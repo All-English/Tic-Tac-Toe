@@ -1,0 +1,262 @@
+@layer openprops, normalize, utils, theme, components.base, components.has-deps;
+
+@import url("https://fonts.googleapis.com/css2?family=Parkinsans:wght@300..800&display=swap");
+
+/* Open Props */
+@import "https://unpkg.com/open-props@2.0.0-beta.5/css/media-queries.css";
+@import "https://unpkg.com/open-props@2.0.0-beta.5/open-props.min.css" layer(openprops);
+@import "https://unpkg.com/open-props@2.0.0-beta.5/utilities.css" layer(openprops);
+@import "https://unpkg.com/open-props@2.0.0-beta.5/index.css" layer(openprops);
+@import "https://unpkg.com/open-props@2.0.0-beta.5/css/sizes/media.css" layer(openprops);
+@import "https://unpkg.com/open-props@2.0.0-beta.5/css/font/lineheight.css" layer(openprops);
+@import "https://unpkg.com/open-props@2.0.0-beta.5/hsl.css" layer(openprops);
+@import "https://unpkg.com/open-props@2.0.0-beta.5/css/color/hues.oklch.css" layer(openprops);
+
+/* Normalize, utils, theme */
+@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/normalize.css";
+@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/utils.css";
+@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/theme.css";
+
+/* Base components */
+@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/actions/button.css";
+@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/actions/icon-button.css";
+@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/data-display/card.css";
+@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/data-display/definition-list.css";
+@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/feedback/dialog.css";
+@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/inputs/range.css";
+
+/* Components with dependencies */
+@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/inputs/field.css";
+@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/inputs/select.css";
+@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/inputs/text-field.css";
+@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/data-display/list.css";
+
+/* CUSTOM STYLES */
+
+body {
+  display: grid;
+  place-content: center;
+  gap: var(--size-5);
+  padding: var(--size-5);
+  background-color: var(--blue-0);
+  color: var(--text-color-1);
+  font-family: 'Parkinsans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+main {
+  display: grid;
+  gap: var(--size-5);
+  width: 100%;
+}
+
+#game-setup {
+  max-width: 60ch;
+  margin-inline: auto;
+}
+
+#game-setup .actions {
+  justify-content: center;
+}
+
+#startGameBtn {
+  margin-bottom: var(--size-3);
+}
+
+.hidden {
+  display: none;
+}
+
+#game-view:not(.hidden) {
+  display: grid;
+  place-items: center;
+  gap: var(--size-5);
+  width: fit-content;
+  margin-inline: auto;
+}
+
+#player-info-list:not(.hidden) {
+  display: flex;
+  gap: var(--size-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#game-board:not(.hidden) {
+  display: grid;
+}
+
+#game-controls:not(.hidden) {
+  display: flex;
+  justify-content: center;
+  gap: var(--size-3);
+}
+
+.cell {
+  --_bg-color: var(--blue-1);
+  --_border-color: var(--blue-3);
+  --_text-color: var(--text-color-1);
+  --_border-radius: 0;
+
+  position: relative;
+  aspect-ratio: var(--ratio-golden);
+  padding: var(--size-3);
+  font-size: var(--font-size-fluid-1);
+  word-break: break-all;
+  hyphens: auto;
+
+  display: grid;
+  place-content: center;
+
+  text-align: center;
+  min-width: 100px;
+  transition: background-color 0.2s var(--ease-out-3);
+}
+
+.cell:not(:disabled):hover {
+  --_bg-color: oklch(from var(--blue-1) calc(l + 0.05) c h);
+}
+
+.cell::after {
+  content: attr(data-player-symbol);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  font-size: clamp(1.5rem, 5vmin, 3rem);
+  color: var(--player-color, var(--text-color-1));
+  background-color: oklch(from var(--surface-default) l c h / 0.5);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.2s var(--ease-out-3), transform 0.2s var(--ease-out-3);
+}
+
+.cell[data-player-symbol]::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.cell.highlight {
+  --_text-color: var(--gray-0);
+  --_bg-color: var(--player-color);
+}
+
+.range-container,
+.phonics-unit-container {
+  display: grid;
+  gap: var(--size-2);
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.phonics-unit-container+.phonics-unit-container {
+  margin-top: var(--size-2);
+}
+
+dialog#game-over-dialog {
+  --_bg-color: var(--blue-1);
+  min-width: 50ch;
+  padding: var(--size-5);
+  border-radius: var(--radius-3);
+  opacity: 0;
+  transform: scale(0.95);
+  transition:
+    opacity 0.3s var(--ease-out-3),
+    transform 0.3s var(--ease-out-3);
+}
+
+dialog#game-over-dialog[open] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+dialog#game-over-dialog::backdrop {
+  background-color: oklch(from var(--blue-9) l c h / 0.5);
+  backdrop-filter: blur(4px);
+  transition: backdrop-filter .3s ease-out, background-color .3s ease-out;
+}
+
+#game-over-dialog .actions {
+  justify-content: center;
+}
+
+#play-again-btn {
+  margin-bottom: var(--size-2);
+}
+
+#dialog-content {
+  text-align: center;
+}
+
+#game-over-dialog #dialog-title {
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-2);
+}
+
+#game-over-dialog #dialog-title svg {
+  width: var(--size-6);
+  height: var(--size-6);
+}
+
+#game-over-dialog .winner-text {
+  color: var(--primary);
+}
+
+#game-over-dialog .score-list {
+  display: grid;
+  gap: var(--size-3);
+  margin-top: var(--size-4);
+}
+
+#game-over-dialog .score-line {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--size-2);
+  font-size: var(--font-size-2);
+}
+
+#game-over-dialog .score-line.winner {
+  color: var(--yellow-7);
+  font-weight: var(--font-weight-6);
+}
+
+#game-over-dialog .score-line svg {
+  width: var(--size-5);
+  height: var(--size-5);
+}
+
+.player-info-block {
+  padding-block: var(--size-1);
+  flex-grow: 1;
+  text-align: center;
+  gap: var(--size-1);
+  --_bg-color: oklch(from var(--player-color, var(--gray-4)) 95% 0.02 h);
+  --_border-color: oklch(from var(--player-color, var(--gray-4)) 85% 0.05 h);
+  transition:
+    transform 0.3s var(--ease-3),
+    box-shadow 0.3s var(--ease-3),
+    border-width 0.3s var(--ease-3);
+}
+
+.player-info-block h3 {
+  color: var(--player-color, var(--text-color-1));
+}
+
+.player-info-block.current-player {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-4);
+  border-width: var(--border-size-3);
+}
+
+.word-wrapper {
+  display: flex;
+  align-items: baseline;
+}
+
+.cell .target-sounds {
+  color: var(--primary);
+  font-weight: var(--font-weight-7);
+}

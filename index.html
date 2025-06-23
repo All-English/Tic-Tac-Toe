@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phonics Tic-Tac-Toe</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <main>
+    <div id="game-setup" class="card outlined">
+      <hgroup>
+        <h2 class="h3">Phonics Tic-Tac-Toe Setup</h2>
+        <p>Configure your game and start playing!</p>
+      </hgroup>
+      <div class="content">
+        <div class="range-container">
+          <label class="range">
+            <span class="label">Number of Players:</span>
+            <input type="range" id="numPlayers" min="2" max="5" value="2">
+          </label>
+          <span id="numPlayersValue">2</span>
+        </div>
+
+        <div id="player-names-container" style="display: grid; gap: var(--size-3); margin-block: var(--size-4);">
+        </div>
+
+        <div class="range-container">
+          <label class="range">
+            <span class="label">Grid Size:</span>
+            <input type="range" id="gridSize" min="3" max="10" value="3">
+          </label>
+          <span id="gridSizeValue">3x3</span>
+        </div>
+
+        <div id="unit-selectors-container" style="margin-block: var(--size-4);">
+        </div>
+
+        <button id="addUnitBtn" class="button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Add Word Unit</span>
+        </button>
+      </div>
+      <div class="actions">
+        <button id="startGameBtn" class="button filled">Start Game</button>
+      </div>
+    </div>
+
+    <div id="game-view" class="hidden">
+      <div id="player-info-list">
+      </div>
+      <div id="game-board">
+      </div>
+      <div id="game-controls">
+        <button id="resetGameBtn" class="button outlined">Reset Game</button>
+        <button id="settings-btn" class="button">Back to Settings</button>
+      </div>
+    </div>
+  </main>
+
+  <dialog id="game-over-dialog" class="card elevated">
+    <hgroup>
+      <h2 id="dialog-title" class="h4"></h2>
+    </hgroup>
+    <div id="dialog-content" class="content">
+    </div>
+    <div class="actions">
+      <button id="play-again-btn" class="button">Play Again</button>
+    </div>
+  </dialog>
+
+  <script src="script.js" defer></script>
+</body>
+
+</html>

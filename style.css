@@ -100,7 +100,7 @@ main {
   position: relative;
   aspect-ratio: var(--ratio-golden);
   padding: var(--size-3);
-  font-size: var(--font-size-fluid-1);
+  font-size: var(--font-size-fluid-2);
   word-break: break-all;
   hyphens: auto;
 

@@ -1,379 +1,17 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const smartPhonicsWordBank = {
-    level1: {
-      unit1: { targetSound: "a,b,c", words: ["A", "a", "B", "b", "C", "c"] },
-      unit2: { targetSound: "d,e,f", words: ["D", "d", "E", "e", "F", "f"] },
-      unit3: { targetSound: "g,h,i", words: ["G", "g", "H", "h", "I", "i"] },
-      unit4: { targetSound: "j,k,l", words: ["J", "j", "K", "k", "L", "l"] },
-      unit5: { targetSound: "m,n,o", words: ["M", "m", "N", "n", "O", "o"] },
-      unit6: { targetSound: "p,q,r", words: ["P", "p", "Q", "q", "R", "r"] },
-      unit7: {
-        targetSound: "s,t,u,v",
-        words: ["S", "s", "T", "t", "U", "u", "V", "v"],
-      },
-      unit8: {
-        targetSound: "w,x,y,z",
-        words: ["W", "w", "X", "x", "Y", "y", "Z", "z"],
-      },
-    },
-    level2: {
-      unit1: {
-        targetSound: "a",
-        words: ["dam", "ham", "jam", "ram", "cap", "lap", "map", "nap"],
-      },
-      unit2: {
-        targetSound: "a",
-        words: ["can", "fan", "man", "pan", "bat", "cat", "hat", "mat"],
-      },
-      unit3: {
-        targetSound: "e",
-        words: ["jet", "net", "vet", "wet", "bed", "red", "hen", "pen"],
-      },
-      unit4: {
-        targetSound: "i",
-        words: ["bib", "rib", "kid", "lid", "pig", "wig", "fin", "pin"],
-      },
-      unit5: {
-        targetSound: "i",
-        words: ["dip", "hip", "lip", "rip", "hit", "sit", "mix", "six"],
-      },
-      unit6: {
-        targetSound: "o",
-        words: ["hot", "pot", "box", "fox", "cop", "hop", "dog", "log"],
-      },
-      unit7: {
-        targetSound: "u",
-        words: ["bug", "hug", "mug", "rug", "rub", "tub", "cup", "pup"],
-      },
-      unit8: {
-        targetSound: "u",
-        words: ["bun", "fun", "run", "sun", "bud", "mud", "cut", "nut"],
-      },
-    },
-    level3: {
-      unit1: {
-        targetSound: "a_e",
-        words: ["bake", "cake", "lake", "rake", "cape", "tape", "cave", "wave"],
-      },
-      unit2: {
-        targetSound: "a_e",
-        words: ["game", "name", "date", "gate", "cane", "mane", "case", "vase"],
-      },
-      unit3: {
-        targetSound: "i_e",
-        words: ["line", "nine", "pine", "vine", "bike", "hike", "lime", "time"],
-      },
-      unit4: {
-        targetSound: "i_e",
-        words: ["hide", "ride", "pipe", "wipe", "bite", "kite", "dive", "five"],
-      },
-      unit5: {
-        targetSound: "o_e",
-        words: ["hose", "nose", "pose", "rose", "hope", "rope", "note", "vote"],
-      },
-      unit6: {
-        targetSound: "o_e",
-        words: ["hole", "mole", "pole", "sole", "dome", "home", "bone", "cone"],
-      },
-      unit7: {
-        targetSound: "u_e",
-        words: ["cube", "tube", "cute", "mute", "mule", "dune", "June", "tune"],
-      },
-    },
-    level4: {
-      unit1: {
-        targetSound: "bl, cl, fl",
-        words: [
-          "black",
-          "blade",
-          "blimp",
-          "blue",
-          "clam",
-          "clap",
-          "cliff",
-          "clock",
-          "flag",
-          "flame",
-          "flap",
-          "flute",
-        ],
-      },
-      unit2: {
-        targetSound: "br, cr, fr",
-        words: [
-          "brake",
-          "brave",
-          "brick",
-          "bride",
-          "crab",
-          "crane",
-          "crib",
-          "cross",
-          "frame",
-          "frog",
-          "front",
-          "frost",
-        ],
-      },
-      unit3: {
-        targetSound: "gl, pl, sl",
-        words: [
-          "glass",
-          "globe",
-          "glove",
-          "glue",
-          "plane",
-          "plant",
-          "plate",
-          "plum",
-          "sled",
-          "slice",
-          "slide",
-          "slim",
-        ],
-      },
-      unit4: {
-        targetSound: "dr, pr, tr",
-        words: [
-          "dragon",
-          "dress",
-          "drive",
-          "drum",
-          "press",
-          "price",
-          "print",
-          "prize",
-          "trace",
-          "track",
-          "truck",
-          "trumpet",
-        ],
-      },
-      unit5: {
-        targetSound: "sm, sn, st, sw",
-        words: [
-          "smell",
-          "smile",
-          "smoke",
-          "snack",
-          "snake",
-          "snore",
-          "stone",
-          "stop",
-          "stove",
-          "sweet",
-          "swim",
-          "swing",
-        ],
-      },
-      unit6: {
-        targetSound: "ng, nk",
-        words: [
-          "bang",
-          "fang",
-          "king",
-          "ring",
-          "gong",
-          "song",
-          "bank",
-          "tank",
-          "pink",
-          "wink",
-          "dunk",
-          "junk",
-        ],
-      },
-      unit7: {
-        targetSound: "sh, ch",
-        words: [
-          "shape",
-          "ship",
-          "shop",
-          "brush",
-          "fish",
-          "flash",
-          "cherry",
-          "chick",
-          "chin",
-          "bench",
-          "branch",
-          "catch",
-        ],
-      },
-      unit8: {
-        targetSound: "th, wh",
-        words: [
-          "thick",
-          "thin",
-          "thumb",
-          "bath",
-          "math",
-          "teeth",
-          "whale",
-          "wheel",
-          "whip",
-          "whisk",
-          "whisper",
-          "white",
-        ],
-      },
-    },
-    level5: {
-      unit1: {
-        targetSound: "ee, ea",
-        words: [
-          "bee",
-          "feet",
-          "green",
-          "peel",
-          "seed",
-          "tree",
-          "leaf",
-          "meat",
-          "peanut",
-          "sea",
-          "seal",
-          "tea",
-        ],
-      },
-      unit2: {
-        targetSound: "oa, ow",
-        words: [
-          "boat",
-          "coat",
-          "goat",
-          "road",
-          "soap",
-          "toast",
-          "blow",
-          "bowl",
-          "pillow",
-          "snow",
-          "window",
-          "yellow",
-        ],
-      },
-      unit3: {
-        targetSound: "ai, ay",
-        words: [
-          "mail",
-          "nail",
-          "rail",
-          "rain",
-          "tail",
-          "train",
-          "clay",
-          "gray",
-          "hay",
-          "play",
-          "pray",
-          "tray",
-        ],
-      },
-      unit4: {
-        targetSound: "oi, oy",
-        words: [
-          "boil",
-          "coil",
-          "coin",
-          "foil",
-          "oil",
-          "point",
-          "soil",
-          "toilet",
-          "boy",
-          "joy",
-          "soybean",
-          "toy",
-        ],
-      },
-      unit5: {
-        targetSound: "ow, ou",
-        words: [
-          "brown",
-          "clown",
-          "cow",
-          "crown",
-          "gown",
-          "owl",
-          "blouse",
-          "cloud",
-          "count",
-          "house",
-          "mouse",
-          "mouth",
-        ],
-      },
-      unit6: {
-        targetSound: "ir, er, ur",
-        words: [
-          "bird",
-          "girl",
-          "shirt",
-          "skirt",
-          "letter",
-          "singer",
-          "soccer",
-          "teacher",
-          "nurse",
-          "purple",
-          "purse",
-          "turtle",
-        ],
-      },
-      unit7: {
-        targetSound: "ar, or",
-        words: [
-          "arm",
-          "car",
-          "card",
-          "farmer",
-          "park",
-          "star",
-          "cork",
-          "corn",
-          "fork",
-          "horse",
-          "north",
-          "store",
-        ],
-      },
-      unit8: {
-        targetSound: "oo",
-        words: [
-          "book",
-          "cook",
-          "foot",
-          "hook",
-          "look",
-          "wood",
-          "food",
-          "goose",
-          "moon",
-          "pool",
-          "spoon",
-          "zoo",
-        ],
-      },
-    },
-  }
+import {
+  smartPhonicsWordBank,
+  MATCH_LENGTH,
+  playerSymbols,
+  COLOR_PALETTE,
+} from "./config.js"
 
+document.addEventListener("DOMContentLoaded", () => {
   // --- STATE ---
-  const MATCH_LENGTH = 3 // The number of tiles in a row needed to score
   let gameState = {}
   let areGameEventListenersAttached = false
-  const playerSymbols = ["X", "O", "△", "□", "☆"]
-  const COLOR_PALETTE = [
-    "var(--orange-7)",
-    "var(--pink-7)",
-    "var(--green-7)",
-    "var(--blue-7)",
-    "var(--violet-7)",
-    "var(--cyan-7)",
-    "var(--red-7)",
-  ]
+  // playerSymbols, MATCH_LENGTH, and COLOR_PALETTE are now imported
 
-  // --- DOM ELEMENTS (Setup-only elements are grabbed now)---
+  // --- DOM ELEMENTS ---
   const setupView = document.getElementById("game-setup")
   const numPlayersInput = document.getElementById("numPlayers")
   const numPlayersValue = document.getElementById("numPlayersValue")
@@ -493,6 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function selectRandomUnit() {
     const firstSelector = document.querySelector(".phonics-unit-select")
     if (!firstSelector) return
+
     const options = Array.from(firstSelector.options).filter(
       (opt) => !opt.disabled
     )
@@ -502,20 +141,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // This is the only function that needs to be changed in script.js
   function highlightTargetSounds(word, targetSoundString) {
     if (!targetSoundString) {
-      return `<span>${word}</span>` // Return plain word if no sounds to highlight
+      return `<span>${word}</span>`
     }
-
     const targetSounds = targetSoundString.split(",").map((s) => s.trim())
     let resultHTML = ""
     let i = 0
-
     while (i < word.length) {
       let foundMatch = false
       for (const sound of targetSounds) {
-        // Handle "magic e" rules like "a_e"
         if (sound.includes("_")) {
           const parts = sound.split("_")
           if (
@@ -523,16 +158,16 @@ document.addEventListener("DOMContentLoaded", () => {
             word[i]?.toLowerCase() === parts[0] &&
             word[i + 2]?.toLowerCase() === parts[1]
           ) {
-            resultHTML += `<span class="target-sounds">${word[i]}</span>` // Vowel
-            resultHTML += `<span>${word[i + 1]}</span>` // Consonant
-            resultHTML += `<span class="target-sounds">${word[i + 2]}</span>` // Final 'e'
+            resultHTML += `<span class="target-sounds">${word[i]}</span>`
+            resultHTML += `<span>${word[i + 1]}</span>`
+            resultHTML += `<span class="target-sounds">${word[i + 2]}</span>`
             i += 3
             foundMatch = true
             break
           }
-        }
-        // Handle normal multi-letter sounds like "bl" or "sh"
-        else if (word.substring(i, i + sound.length).toLowerCase() === sound) {
+        } else if (
+          word.substring(i, i + sound.length).toLowerCase() === sound
+        ) {
           resultHTML += `<span class="target-sounds">${word.substring(
             i,
             i + sound.length
@@ -542,13 +177,11 @@ document.addEventListener("DOMContentLoaded", () => {
           break
         }
       }
-      // If no match was found at the current position, add the single character
       if (!foundMatch) {
         resultHTML += `<span>${word[i]}</span>`
         i++
       }
     }
-    // Wrap the entire result in a flex container to remove whitespace issues
     return `<span class="word-wrapper">${resultHTML}</span>`
   }
 
@@ -569,7 +202,6 @@ document.addEventListener("DOMContentLoaded", () => {
         .map((select) => select.value)
         .filter((value) => value)
 
-      // ✅ Shuffle the color palette and assign to players
       const shuffledColors = [...COLOR_PALETTE].sort(() => 0.5 - Math.random())
       settings.playerColors = shuffledColors.slice(0, settings.numPlayers)
 
@@ -578,13 +210,12 @@ document.addEventListener("DOMContentLoaded", () => {
         return
       }
     } else {
-      // On reset, keep the same settings, including the randomized colors from that round
       settings = {
         numPlayers: gameState.numPlayers,
         gridSize: gameState.gridSize,
         playerNames: gameState.playerNames,
         selectedUnits: gameState.selectedUnits,
-        playerColors: gameState.playerColors, // Persist colors on reset
+        playerColors: gameState.playerColors,
       }
     }
     gameState = {
@@ -611,7 +242,6 @@ document.addEventListener("DOMContentLoaded", () => {
     setupGameEventListeners()
   }
 
-  // ✅ Refactored to return objects with word and target sound
   function getCombinedWords(selectedUnits, totalWordsNeeded) {
     const finalWords = []
     const uniqueUnits = [...new Set(selectedUnits)]
@@ -662,11 +292,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const playerBlock = document.createElement("div")
       playerBlock.className = "card outlined player-info-block"
       playerBlock.id = `player-${i}-info-block`
-
-      // ✅ Set the custom property for this player's card
       const playerColor = gameState.playerColors[i]
       playerBlock.style.setProperty("--player-color", playerColor)
-
       const hgroup = document.createElement("hgroup")
       const nameHeader = document.createElement("h3")
       nameHeader.className = "h6"
@@ -711,12 +338,10 @@ document.addEventListener("DOMContentLoaded", () => {
     gameState.board[index] = gameState.currentPlayer
     cell.dataset.playerSymbol = playerSymbols[gameState.currentPlayer]
     cell.dataset.playerId = gameState.currentPlayer
-
-    // ✅ Apply the dynamic color to the cell
     const playerColor = gameState.playerColors[gameState.currentPlayer]
     cell.style.setProperty("--player-color", playerColor)
-
     cell.disabled = true
+
     const pointsScored = checkForWins(move)
     if (pointsScored > 0) {
       gameState.scores[gameState.currentPlayer] += pointsScored
@@ -744,7 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
     )
     cell.removeAttribute("data-player-symbol")
     cell.removeAttribute("data-player-id")
-    cell.style.removeProperty("--player-color") // ✅ Clear the color on undo
+    cell.style.removeProperty("--player-color")
     cell.disabled = false
 
     if (lastMove.scoredLines.length > 0) {
@@ -762,7 +387,7 @@ document.addEventListener("DOMContentLoaded", () => {
             ).some((l) => l.split(",").includes(String(index)))
             if (!isStillHighlighted) {
               scoredCell.classList.remove("highlight")
-              scoredCell.style.removeProperty("--player-color") // ✅ Clear color
+              scoredCell.style.removeProperty("--player-color")
             }
           }
         })
@@ -785,7 +410,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function checkForWins(move) {
     const { gridSize, board, currentPlayer, completedLines } = gameState
     let newPoints = 0
-
     const checkLine = (line) => {
       const isWin = line.every((index) => board[index] === currentPlayer)
       const lineId = lineToString(line)
@@ -796,42 +420,29 @@ document.addEventListener("DOMContentLoaded", () => {
         if (move) move.scoredLines.push(lineId)
       }
     }
-
     for (let r = 0; r < gridSize; r++) {
       for (let c = 0; c < gridSize; c++) {
-        // Check Horizontal
         if (c <= gridSize - MATCH_LENGTH) {
           const line = []
-          for (let i = 0; i < MATCH_LENGTH; i++) {
-            line.push(r * gridSize + c + i)
-          }
+          for (let i = 0; i < MATCH_LENGTH; i++) line.push(r * gridSize + c + i)
           checkLine(line)
         }
-
-        // Check Vertical
         if (r <= gridSize - MATCH_LENGTH) {
           const line = []
-          for (let i = 0; i < MATCH_LENGTH; i++) {
+          for (let i = 0; i < MATCH_LENGTH; i++)
             line.push((r + i) * gridSize + c)
-          }
           checkLine(line)
         }
-
-        // Check Diagonal (down-right)
         if (r <= gridSize - MATCH_LENGTH && c <= gridSize - MATCH_LENGTH) {
           const line = []
-          for (let i = 0; i < MATCH_LENGTH; i++) {
+          for (let i = 0; i < MATCH_LENGTH; i++)
             line.push((r + i) * gridSize + (c + i))
-          }
           checkLine(line)
         }
-
-        // Check Diagonal (down-left)
         if (r <= gridSize - MATCH_LENGTH && c >= MATCH_LENGTH - 1) {
           const line = []
-          for (let i = 0; i < MATCH_LENGTH; i++) {
+          for (let i = 0; i < MATCH_LENGTH; i++)
             line.push((r + i) * gridSize + (c - i))
-          }
           checkLine(line)
         }
       }
@@ -846,7 +457,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `#game-board .cell[data-index='${index}']`
       )
       cell.classList.add("highlight")
-      cell.style.setProperty("--player-color", playerColor) // ✅ Apply color on highlight
+      cell.style.setProperty("--player-color", playerColor)
     })
   }
 
@@ -857,7 +468,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let winnerText
     let maxScore = -1
     let winners = []
-
     for (let i = 0; i < gameState.numPlayers; i++) {
       if (gameState.scores[i] > maxScore) {
         maxScore = gameState.scores[i]
@@ -866,7 +476,6 @@ document.addEventListener("DOMContentLoaded", () => {
         winners.push(i)
       }
     }
-
     if (winners.length === 0 || maxScore === 0) {
       winnerText = "No one scored any points! It's a draw."
     } else if (winners.length > 1) {
@@ -877,37 +486,32 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       winnerText = `${gameState.playerNames[winners[0]]} wins!`
     }
-
     dialogTitle.innerHTML = `Congratulations! 🎉`
-
     let winnerHTML = `<h3 class="h4 winner-text">${winnerText}</h3>`
 
-    // Create a list of players to sort
-    const sortedPlayers = gameState.playerNames.map((name, index) => ({
-      name: name,
-      score: gameState.scores[index],
-      symbol: playerSymbols[index],
-      originalIndex: index,
-    }))
-
-    // Sort players by score in descending order
-    sortedPlayers.sort((a, b) => b.score - a.score)
+    const sortedPlayers = gameState.playerNames
+      .map((name, index) => ({
+        name: name,
+        score: gameState.scores[index],
+        symbol: playerSymbols[index],
+        originalIndex: index,
+      }))
+      .sort((a, b) => b.score - a.score)
 
     let finalScoresHTML = `<div class="score-list">`
     const trophyIcon = "🏆"
 
-    // Build the HTML from the sorted list
     sortedPlayers.forEach((player) => {
       const isWinner = winners.includes(player.originalIndex)
       const winnerClass = isWinner ? "winner" : ""
       finalScoresHTML += `
-                        <div class="score-line ${winnerClass}">
-                            ${isWinner ? trophyIcon : ""}
-                            <span>${player.name} (${player.symbol}): ${
+                <div class="score-line ${winnerClass}">
+                    ${isWinner ? trophyIcon : ""}
+                    <span>${player.name} (${player.symbol}): ${
         player.score
       }</span>
-                        </div>
-                    `
+                </div>
+            `
     })
 
     finalScoresHTML += `</div>`
@@ -917,6 +521,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --- INITIALIZE ---
+  // Listeners for the setup screen are attached immediately.
   numPlayersInput.addEventListener("input", updateSliderValues)
   gridSizeInput.addEventListener("input", () => {
     gridSizeValue.textContent = `${gridSizeInput.value}x${gridSizeInput.value}`
@@ -924,6 +529,7 @@ document.addEventListener("DOMContentLoaded", () => {
   addUnitBtn.addEventListener("click", createUnitSelector)
   startGameBtn.addEventListener("click", () => initGame(true))
 
+  // Run initial UI setup
   updateSliderValues()
   createUnitSelector()
   selectRandomUnit()

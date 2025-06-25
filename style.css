@@ -150,6 +150,12 @@ main {
   transition: background-color 0.2s var(--ease-out-3);
 }
 
+/* New rule for when the grid is 9x9 or 10x10 */
+.large-grid .cell {
+  font-size: var(--font-size-fluid-1);
+  padding: var(--size-fluid-1);
+}
+
 .cell:not(:disabled):hover {
   --_bg-color: oklch(from var(--blue-1) calc(l + 0.05) c h);
 }

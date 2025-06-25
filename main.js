@@ -355,6 +355,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const gameBoard = document.getElementById("game-board")
     gameBoard.innerHTML = ""
     gameBoard.style.gridTemplateColumns = `repeat(${gameState.gridSize}, 1fr)`
+
+    // Add or remove the class based on the grid size
+    if (gameState.gridSize > 7) {
+      gameBoard.classList.add("large-grid")
+    } else {
+      gameBoard.classList.remove("large-grid")
+    }
+
     for (let i = 0; i < gameState.gridSize * gameState.gridSize; i++) {
       const cell = document.createElement("button")
       cell.classList.add("button", "cell")

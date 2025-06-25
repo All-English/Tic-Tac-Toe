@@ -391,7 +391,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const contentDiv = document.createElement("div")
       contentDiv.className = "content"
       contentDiv.id = `player-${i}-score`
-      contentDiv.textContent = `Score: ${gameState.scores[i]}`
+      contentDiv.textContent = `${gameState.scores[i]}`
       playerBlock.appendChild(hgroup)
       playerBlock.appendChild(contentDiv)
       playerInfoList.appendChild(playerBlock)
@@ -493,7 +493,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateScoreDisplay(playerIndex) {
     const scoreDiv = document.getElementById(`player-${playerIndex}-score`)
     if (scoreDiv)
-      scoreDiv.textContent = `Score: ${gameState.scores[playerIndex]}`
+      scoreDiv.textContent = `${gameState.scores[playerIndex]}`
   }
 
   function lineToString(line) {

@@ -282,6 +282,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const shuffledColors = [...COLOR_PALETTE].sort(() => 0.5 - Math.random())
       settings.playerColors = shuffledColors.slice(0, settings.numPlayers)
+    
+      settings.showLines = showLinesToggle.checked
 
       if (settings.selectedUnits.length === 0) {
         alert("Please select at least one word unit to start the game.")

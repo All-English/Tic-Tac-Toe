@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- STATE ---
   let gameState = {}
   let areGameEventListenersAttached = false
+  let playerSetupList = [] // ✅ The new single source of truth for player order during setup.
 
   // --- DOM ELEMENTS ---
   const setupView = document.getElementById("game-setup")
@@ -64,52 +65,6 @@ document.addEventListener("DOMContentLoaded", () => {
     areGameEventListenersAttached = true
   }
 
-  // Add event listeners to the container to handle the drag-and-drop logic
-  playerNamesContainer.addEventListener("dragover", (e) => {
-    e.preventDefault() // This is necessary to allow a drop
-    const afterElement = getDragAfterElement(playerNamesContainer, e.clientY)
-
-    // Clear all previous indicators
-    playerNamesContainer
-      .querySelectorAll(".drag-over-top, .drag-over-bottom")
-      .forEach((el) => {
-        el.classList.remove("drag-over-top", "drag-over-bottom")
-      })
-
-    if (afterElement) {
-      // Add top border indicator to the element we are inserting before
-      afterElement.classList.add("drag-over-top")
-    } else {
-      // Add bottom border indicator to the last element in the list
-      const lastElement = playerNamesContainer.querySelector(
-        ".player-name-field:not(.dragging):last-child"
-      )
-      if (lastElement) {
-        lastElement.classList.add("drag-over-bottom")
-      }
-    }
-  })
-
-
-  playerNamesContainer.addEventListener("drop", (e) => {
-    e.preventDefault()
-    const dragging = playerNamesContainer.querySelector(".dragging")
-    const afterElement = getDragAfterElement(playerNamesContainer, e.clientY)
-
-    // Clear all indicators on drop
-    playerNamesContainer
-      .querySelectorAll(".drag-over-top, .drag-over-bottom")
-      .forEach((el) => {
-        el.classList.remove("drag-over-top", "drag-over-bottom")
-      })
-
-    if (afterElement == null) {
-      playerNamesContainer.appendChild(dragging)
-    } else {
-      playerNamesContainer.insertBefore(dragging, afterElement)
-    }
-  })
-
   // --- FUNCTIONS ---
 
   function getDragAfterElement(container, y) {
@@ -131,70 +86,68 @@ document.addEventListener("DOMContentLoaded", () => {
     ).element
   }
 
+  // ✅ Refactored to shuffle the `playerSetupList` array, then re-render
   function randomizePlayerOrder() {
-    const nameInputs = Array.from(
-      document.querySelectorAll(".player-name-input")
-    )
-    if (nameInputs.length < 2) return // Cannot shuffle one or zero items
+    if (playerSetupList.length < 2) return
 
-    const originalOrder = nameInputs.map((input) => input.value)
-    let shuffledOrder = [...originalOrder]
-
-    // Keep shuffling until the order is different from the original
+    const originalOrderJSON = JSON.stringify(playerSetupList)
     let attempts = 0
+
     do {
-      for (let i = shuffledOrder.length - 1; i > 0; i--) {
+      for (let i = playerSetupList.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1))
-        ;[shuffledOrder[i], shuffledOrder[j]] = [
-          shuffledOrder[j],
-          shuffledOrder[i],
+        ;[playerSetupList[i], playerSetupList[j]] = [
+          playerSetupList[j],
+          playerSetupList[i],
         ]
       }
       attempts++
     } while (
-      JSON.stringify(originalOrder) === JSON.stringify(shuffledOrder) &&
+      JSON.stringify(playerSetupList) === originalOrderJSON &&
       attempts < 10
-    ) // Loop while orders are the same (with a safety break)
+    )
 
-    // Re-assign the shuffled names to the input fields
-    nameInputs.forEach((input, index) => {
-      input.value = shuffledOrder[index]
-    })
+    renderNameInputs()
   }
 
+  // ✅ Refactored to be the single function that renders the player list from the `playerSetupList` array
   function renderNameInputs() {
-    const count = parseInt(numPlayersInput.value, 10)
-    // Preserve existing names and create new ones if needed
-    const existingNames = Array.from(
-      playerNamesContainer.querySelectorAll(".player-name-input")
-    ).map((input) => input.value)
+    playerNamesContainer.innerHTML = "" // Clear the container
 
-    playerNamesContainer.innerHTML = ""
-    for (let i = 0; i < count; i++) {
+    // Re-build the entire list from the `playerSetupList` array
+    playerSetupList.forEach((player, index) => {
       const field = document.createElement("label")
-      field.className = "field player-name-field" // Added class for styling/selection
-      field.draggable = true // Make the element draggable
+      field.className = "field player-name-field"
+      field.draggable = true
+      field.dataset.playerId = player.id // Use a stable ID for tracking
 
-      field.addEventListener("dragstart", () => {
-        field.classList.add("dragging")
-      })
-
-      field.addEventListener("dragend", () => {
+      // Add drag listeners every time we render
+      field.addEventListener("dragstart", () => field.classList.add("dragging"))
+      field.addEventListener("dragend", () =>
         field.classList.remove("dragging")
-      })
+      )
 
       const label = document.createElement("span")
       label.className = "label"
-      label.textContent = `Player ${i + 1} Name`
+      label.textContent = `Player ${index + 1} Name` // Label reflects visual order
+
       const input = document.createElement("input")
       input.type = "text"
       input.className = "player-name-input"
-      input.value = existingNames[i] || `Player ${i + 1}`
-      input.dataset.playerId = i // This may become out of sync, but it's just for default text
+      input.value = player.name
+      // Listen for changes to the name and update our source of truth
+      input.addEventListener("input", (e) => {
+        const playerId = parseInt(field.dataset.playerId)
+        const playerToUpdate = playerSetupList.find((p) => p.id === playerId)
+        if (playerToUpdate) {
+          playerToUpdate.name = e.target.value
+        }
+      })
+
       field.appendChild(label)
       field.appendChild(input)
       playerNamesContainer.appendChild(field)
-    }
+    })
   }
 
   function createUnitSelector() {
@@ -232,12 +185,28 @@ document.addEventListener("DOMContentLoaded", () => {
     unitSelectorsContainer.appendChild(container)
   }
 
+  // ✅ Refactored to manage the `playerSetupList` array, then re-render
   function updateSliderValues() {
-    numPlayersValue.textContent = numPlayersInput.value
-    const defaultGridSize = parseInt(numPlayersInput.value) + 1
+    const newCount = parseInt(numPlayersInput.value, 10)
+    numPlayersValue.textContent = newCount
+
+    const currentCount = playerSetupList.length
+
+    if (newCount > currentCount) {
+      // Add new players
+      for (let i = currentCount; i < newCount; i++) {
+        playerSetupList.push({ id: Date.now() + i, name: `Player ${i + 1}` })
+      }
+    } else if (newCount < currentCount) {
+      // Remove players from the end
+      playerSetupList.splice(newCount)
+    }
+
+    const defaultGridSize = newCount + 1
     gridSizeInput.value = defaultGridSize
-    gridSizeValue.textContent = `${gridSizeInput.value}x${gridSizeInput.value}`
-    renderNameInputs()
+    gridSizeValue.textContent = `${defaultGridSize}x${defaultGridSize}`
+
+    renderNameInputs() // Re-render the UI based on the updated list
   }
 
   function selectRandomUnit() {
@@ -300,25 +269,19 @@ document.addEventListener("DOMContentLoaded", () => {
   function initGame(isNewGame) {
     let settings = {}
     if (isNewGame) {
+      // ✅ Read player names directly from our source-of-truth array
+      settings.playerNames = playerSetupList.map((p) => p.name)
+
       settings.numPlayers = parseInt(numPlayersInput.value)
       settings.gridSize = parseInt(gridSizeInput.value)
-      settings.playerNames = [
-        ...document.querySelectorAll(".player-name-input"),
-      ].map(
-        (input) =>
-          input.value || `Player ${parseInt(input.dataset.playerId) + 1}`
-      )
       settings.selectedUnits = [
         ...document.querySelectorAll(".phonics-unit-select"),
       ]
         .map((select) => select.value)
         .filter((value) => value)
-      settings.playerColors = [...COLOR_PALETTE]
-        .sort(() => 0.5 - Math.random())
-        .slice(0, settings.numPlayers)
 
-      // Read the value from the new toggle switch
-      settings.showLines = showLinesToggle.checked
+      const shuffledColors = [...COLOR_PALETTE].sort(() => 0.5 - Math.random())
+      settings.playerColors = shuffledColors.slice(0, settings.numPlayers)
 
       if (settings.selectedUnits.length === 0) {
         alert("Please select at least one word unit to start the game.")
@@ -683,8 +646,9 @@ document.addEventListener("DOMContentLoaded", () => {
     gameDialog.showModal()
   }
 
-  // --- INITIALIZE ---
-  // Listeners for the setup screen are attached immediately.
+  // --- INITIALIZE and ATTACH LISTENERS ---
+
+  // Setup screen listeners
   numPlayersInput.addEventListener("input", updateSliderValues)
   gridSizeInput.addEventListener("input", () => {
     gridSizeValue.textContent = `${gridSizeInput.value}x${gridSizeInput.value}`
@@ -692,6 +656,63 @@ document.addEventListener("DOMContentLoaded", () => {
   addUnitBtn.addEventListener("click", createUnitSelector)
   startGameBtn.addEventListener("click", () => initGame(true))
   randomizeOrderBtn.addEventListener("click", randomizePlayerOrder)
+
+  // Drag and Drop listeners on the container
+  playerNamesContainer.addEventListener("dragover", (e) => {
+    e.preventDefault()
+    const afterElement = getDragAfterElement(playerNamesContainer, e.clientY)
+
+    playerNamesContainer
+      .querySelectorAll(".drag-over-top, .drag-over-bottom")
+      .forEach((el) => {
+        el.classList.remove("drag-over-top", "drag-over-bottom")
+      })
+
+    if (afterElement) {
+      afterElement.classList.add("drag-over-top")
+    } else {
+      const lastElement = playerNamesContainer.querySelector(
+        ".player-name-field:not(.dragging):last-child"
+      )
+      if (lastElement) {
+        lastElement.classList.add("drag-over-bottom")
+      }
+    }
+  })
+
+  // ✅ Refactored drop listener to update the array, then re-render
+  playerNamesContainer.addEventListener("drop", (e) => {
+    e.preventDefault()
+    playerNamesContainer
+      .querySelectorAll(".drag-over-top, .drag-over-bottom")
+      .forEach((el) => {
+        el.classList.remove("drag-over-top", "drag-over-bottom")
+      })
+
+    const dragging = playerNamesContainer.querySelector(".dragging")
+    if (!dragging) return
+
+    const draggingId = parseInt(dragging.dataset.playerId)
+    const afterElement = getDragAfterElement(playerNamesContainer, e.clientY)
+
+    // Find the index of the dragged item and remove it from the list
+    const draggedItemIndex = playerSetupList.findIndex(
+      (p) => p.id === draggingId
+    )
+    const [draggedItem] = playerSetupList.splice(draggedItemIndex, 1)
+
+    if (afterElement == null) {
+      // Dropped at the end
+      playerSetupList.push(draggedItem)
+    } else {
+      // Dropped before another element
+      const afterId = parseInt(afterElement.dataset.playerId)
+      const dropIndex = playerSetupList.findIndex((p) => p.id === afterId)
+      playerSetupList.splice(dropIndex, 0, draggedItem)
+    }
+
+    renderNameInputs() // Re-render the entire list from the updated array
+  })
 
   // Run initial UI setup
   updateSliderValues()

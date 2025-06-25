@@ -64,7 +64,72 @@ document.addEventListener("DOMContentLoaded", () => {
     areGameEventListenersAttached = true
   }
 
+  // Add event listeners to the container to handle the drag-and-drop logic
+  playerNamesContainer.addEventListener("dragover", (e) => {
+    e.preventDefault() // This is necessary to allow a drop
+    const afterElement = getDragAfterElement(playerNamesContainer, e.clientY)
+
+    // Clear all previous indicators
+    playerNamesContainer
+      .querySelectorAll(".drag-over-top, .drag-over-bottom")
+      .forEach((el) => {
+        el.classList.remove("drag-over-top", "drag-over-bottom")
+      })
+
+    if (afterElement) {
+      // Add top border indicator to the element we are inserting before
+      afterElement.classList.add("drag-over-top")
+    } else {
+      // Add bottom border indicator to the last element in the list
+      const lastElement = playerNamesContainer.querySelector(
+        ".player-name-field:not(.dragging):last-child"
+      )
+      if (lastElement) {
+        lastElement.classList.add("drag-over-bottom")
+      }
+    }
+  })
+
+
+  playerNamesContainer.addEventListener("drop", (e) => {
+    e.preventDefault()
+    const dragging = playerNamesContainer.querySelector(".dragging")
+    const afterElement = getDragAfterElement(playerNamesContainer, e.clientY)
+
+    // Clear all indicators on drop
+    playerNamesContainer
+      .querySelectorAll(".drag-over-top, .drag-over-bottom")
+      .forEach((el) => {
+        el.classList.remove("drag-over-top", "drag-over-bottom")
+      })
+
+    if (afterElement == null) {
+      playerNamesContainer.appendChild(dragging)
+    } else {
+      playerNamesContainer.insertBefore(dragging, afterElement)
+    }
+  })
+
   // --- FUNCTIONS ---
+
+  function getDragAfterElement(container, y) {
+    const draggableElements = [
+      ...container.querySelectorAll(".player-name-field:not(.dragging)"),
+    ]
+
+    return draggableElements.reduce(
+      (closest, child) => {
+        const box = child.getBoundingClientRect()
+        const offset = y - box.top - box.height / 2
+        if (offset < 0 && offset > closest.offset) {
+          return { offset: offset, element: child }
+        } else {
+          return closest
+        }
+      },
+      { offset: Number.NEGATIVE_INFINITY }
+    ).element
+  }
 
   function randomizePlayerOrder() {
     const nameInputs = Array.from(
@@ -99,18 +164,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderNameInputs() {
     const count = parseInt(numPlayersInput.value, 10)
+    // Preserve existing names and create new ones if needed
+    const existingNames = Array.from(
+      playerNamesContainer.querySelectorAll(".player-name-input")
+    ).map((input) => input.value)
+
     playerNamesContainer.innerHTML = ""
     for (let i = 0; i < count; i++) {
       const field = document.createElement("label")
-      field.className = "field"
+      field.className = "field player-name-field" // Added class for styling/selection
+      field.draggable = true // Make the element draggable
+
+      field.addEventListener("dragstart", () => {
+        field.classList.add("dragging")
+      })
+
+      field.addEventListener("dragend", () => {
+        field.classList.remove("dragging")
+      })
+
       const label = document.createElement("span")
       label.className = "label"
       label.textContent = `Player ${i + 1} Name`
       const input = document.createElement("input")
       input.type = "text"
       input.className = "player-name-input"
-      input.value = `Player ${i + 1}`
-      input.dataset.playerId = i
+      input.value = existingNames[i] || `Player ${i + 1}`
+      input.dataset.playerId = i // This may become out of sync, but it's just for default text
       field.appendChild(label)
       field.appendChild(input)
       playerNamesContainer.appendChild(field)

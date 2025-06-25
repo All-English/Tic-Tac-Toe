@@ -67,6 +67,34 @@ main {
   display: none;
 }
 
+#player-names-container {
+  display: grid;
+  gap: var(--size-3);
+  margin-block: var(--size-4);
+}
+
+/* This makes the player name fields look grabbable */
+.player-name-field {
+  cursor: grab;
+  user-select: none;
+  /* Prevents text selection while dragging */
+}
+
+/* This class is added to the field being dragged */
+.player-name-field.dragging {
+  opacity: 0.5;
+}
+
+/* This class indicates the item will be dropped BEFORE this element */
+.player-name-field.drag-over-top {
+  border-top: 3px solid var(--primary);
+}
+
+/* This new class indicates the item will be dropped AFTER this element */
+.player-name-field.drag-over-bottom {
+  border-bottom: 3px solid var(--primary);
+}
+
 #game-view:not(.hidden) {
   display: grid;
   place-items: center;
@@ -89,7 +117,6 @@ main {
 
 .strike-through-line {
   position: absolute;
-  /* background-color: var(--gray-15); */
   height: 5px;
   border-radius: var(--radius-round);
   transform-origin: left center;

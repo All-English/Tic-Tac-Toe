@@ -238,6 +238,10 @@ dialog#game-over-dialog::backdrop {
   text-align: center;
 }
 
+#game-over-dialog hgroup {
+  align-self: center;
+}
+
 #game-over-dialog #dialog-title {
   color: var(--primary);
   display: inline-flex;

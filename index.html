@@ -24,6 +24,10 @@
           <span id="numPlayersValue">2</span>
         </div>
 
+        <div id="randomize-container">
+          <button id="randomizeOrderBtn" class="button outlined small">Randomize</button>
+        </div>
+
         <div id="player-names-container" style="display: grid; gap: var(--size-3); margin-block: var(--size-4);">
         </div>
 
@@ -46,6 +50,14 @@
           </svg>
           <span>Add Word Unit</span>
         </button>
+
+        <div class="setting-group">
+          <label class="switch">
+            <input type="checkbox" role="switch" id="showLinesToggle" checked>
+            <span class="label">Show Winning Lines</span>
+          </label>
+        </div>
+
       </div>
       <div class="actions">
         <button id="startGameBtn" class="button filled">Start Game</button>

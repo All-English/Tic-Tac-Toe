@@ -24,6 +24,7 @@
 @import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/data-display/definition-list.css";
 @import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/feedback/dialog.css";
 @import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/inputs/range.css";
+@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/inputs/switch.css";
 
 /* Components with dependencies */
 @import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/inputs/field.css";
@@ -83,6 +84,16 @@ main {
 
 #game-board:not(.hidden) {
   display: grid;
+  position: relative;
+}
+
+.strike-through-line {
+  position: absolute;
+  /* background-color: var(--gray-15); */
+  height: 5px;
+  border-radius: var(--radius-round);
+  transform-origin: left center;
+  box-shadow: var(--shadow-2);
 }
 
 #game-controls:not(.hidden) {
@@ -99,7 +110,7 @@ main {
 
   position: relative;
   aspect-ratio: var(--ratio-golden);
-  padding: var(--size-3);
+  padding: var(--size-fluid-2);
   font-size: var(--font-size-fluid-2);
   word-break: break-all;
   hyphens: auto;
@@ -122,10 +133,10 @@ main {
   inset: 0;
   display: grid;
   place-content: center;
-  font-size: clamp(1.5rem, 5vmin, 3rem);
+  font-size: var(--font-size-fluid-3);
   color: var(--player-color, var(--text-color-1));
-  background-color: oklch(from var(--surface-default) l c h / 0.5);
-  backdrop-filter: blur(2px);
+  background-color: oklch(from var(--surface-default) l c h / 0.85);
+  backdrop-filter: blur(5px);
   opacity: 0;
   transform: scale(0.8);
   transition: opacity 0.2s var(--ease-out-3), transform 0.2s var(--ease-out-3);
@@ -145,8 +156,14 @@ main {
 .phonics-unit-container {
   display: grid;
   gap: var(--size-2);
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
+}
+
+#randomize-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--size-3);
 }
 
 .phonics-unit-container+.phonics-unit-container {
@@ -254,9 +271,14 @@ dialog#game-over-dialog::backdrop {
 .word-wrapper {
   display: flex;
   align-items: baseline;
+  white-space: nowrap;
 }
 
 .cell .target-sounds {
   color: var(--primary);
   font-weight: var(--font-weight-7);
+}
+
+.setting-group {
+  margin-block-start: var(--size-4);
 }

@@ -9,7 +9,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- STATE ---
   let gameState = {}
   let areGameEventListenersAttached = false
-  // playerSymbols, MATCH_LENGTH, and COLOR_PALETTE are now imported
 
   // --- DOM ELEMENTS ---
   const setupView = document.getElementById("game-setup")
@@ -23,6 +22,8 @@ document.addEventListener("DOMContentLoaded", () => {
   )
   const addUnitBtn = document.getElementById("addUnitBtn")
   const startGameBtn = document.getElementById("startGameBtn")
+  const showLinesToggle = document.getElementById("showLinesToggle")
+  const randomizeOrderBtn = document.getElementById("randomizeOrderBtn") // New button
 
   // --- EVENT LISTENERS ---
 
@@ -64,6 +65,37 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --- FUNCTIONS ---
+
+  function randomizePlayerOrder() {
+    const nameInputs = Array.from(
+      document.querySelectorAll(".player-name-input")
+    )
+    if (nameInputs.length < 2) return // Cannot shuffle one or zero items
+
+    const originalOrder = nameInputs.map((input) => input.value)
+    let shuffledOrder = [...originalOrder]
+
+    // Keep shuffling until the order is different from the original
+    let attempts = 0
+    do {
+      for (let i = shuffledOrder.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[shuffledOrder[i], shuffledOrder[j]] = [
+          shuffledOrder[j],
+          shuffledOrder[i],
+        ]
+      }
+      attempts++
+    } while (
+      JSON.stringify(originalOrder) === JSON.stringify(shuffledOrder) &&
+      attempts < 10
+    ) // Loop while orders are the same (with a safety break)
+
+    // Re-assign the shuffled names to the input fields
+    nameInputs.forEach((input, index) => {
+      input.value = shuffledOrder[index]
+    })
+  }
 
   function renderNameInputs() {
     const count = parseInt(numPlayersInput.value, 10)
@@ -201,9 +233,12 @@ document.addEventListener("DOMContentLoaded", () => {
       ]
         .map((select) => select.value)
         .filter((value) => value)
+      settings.playerColors = [...COLOR_PALETTE]
+        .sort(() => 0.5 - Math.random())
+        .slice(0, settings.numPlayers)
 
-      const shuffledColors = [...COLOR_PALETTE].sort(() => 0.5 - Math.random())
-      settings.playerColors = shuffledColors.slice(0, settings.numPlayers)
+      // Read the value from the new toggle switch
+      settings.showLines = showLinesToggle.checked
 
       if (settings.selectedUnits.length === 0) {
         alert("Please select at least one word unit to start the game.")
@@ -216,6 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
         playerNames: gameState.playerNames,
         selectedUnits: gameState.selectedUnits,
         playerColors: gameState.playerColors,
+        showLines: gameState.showLines,
       }
     }
     gameState = {
@@ -334,6 +370,7 @@ document.addEventListener("DOMContentLoaded", () => {
       index: index,
       player: gameState.currentPlayer,
       scoredLines: [],
+      lineElements: [], // To track the line divs for undo
     }
     gameState.board[index] = gameState.currentPlayer
     cell.dataset.playerSymbol = playerSymbols[gameState.currentPlayer]
@@ -371,6 +408,9 @@ document.addEventListener("DOMContentLoaded", () => {
     cell.removeAttribute("data-player-id")
     cell.style.removeProperty("--player-color")
     cell.disabled = false
+
+    // Remove the line elements from the DOM
+    lastMove.lineElements.forEach((line) => line.remove())
 
     if (lastMove.scoredLines.length > 0) {
       gameState.scores[lastMove.player] -= lastMove.scoredLines.length
@@ -415,9 +455,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const lineId = lineToString(line)
       if (isWin && !completedLines.has(lineId)) {
         completedLines.add(lineId)
-        highlightWin(line, currentPlayer)
+        const lineElement = highlightWin(line, currentPlayer) // Get the created line element
         newPoints++
-        if (move) move.scoredLines.push(lineId)
+        if (move) {
+          move.scoredLines.push(lineId)
+          if (lineElement) move.lineElements.push(lineElement) // Store the line element
+        }
       }
     }
     for (let r = 0; r < gridSize; r++) {
@@ -450,15 +493,55 @@ document.addEventListener("DOMContentLoaded", () => {
     return newPoints
   }
 
+  function drawLine(startCell, endCell, color) {
+    const gameBoard = document.getElementById("game-board")
+    const boardRect = gameBoard.getBoundingClientRect()
+    const startRect = startCell.getBoundingClientRect()
+    const endRect = endCell.getBoundingClientRect()
+
+    const line = document.createElement("div")
+    line.classList.add("strike-through-line")
+    // Set the background color dynamically
+    line.style.backgroundColor = color
+
+    const startX = startRect.left + startRect.width / 2 - boardRect.left
+    const startY = startRect.top + startRect.height / 2 - boardRect.top
+    const endX = endRect.left + endRect.width / 2 - boardRect.left
+    const endY = endRect.top + endRect.height / 2 - boardRect.top
+
+    const length = Math.sqrt(
+      Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)
+    )
+    const angle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI)
+
+    line.style.width = `${length}px`
+    line.style.left = `${startX}px`
+    line.style.top = `${startY}px`
+    line.style.transform = `rotate(${angle}deg)`
+
+    gameBoard.appendChild(line)
+    return line
+  }
+
   function highlightWin(indices, playerIndex) {
     const playerColor = gameState.playerColors[playerIndex]
+    const gameBoard = document.getElementById("game-board")
+    const firstCell = gameBoard.querySelector(`[data-index='${indices[0]}']`)
+    const lastCell = gameBoard.querySelector(
+      `[data-index='${indices[indices.length - 1]}']`
+    )
+
     indices.forEach((index) => {
-      const cell = document.querySelector(
-        `#game-board .cell[data-index='${index}']`
-      )
+      const cell = gameBoard.querySelector(`[data-index='${index}']`)
       cell.classList.add("highlight")
       cell.style.setProperty("--player-color", playerColor)
     })
+
+    // Only draw the line if the setting is enabled
+    if (gameState.showLines && firstCell && lastCell) {
+      return drawLine(firstCell, lastCell, playerColor)
+    }
+    return null
   }
 
   function endGame() {
@@ -528,6 +611,7 @@ document.addEventListener("DOMContentLoaded", () => {
   })
   addUnitBtn.addEventListener("click", createUnitSelector)
   startGameBtn.addEventListener("click", () => initGame(true))
+  randomizeOrderBtn.addEventListener("click", randomizePlayerOrder)
 
   // Run initial UI setup
   updateSliderValues()

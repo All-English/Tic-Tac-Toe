@@ -360,11 +360,9 @@ export const smartPhonicsWordBank = {
 export const MATCH_LENGTH = 3
 export const playerSymbols = ["X", "O", "△", "□", "☆"]
 export const COLOR_PALETTE = [
-  "var(--orange-7)",
-  "var(--pink-7)",
   "var(--green-7)",
   "var(--blue-7)",
   "var(--violet-7)",
-  "var(--cyan-7)",
+  "var(--yellow-7)",
   "var(--red-7)",
 ]

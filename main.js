@@ -643,9 +643,7 @@ document.addEventListener("DOMContentLoaded", () => {
       finalScoresHTML += `
                 <div class="score-line ${winnerClass}">
                     ${isWinner ? trophyIcon : ""}
-                    <span>${player.name} (${player.symbol}): ${
-        player.score
-      }</span>
+                    <span>${player.name}: ${player.score}</span>
                 </div>
             `
     })

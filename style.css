@@ -283,6 +283,7 @@ dialog#game-over-dialog::backdrop {
 }
 
 .player-info-block {
+  font-size: var(--font-size-fluid-1);
   padding-block: var(--size-1);
   flex-grow: 1;
   text-align: center;

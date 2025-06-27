@@ -9,7 +9,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- STATE ---
   let gameState = {}
   let areGameEventListenersAttached = false
-  let playerSetupList = [] // ✅ The new single source of truth for player order during setup.
+  let playerSetupList = []
+
+  // ✅ Updated sound file extensions and added a simple sound system
+  const sounds = {
+    click: new Audio("sounds/click.mp3"),
+    block: new Audio("sounds/block.mp3"),
+    score: new Audio("sounds/score.mp3"),
+    gameOver: new Audio("sounds/game-over.mp3"),
+  }
 
   // --- DOM ELEMENTS ---
   const setupView = document.getElementById("game-setup")
@@ -24,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const addUnitBtn = document.getElementById("addUnitBtn")
   const startGameBtn = document.getElementById("startGameBtn")
   const showLinesToggle = document.getElementById("showLinesToggle")
-  const randomizeOrderBtn = document.getElementById("randomizeOrderBtn") // New button
+  const randomizeOrderBtn = document.getElementById("randomizeOrderBtn")
 
   // --- EVENT LISTENERS ---
 
@@ -67,6 +75,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- FUNCTIONS ---
 
+  // ✅ New sound functions to handle sequential playback
+  function playSound(soundName) {
+    const audio = sounds[soundName]
+    if (audio) {
+      audio.currentTime = 0
+      audio.play().catch((e) => console.error(`Could not play sound: ${e}`))
+    }
+  }
+
+  async function playSoundSequentially(soundName, times) {
+    const audio = sounds[soundName]
+    if (!audio) return
+
+    for (let i = 0; i < times; i++) {
+      await new Promise((resolve) => {
+        const playAudio = () => {
+          audio.currentTime = 0
+          audio.play().catch((e) => {
+            console.error(`Could not play sound: ${e}`)
+            resolve() // Resolve even if there's an error to not block the loop
+          })
+        }
+        audio.onended = () => resolve()
+        playAudio()
+      })
+    }
+  }
+
   function getDragAfterElement(container, y) {
     const draggableElements = [
       ...container.querySelectorAll(".player-name-field:not(.dragging)"),
@@ -86,7 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
     ).element
   }
 
-  // ✅ Refactored to shuffle the `playerSetupList` array, then re-render
   function randomizePlayerOrder() {
     if (playerSetupList.length < 2) return
 
@@ -110,18 +145,15 @@ document.addEventListener("DOMContentLoaded", () => {
     renderNameInputs()
   }
 
-  // ✅ Refactored to be the single function that renders the player list from the `playerSetupList` array
   function renderNameInputs() {
-    playerNamesContainer.innerHTML = "" // Clear the container
+    playerNamesContainer.innerHTML = ""
 
-    // Re-build the entire list from the `playerSetupList` array
     playerSetupList.forEach((player, index) => {
       const field = document.createElement("label")
       field.className = "field player-name-field"
       field.draggable = true
-      field.dataset.playerId = player.id // Use a stable ID for tracking
+      field.dataset.playerId = player.id
 
-      // Add drag listeners every time we render
       field.addEventListener("dragstart", () => field.classList.add("dragging"))
       field.addEventListener("dragend", () =>
         field.classList.remove("dragging")
@@ -129,13 +161,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const label = document.createElement("span")
       label.className = "label"
-      label.textContent = `Player ${index + 1} Name` // Label reflects visual order
+      label.textContent = `Player ${index + 1} Name`
 
       const input = document.createElement("input")
       input.type = "text"
       input.className = "player-name-input"
       input.value = player.name
-      // Listen for changes to the name and update our source of truth
+
       input.addEventListener("input", (e) => {
         const playerId = parseInt(field.dataset.playerId)
         const playerToUpdate = playerSetupList.find((p) => p.id === playerId)
@@ -185,7 +217,6 @@ document.addEventListener("DOMContentLoaded", () => {
     unitSelectorsContainer.appendChild(container)
   }
 
-  // ✅ Refactored to manage the `playerSetupList` array, then re-render
   function updateSliderValues() {
     const newCount = parseInt(numPlayersInput.value, 10)
     numPlayersValue.textContent = newCount
@@ -193,12 +224,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const currentCount = playerSetupList.length
 
     if (newCount > currentCount) {
-      // Add new players
       for (let i = currentCount; i < newCount; i++) {
         playerSetupList.push({ id: Date.now() + i, name: `Player ${i + 1}` })
       }
     } else if (newCount < currentCount) {
-      // Remove players from the end
       playerSetupList.splice(newCount)
     }
 
@@ -206,7 +235,7 @@ document.addEventListener("DOMContentLoaded", () => {
     gridSizeInput.value = defaultGridSize
     gridSizeValue.textContent = `${defaultGridSize}x${defaultGridSize}`
 
-    renderNameInputs() // Re-render the UI based on the updated list
+    renderNameInputs()
   }
 
   function selectRandomUnit() {
@@ -269,9 +298,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function initGame(isNewGame) {
     let settings = {}
     if (isNewGame) {
-      // ✅ Read player names directly from our source-of-truth array
       settings.playerNames = playerSetupList.map((p) => p.name)
-
       settings.numPlayers = parseInt(numPlayersInput.value)
       settings.gridSize = parseInt(gridSizeInput.value)
       settings.selectedUnits = [
@@ -282,7 +309,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const shuffledColors = [...COLOR_PALETTE].sort(() => 0.5 - Math.random())
       settings.playerColors = shuffledColors.slice(0, settings.numPlayers)
-    
+
       settings.showLines = showLinesToggle.checked
 
       if (settings.selectedUnits.length === 0) {
@@ -356,8 +383,7 @@ document.addEventListener("DOMContentLoaded", () => {
     gameBoard.innerHTML = ""
     gameBoard.style.gridTemplateColumns = `repeat(${gameState.gridSize}, 1fr)`
 
-    // Add or remove the class based on the grid size
-    if (gameState.gridSize > 7) {
+    if (gameState.gridSize > 8) {
       gameBoard.classList.add("large-grid")
     } else {
       gameBoard.classList.remove("large-grid")
@@ -391,7 +417,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const contentDiv = document.createElement("div")
       contentDiv.className = "content"
       contentDiv.id = `player-${i}-score`
-      contentDiv.textContent = `${gameState.scores[i]}`
+      contentDiv.textContent = `Score: ${gameState.scores[i]}`
       playerBlock.appendChild(hgroup)
       playerBlock.appendChild(contentDiv)
       playerInfoList.appendChild(playerBlock)
@@ -419,13 +445,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const index = parseInt(cell.dataset.index)
     if (gameState.board[index] !== null) return
 
+    const wasBlock = checkForBlock(index)
+    gameState.board[index] = gameState.currentPlayer
+
     const move = {
       index: index,
       player: gameState.currentPlayer,
       scoredLines: [],
-      lineElements: [], // To track the line divs for undo
+      lineElements: [],
     }
-    gameState.board[index] = gameState.currentPlayer
+
     cell.dataset.playerSymbol = playerSymbols[gameState.currentPlayer]
     cell.dataset.playerId = gameState.currentPlayer
     const playerColor = gameState.playerColors[gameState.currentPlayer]
@@ -433,10 +462,15 @@ document.addEventListener("DOMContentLoaded", () => {
     cell.disabled = true
 
     const pointsScored = checkForWins(move)
+
     if (pointsScored > 0) {
-      gameState.scores[gameState.currentPlayer] += pointsScored
-      updateScoreDisplay(gameState.currentPlayer)
+      playSoundSequentially("score", pointsScored)
+    } else if (wasBlock) {
+      playSound("block")
+    } else {
+      playSound("click")
     }
+
     gameState.moveHistory.push(move)
     gameState.movesMade++
     if (gameState.movesMade === gameState.gridSize * gameState.gridSize) {
@@ -462,7 +496,6 @@ document.addEventListener("DOMContentLoaded", () => {
     cell.style.removeProperty("--player-color")
     cell.disabled = false
 
-    // Remove the line elements from the DOM
     lastMove.lineElements.forEach((line) => line.remove())
 
     if (lastMove.scoredLines.length > 0) {
@@ -493,56 +526,106 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateScoreDisplay(playerIndex) {
     const scoreDiv = document.getElementById(`player-${playerIndex}-score`)
     if (scoreDiv)
-      scoreDiv.textContent = `${gameState.scores[playerIndex]}`
+      scoreDiv.textContent = `Score: ${gameState.scores[playerIndex]}`
   }
 
   function lineToString(line) {
     return [...line].sort((a, b) => a - b).join(",")
   }
 
-  function checkForWins(move) {
-    const { gridSize, board, currentPlayer, completedLines } = gameState
-    let newPoints = 0
-    const checkLine = (line) => {
-      const isWin = line.every((index) => board[index] === currentPlayer)
-      const lineId = lineToString(line)
-      if (isWin && !completedLines.has(lineId)) {
-        completedLines.add(lineId)
-        const lineElement = highlightWin(line, currentPlayer) // Get the created line element
-        newPoints++
-        if (move) {
-          move.scoredLines.push(lineId)
-          if (lineElement) move.lineElements.push(lineElement) // Store the line element
-        }
-      }
-    }
+  function getWinningLines(board, player, gridSize) {
+    const newWins = []
     for (let r = 0; r < gridSize; r++) {
       for (let c = 0; c < gridSize; c++) {
         if (c <= gridSize - MATCH_LENGTH) {
-          const line = []
-          for (let i = 0; i < MATCH_LENGTH; i++) line.push(r * gridSize + c + i)
-          checkLine(line)
+          const line = Array.from(
+            { length: MATCH_LENGTH },
+            (_, i) => r * gridSize + c + i
+          )
+          if (line.every((index) => board[index] === player)) newWins.push(line)
         }
         if (r <= gridSize - MATCH_LENGTH) {
-          const line = []
-          for (let i = 0; i < MATCH_LENGTH; i++)
-            line.push((r + i) * gridSize + c)
-          checkLine(line)
+          const line = Array.from(
+            { length: MATCH_LENGTH },
+            (_, i) => (r + i) * gridSize + c
+          )
+          if (line.every((index) => board[index] === player)) newWins.push(line)
         }
         if (r <= gridSize - MATCH_LENGTH && c <= gridSize - MATCH_LENGTH) {
-          const line = []
-          for (let i = 0; i < MATCH_LENGTH; i++)
-            line.push((r + i) * gridSize + (c + i))
-          checkLine(line)
+          const line = Array.from(
+            { length: MATCH_LENGTH },
+            (_, i) => (r + i) * gridSize + (c + i)
+          )
+          if (line.every((index) => board[index] === player)) newWins.push(line)
         }
         if (r <= gridSize - MATCH_LENGTH && c >= MATCH_LENGTH - 1) {
-          const line = []
-          for (let i = 0; i < MATCH_LENGTH; i++)
-            line.push((r + i) * gridSize + (c - i))
-          checkLine(line)
+          const line = Array.from(
+            { length: MATCH_LENGTH },
+            (_, i) => (r + i) * gridSize + (c - i)
+          )
+          if (line.every((index) => board[index] === player)) newWins.push(line)
         }
       }
     }
+    return newWins
+  }
+
+  function checkForBlock(moveIndex) {
+    let wasBlock = false
+    const originalPlayer = gameState.currentPlayer
+    for (
+      let opponentIndex = 0;
+      opponentIndex < gameState.numPlayers;
+      opponentIndex++
+    ) {
+      if (opponentIndex === originalPlayer) continue
+      const tempBoard = [...gameState.board]
+      tempBoard[moveIndex] = opponentIndex
+      const potentialWins = getWinningLines(
+        tempBoard,
+        opponentIndex,
+        gameState.gridSize
+      )
+      const newWins = potentialWins.filter(
+        (line) => !gameState.completedLines.has(lineToString(line))
+      )
+      if (newWins.length > 0) {
+        wasBlock = true
+        break
+      }
+    }
+    return wasBlock
+  }
+
+  function checkForWins(move) {
+    const { board, currentPlayer, completedLines } = gameState
+    let newPoints = 0
+
+    const potentialWins = getWinningLines(
+      board,
+      currentPlayer,
+      gameState.gridSize
+    )
+    const newWinningLines = potentialWins.filter(
+      (line) => !completedLines.has(lineToString(line))
+    )
+
+    newWinningLines.forEach((line) => {
+      const lineId = lineToString(line)
+      completedLines.add(lineId)
+      const lineElement = highlightWin(line, currentPlayer)
+      newPoints++
+      if (move) {
+        move.scoredLines.push(lineId)
+        if (lineElement) move.lineElements.push(lineElement)
+      }
+    })
+
+    if (newPoints > 0) {
+      gameState.scores[currentPlayer] += newPoints
+      updateScoreDisplay(currentPlayer)
+    }
+
     return newPoints
   }
 
@@ -554,7 +637,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const line = document.createElement("div")
     line.classList.add("strike-through-line")
-    // Set the background color dynamically
     line.style.backgroundColor = color
 
     const startX = startRect.left + startRect.width / 2 - boardRect.left
@@ -590,7 +672,6 @@ document.addEventListener("DOMContentLoaded", () => {
       cell.style.setProperty("--player-color", playerColor)
     })
 
-    // Only draw the line if the setting is enabled
     if (gameState.showLines && firstCell && lastCell) {
       return drawLine(firstCell, lastCell, playerColor)
     }
@@ -598,6 +679,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function endGame() {
+    playSound("gameOver")
     const gameDialog = document.getElementById("game-over-dialog")
     const dialogTitle = document.getElementById("dialog-title")
     const dialogContent = document.getElementById("dialog-content")
@@ -656,7 +738,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- INITIALIZE and ATTACH LISTENERS ---
 
-  // Setup screen listeners
   numPlayersInput.addEventListener("input", updateSliderValues)
   gridSizeInput.addEventListener("input", () => {
     gridSizeValue.textContent = `${gridSizeInput.value}x${gridSizeInput.value}`
@@ -665,7 +746,6 @@ document.addEventListener("DOMContentLoaded", () => {
   startGameBtn.addEventListener("click", () => initGame(true))
   randomizeOrderBtn.addEventListener("click", randomizePlayerOrder)
 
-  // Drag and Drop listeners on the container
   playerNamesContainer.addEventListener("dragover", (e) => {
     e.preventDefault()
     const afterElement = getDragAfterElement(playerNamesContainer, e.clientY)
@@ -688,7 +768,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   })
 
-  // ✅ Refactored drop listener to update the array, then re-render
   playerNamesContainer.addEventListener("drop", (e) => {
     e.preventDefault()
     playerNamesContainer
@@ -703,26 +782,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const draggingId = parseInt(dragging.dataset.playerId)
     const afterElement = getDragAfterElement(playerNamesContainer, e.clientY)
 
-    // Find the index of the dragged item and remove it from the list
     const draggedItemIndex = playerSetupList.findIndex(
       (p) => p.id === draggingId
     )
     const [draggedItem] = playerSetupList.splice(draggedItemIndex, 1)
 
     if (afterElement == null) {
-      // Dropped at the end
       playerSetupList.push(draggedItem)
     } else {
-      // Dropped before another element
       const afterId = parseInt(afterElement.dataset.playerId)
       const dropIndex = playerSetupList.findIndex((p) => p.id === afterId)
       playerSetupList.splice(dropIndex, 0, draggedItem)
     }
 
-    renderNameInputs() // Re-render the entire list from the updated array
+    renderNameInputs()
   })
 
-  // Run initial UI setup
   updateSliderValues()
   createUnitSelector()
   selectRandomUnit()

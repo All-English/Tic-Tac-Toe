@@ -59,15 +59,33 @@ main {
   justify-content: center;
 }
 
-.player-options-container {
+#player-names-container {
   display: grid;
-  gap: var(--size-2);
-  margin-block: var(--size-4);
+  gap: var(--size-3);
+  margin-block: var(--size-2) var(--size-4);
+}
+
+/* Style for the new section headers */
+#game-setup .content>.h5 {
+  color: var(--text-color-2);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: var(--size-1);
+  margin-block-end: var(--size-4);
+}
+
+/* Remove margin from the first header */
+#game-setup .content>.h5:first-of-type {
+  margin-block-start: 0;
+}
+
+/* Spacing for the dividers */
+#game-setup .divider {
+  margin-block: var(--size-5);
 }
 
 #randomize-container {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   margin-top: var(--size-3);
 }
 

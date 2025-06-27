@@ -16,6 +16,7 @@
         <p>Configure your game and start playing!</p>
       </hgroup>
       <div class="content">
+        <h4 class="h5">Player Setup</h4>
         <div class="range-container">
           <label class="range">
             <span class="label">Number of Players:</span>
@@ -24,14 +25,16 @@
           <span id="numPlayersValue">2</span>
         </div>
 
-        <div class="player-options-container">
-          <div id="randomize-container">
-            <button id="randomizeOrderBtn" class="button outlined small">Randomize</button>
-          </div>
-          <div id="player-names-container">
-          </div>
+        <div id="randomize-container">
+          <button id="randomizeOrderBtn" class="button outlined small">Randomize</button>
         </div>
-        
+
+        <div id="player-names-container">
+        </div>
+
+        <hr class="divider">
+
+        <h4 class="h5">Game Rules</h4>
         <div class="range-container">
           <label class="range">
             <span class="label">Grid Size:</span>
@@ -39,7 +42,7 @@
           </label>
           <span id="gridSizeValue">3x3</span>
         </div>
-        
+
         <div class="range-container">
           <label class="range">
             <span class="label">Match Length:</span>
@@ -47,8 +50,18 @@
           </label>
           <span id="matchLengthValue">3</span>
         </div>
-        
-        <div id="unit-selectors-container" style="margin-block: var(--size-4);">
+
+        <div class="setting-group">
+          <label class="switch">
+            <input type="checkbox" role="switch" id="showLinesToggle" checked>
+            <span class="label">Show Winning Lines</span>
+          </label>
+        </div>
+
+        <hr class="divider">
+
+        <h4 class="h5">Word Selection</h4>
+        <div id="unit-selectors-container">
         </div>
 
         <button id="addUnitBtn" class="button">
@@ -59,19 +72,13 @@
           </svg>
           <span>Add Word Unit</span>
         </button>
-
-        <div class="setting-group">
-          <label class="switch">
-            <input type="checkbox" role="switch" id="showLinesToggle" checked>
-            <span class="label">Show Winning Lines</span>
-          </label>
-        </div>
-
       </div>
+      
       <div class="actions">
         <button id="startGameBtn" class="button filled">Start Game</button>
       </div>
     </div>
+
 
     <div id="game-view" class="hidden">
       <div id="player-info-list">

@@ -1,6 +1,5 @@
 import {
   smartPhonicsWordBank,
-  MATCH_LENGTH,
   playerSymbols,
   COLOR_PALETTE,
 } from "./config.js"
@@ -26,6 +25,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const playerNamesContainer = document.getElementById("player-names-container")
   const gridSizeInput = document.getElementById("gridSize")
   const gridSizeValue = document.getElementById("gridSizeValue")
+  const matchLengthInput = document.getElementById("matchLength")
+  const matchLengthValue = document.getElementById("matchLengthValue")
   const unitSelectorsContainer = document.getElementById(
     "unit-selectors-container"
   )
@@ -35,6 +36,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const randomizeOrderBtn = document.getElementById("randomizeOrderBtn")
 
   // --- EVENT LISTENERS ---
+
+  matchLengthInput.addEventListener("input", () => {
+    matchLengthValue.textContent = matchLengthInput.value
+  })
 
   function setupGameEventListeners() {
     if (areGameEventListenersAttached) return
@@ -301,6 +306,7 @@ document.addEventListener("DOMContentLoaded", () => {
       settings.playerNames = playerSetupList.map((p) => p.name)
       settings.numPlayers = parseInt(numPlayersInput.value)
       settings.gridSize = parseInt(gridSizeInput.value)
+      settings.matchLength = parseInt(matchLengthInput.value)
       settings.selectedUnits = [
         ...document.querySelectorAll(".phonics-unit-select"),
       ]
@@ -324,6 +330,7 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedUnits: gameState.selectedUnits,
         playerColors: gameState.playerColors,
         showLines: gameState.showLines,
+        matchLength: gameState.matchLength,
       }
     }
     gameState = {
@@ -544,34 +551,38 @@ document.addEventListener("DOMContentLoaded", () => {
     return [...line].sort((a, b) => a - b).join(",")
   }
 
-  function getWinningLines(board, player, gridSize) {
+  function getWinningLines(board, player, gridSize, matchLength) {
     const newWins = []
     for (let r = 0; r < gridSize; r++) {
       for (let c = 0; c < gridSize; c++) {
-        if (c <= gridSize - MATCH_LENGTH) {
+        // Horizontal
+        if (c <= gridSize - matchLength) {
           const line = Array.from(
-            { length: MATCH_LENGTH },
+            { length: matchLength },
             (_, i) => r * gridSize + c + i
           )
           if (line.every((index) => board[index] === player)) newWins.push(line)
         }
-        if (r <= gridSize - MATCH_LENGTH) {
+        // Vertical
+        if (r <= gridSize - matchLength) {
           const line = Array.from(
-            { length: MATCH_LENGTH },
+            { length: matchLength },
             (_, i) => (r + i) * gridSize + c
           )
           if (line.every((index) => board[index] === player)) newWins.push(line)
         }
-        if (r <= gridSize - MATCH_LENGTH && c <= gridSize - MATCH_LENGTH) {
+        // Diagonal down-right
+        if (r <= gridSize - matchLength && c <= gridSize - matchLength) {
           const line = Array.from(
-            { length: MATCH_LENGTH },
+            { length: matchLength },
             (_, i) => (r + i) * gridSize + (c + i)
           )
           if (line.every((index) => board[index] === player)) newWins.push(line)
         }
-        if (r <= gridSize - MATCH_LENGTH && c >= MATCH_LENGTH - 1) {
+        // Diagonal down-left
+        if (r <= gridSize - matchLength && c >= matchLength - 1) {
           const line = Array.from(
-            { length: MATCH_LENGTH },
+            { length: matchLength },
             (_, i) => (r + i) * gridSize + (c - i)
           )
           if (line.every((index) => board[index] === player)) newWins.push(line)
@@ -609,13 +620,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function checkForWins(move) {
-    const { board, currentPlayer, completedLines } = gameState
+    const { gridSize, board, currentPlayer, completedLines, matchLength } =
+      gameState // Use matchLength from state
     let newPoints = 0
 
     const potentialWins = getWinningLines(
       board,
       currentPlayer,
-      gameState.gridSize
+      gridSize,
+      matchLength
     )
     const newWinningLines = potentialWins.filter(
       (line) => !completedLines.has(lineToString(line))
@@ -758,15 +771,50 @@ document.addEventListener("DOMContentLoaded", () => {
     finalScoresHTML += `</div>`
     dialogContent.innerHTML = winnerHTML + finalScoresHTML
 
-    gameDialog.showModal()
+    setTimeout(() => {
+      gameDialog.showModal()
+    }, 3000) // Delay for 3 seconds (3000 milliseconds)
+  }
+
+  function syncSliders() {
+    const newGridSize = parseInt(gridSizeInput.value, 10)
+    gridSizeValue.textContent = `${newGridSize}x${newGridSize}`
+
+    // The absolute max for match length is 5, or the grid size, whichever is smaller
+    const newMaxMatchLength = Math.min(newGridSize, 5)
+    matchLengthInput.max = newMaxMatchLength
+
+    // If the current match length is now invalid, lower it
+    if (parseInt(matchLengthInput.value) > newMaxMatchLength) {
+      matchLengthInput.value = newMaxMatchLength
+    }
+
+    matchLengthValue.textContent = matchLengthInput.value
   }
 
   // --- INITIALIZE and ATTACH LISTENERS ---
 
-  numPlayersInput.addEventListener("input", updateSliderValues)
   gridSizeInput.addEventListener("input", () => {
-    gridSizeValue.textContent = `${gridSizeInput.value}x${gridSizeInput.value}`
+    const newGridSize = parseInt(gridSizeInput.value)
+    gridSizeValue.textContent = `${newGridSize}x${newGridSize}`
+
+    // The absolute max for match length is 5, or the grid size, whichever is smaller
+    const newMaxMatchLength = Math.min(newGridSize, 5)
+    matchLengthInput.max = newMaxMatchLength
+
+    // If the current match length is now invalid, lower it
+    if (parseInt(matchLengthInput.value) > newMaxMatchLength) {
+      matchLengthInput.value = newMaxMatchLength
+    }
+
+    matchLengthValue.textContent = matchLengthInput.value
   })
+
+  matchLengthInput.addEventListener("input", () => {
+    matchLengthValue.textContent = matchLengthInput.value
+  })
+
+  numPlayersInput.addEventListener("input", updateSliderValues)
   addUnitBtn.addEventListener("click", createUnitSelector)
   startGameBtn.addEventListener("click", () => initGame(true))
   randomizeOrderBtn.addEventListener("click", randomizePlayerOrder)
@@ -826,4 +874,5 @@ document.addEventListener("DOMContentLoaded", () => {
   updateSliderValues()
   createUnitSelector()
   selectRandomUnit()
+  syncSliders()
 })

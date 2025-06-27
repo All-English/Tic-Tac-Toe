@@ -357,7 +357,6 @@ export const smartPhonicsWordBank = {
   },
 }
 
-export const MATCH_LENGTH = 3
 export const playerSymbols = ["X", "O", "△", "□", "☆"]
 export const COLOR_PALETTE = [
   "var(--green-7)",

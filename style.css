@@ -59,6 +59,18 @@ main {
   justify-content: center;
 }
 
+.player-options-container {
+  display: grid;
+  gap: var(--size-2);
+  margin-block: var(--size-4);
+}
+
+#randomize-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--size-3);
+}
+
 #startGameBtn {
   margin-bottom: var(--size-3);
 }
@@ -195,12 +207,6 @@ main {
   gap: var(--size-2);
   grid-template-columns: auto 1fr auto;
   align-items: center;
-}
-
-#randomize-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: var(--size-3);
 }
 
 .phonics-unit-container+.phonics-unit-container {

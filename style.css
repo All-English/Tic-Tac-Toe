@@ -335,16 +335,18 @@ dialog#game-over-dialog::backdrop {
 
 .strike-through-line {
   position: absolute;
-  height: 5px; /* Adjust thickness as needed */
-  background-color: currentColor; /* This will be overridden by the inline style */
-  transform-origin: left center; /* Ensures the line grows from its starting point */
+  height: 5px;
+  /* Adjust thickness as needed */
+  background-color: currentColor;
+  /* This will be overridden by the inline style */
+  transform-origin: left center;
+  /* Ensures the line grows from its starting point */
 
   /* Initial state for animation */
   width: 0;
   opacity: 0;
 
-  /* Transition properties for smooth animation */
-  transition: width .5s ease-out, opacity .5s ease-out; /* 0.5 seconds duration */
+  transition: width .5s var(--ease-out-3), opacity .5s var(--ease-out-3);
 }
 
 @keyframes spin {

@@ -1,8 +1,4 @@
-import {
-  smartPhonicsWordBank,
-  playerSymbols,
-  COLOR_PALETTE,
-} from "./config.js"
+import { smartPhonicsWordBank, playerSymbols, COLOR_PALETTE } from "./config.js"
 
 document.addEventListener("DOMContentLoaded", () => {
   // --- STATE ---
@@ -682,9 +678,9 @@ document.addEventListener("DOMContentLoaded", () => {
     gameBoard.appendChild(line)
 
     requestAnimationFrame(() => {
-      line.style.width = `${length}px`; // Animate to full width
-      line.style.opacity = 1; // Animate to full visibility
-    });
+      line.style.width = `${length}px` // Animate to full width
+      line.style.opacity = 1 // Animate to full visibility
+    })
 
     return line
   }
@@ -781,6 +777,14 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
       gameDialog.showModal()
     }, 3000) // Delay for 3 seconds (3000 milliseconds)
+
+    // Add event listener to close dialog when clicking outside its content (on the backdrop).
+    gameDialog.addEventListener("click", (event) => {
+      if (event.target === gameDialog) {
+        // Check if the click was directly on the dialog element itself
+        gameDialog.close() // Close the dialog
+      }
+    })
   }
 
   // --- INITIALIZE and ATTACH LISTENERS ---

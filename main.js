@@ -602,7 +602,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const potentialWins = getWinningLines(
         tempBoard,
         opponentIndex,
-        gameState.gridSize
+        gameState.gridSize,
+        gameState.matchLength
       )
       const newWins = potentialWins.filter(
         (line) => !gameState.completedLines.has(lineToString(line))

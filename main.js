@@ -677,8 +677,15 @@ document.addEventListener("DOMContentLoaded", () => {
     line.style.left = `${startX}px`
     line.style.top = `${startY}px`
     line.style.transform = `rotate(${angle}deg)`
+    line.style.transformOrigin = `left center`
 
     gameBoard.appendChild(line)
+
+    requestAnimationFrame(() => {
+      line.style.width = `${length}px`; // Animate to full width
+      line.style.opacity = 1; // Animate to full visibility
+    });
+
     return line
   }
 
@@ -776,45 +783,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 3000) // Delay for 3 seconds (3000 milliseconds)
   }
 
-  function syncSliders() {
-    const newGridSize = parseInt(gridSizeInput.value, 10)
-    gridSizeValue.textContent = `${newGridSize}x${newGridSize}`
-
-    // The absolute max for match length is 5, or the grid size, whichever is smaller
-    const newMaxMatchLength = Math.min(newGridSize, 5)
-    matchLengthInput.max = newMaxMatchLength
-
-    // If the current match length is now invalid, lower it
-    if (parseInt(matchLengthInput.value) > newMaxMatchLength) {
-      matchLengthInput.value = newMaxMatchLength
-    }
-
-    matchLengthValue.textContent = matchLengthInput.value
-  }
-
   // --- INITIALIZE and ATTACH LISTENERS ---
 
-  gridSizeInput.addEventListener("input", () => {
-    const newGridSize = parseInt(gridSizeInput.value)
-    gridSizeValue.textContent = `${newGridSize}x${newGridSize}`
-
-    // The absolute max for match length is 5, or the grid size, whichever is smaller
-    const newMaxMatchLength = Math.min(newGridSize, 5)
-    matchLengthInput.max = newMaxMatchLength
-
-    // If the current match length is now invalid, lower it
-    if (parseInt(matchLengthInput.value) > newMaxMatchLength) {
-      matchLengthInput.value = newMaxMatchLength
-    }
-
-    matchLengthValue.textContent = matchLengthInput.value
-  })
-
-  matchLengthInput.addEventListener("input", () => {
-    matchLengthValue.textContent = matchLengthInput.value
-  })
-
   numPlayersInput.addEventListener("input", updateSliderValues)
+  gridSizeInput.addEventListener("input", () => {
+    gridSizeValue.textContent = `${gridSizeInput.value}x${gridSizeInput.value}`
+  })
   addUnitBtn.addEventListener("click", createUnitSelector)
   startGameBtn.addEventListener("click", () => initGame(true))
   randomizeOrderBtn.addEventListener("click", randomizePlayerOrder)
@@ -874,5 +848,4 @@ document.addEventListener("DOMContentLoaded", () => {
   updateSliderValues()
   createUnitSelector()
   selectRandomUnit()
-  syncSliders()
 })

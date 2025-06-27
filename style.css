@@ -333,6 +333,20 @@ dialog#game-over-dialog::backdrop {
   margin-block-start: var(--size-4);
 }
 
+.strike-through-line {
+  position: absolute;
+  height: 5px; /* Adjust thickness as needed */
+  background-color: currentColor; /* This will be overridden by the inline style */
+  transform-origin: left center; /* Ensures the line grows from its starting point */
+
+  /* Initial state for animation */
+  width: 0;
+  opacity: 0;
+
+  /* Transition properties for smooth animation */
+  transition: width .5s ease-out, opacity .5s ease-out; /* 0.5 seconds duration */
+}
+
 @keyframes spin {
   to {
     transform: rotate(1turn);

@@ -33,10 +33,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- EVENT LISTENERS ---
 
-  matchLengthInput.addEventListener("input", () => {
-    matchLengthValue.textContent = matchLengthInput.value
-  })
-
   function setupGameEventListeners() {
     if (areGameEventListenersAttached) return
 
@@ -788,16 +784,34 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   }
 
+  function syncSliders() {
+    const newGridSize = parseInt(gridSizeInput.value, 10)
+    gridSizeValue.textContent = `${newGridSize}x${newGridSize}`
+
+    // The absolute max for match length is 5, or the grid size, whichever is smaller
+    const newMaxMatchLength = Math.min(newGridSize, 5)
+    matchLengthInput.max = newMaxMatchLength
+
+    // If the current match length is now invalid, lower it
+    if (parseInt(matchLengthInput.value) > newMaxMatchLength) {
+      matchLengthInput.value = newMaxMatchLength
+    }
+
+    matchLengthValue.textContent = matchLengthInput.value
+  }
+
   // --- INITIALIZE and ATTACH LISTENERS ---
 
   numPlayersInput.addEventListener("input", updateSliderValues)
-  gridSizeInput.addEventListener("input", () => {
-    gridSizeValue.textContent = `${gridSizeInput.value}x${gridSizeInput.value}`
-  })
+  gridSizeInput.addEventListener("input", syncSliders)
   addUnitBtn.addEventListener("click", createUnitSelector)
   startGameBtn.addEventListener("click", () => initGame(true))
   randomizeOrderBtn.addEventListener("click", randomizePlayerOrder)
 
+  matchLengthInput.addEventListener("input", () => {
+    matchLengthValue.textContent = matchLengthInput.value
+  })
+  
   playerNamesContainer.addEventListener("dragover", (e) => {
     e.preventDefault()
     const afterElement = getDragAfterElement(playerNamesContainer, e.clientY)
@@ -853,4 +867,5 @@ document.addEventListener("DOMContentLoaded", () => {
   updateSliderValues()
   createUnitSelector()
   selectRandomUnit()
+  syncSliders()
 })

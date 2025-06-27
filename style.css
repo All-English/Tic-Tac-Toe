@@ -55,38 +55,26 @@ main {
   margin-inline: auto;
 }
 
+#game-setup>hgroup {
+  text-align: center;
+}
+
 #game-setup .actions {
   justify-content: center;
-}
-
-#player-names-container {
-  display: grid;
-  gap: var(--size-3);
-  margin-block: var(--size-2) var(--size-4);
-}
-
-/* Style for the new section headers */
-#game-setup .content>.h5 {
-  color: var(--text-color-2);
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: var(--size-1);
-  margin-block-end: var(--size-4);
-}
-
-/* Remove margin from the first header */
-#game-setup .content>.h5:first-of-type {
-  margin-block-start: 0;
-}
-
-/* Spacing for the dividers */
-#game-setup .divider {
-  margin-block: var(--size-5);
 }
 
 #randomize-container {
   display: flex;
   justify-content: center;
-  margin-top: var(--size-3);
+  margin-bottom: var(--size-3);
+}
+
+#unit-selectors-container {
+  margin-bottom: var(--size-3);
+}
+
+.word-selection-container {
+  justify-items: center;
 }
 
 #startGameBtn {
@@ -100,7 +88,20 @@ main {
 #player-names-container {
   display: grid;
   gap: var(--size-3);
-  margin-block: var(--size-4);
+  margin-block: var(--size-2) 0;
+}
+
+.content>.setup-section>.h5 {
+  /* Updated selector */
+  color: var(--text-color-2);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: var(--size-1);
+  margin-block-end: var(--size-4);
+  text-align: center;
+}
+
+.content>.setup-section:first-of-type>.h5 {
+  margin-block-start: 0;
 }
 
 /* This makes the player name fields look grabbable */
@@ -143,14 +144,6 @@ main {
 #game-board:not(.hidden) {
   display: grid;
   position: relative;
-}
-
-.strike-through-line {
-  position: absolute;
-  height: 5px;
-  border-radius: var(--radius-round);
-  transform-origin: left center;
-  box-shadow: var(--shadow-2);
 }
 
 #game-controls:not(.hidden) {
@@ -354,11 +347,10 @@ dialog#game-over-dialog::backdrop {
 .strike-through-line {
   position: absolute;
   height: 5px;
-  /* Adjust thickness as needed */
+  border-radius: var(--radius-round);
+  box-shadow: var(--shadow-2);
   background-color: currentColor;
-  /* This will be overridden by the inline style */
   transform-origin: left center;
-  /* Ensures the line grows from its starting point */
 
   /* Initial state for animation */
   width: 0;
@@ -367,10 +359,8 @@ dialog#game-over-dialog::backdrop {
   transition: width .5s var(--ease-out-3), opacity .5s var(--ease-out-3);
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(1turn);
-  }
+label:has(#showLinesToggle) .label {
+  white-space: nowrap;
 }
 
 /* New keyframes for the pulse effect */
@@ -385,5 +375,29 @@ dialog#game-over-dialog::backdrop {
 
   100% {
     transform: scale(1);
+  }
+}
+
+@media (min-width: 768px) {
+  #game-setup .content {
+    display: grid;
+    grid-template-areas:
+      "players rules"
+      "words words";
+    grid-template-columns: 1fr 1fr;
+    gap: var(--size-5) var(--size-7);
+    align-items: start;
+  }
+
+  .player-setup {
+    grid-area: players;
+  }
+
+  .game-rules {
+    grid-area: rules;
+  }
+
+  .word-selection {
+    grid-area: words;
   }
 }

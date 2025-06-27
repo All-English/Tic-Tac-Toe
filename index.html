@@ -16,64 +16,63 @@
         <p>Configure your game and start playing!</p>
       </hgroup>
       <div class="content">
-        <h4 class="h5">Player Setup</h4>
-        <div class="range-container">
-          <label class="range">
-            <span class="label">Number of Players:</span>
-            <input type="range" id="numPlayers" min="2" max="5" value="2">
-          </label>
-          <span id="numPlayersValue">2</span>
+        <div class="setup-section player-setup">
+          <h4 class="h5">Player Setup</h4>
+          <div class="range-container">
+            <label class="range">
+              <span class="label">Number of Players:</span>
+              <input type="range" id="numPlayers" min="2" max="5" value="2">
+            </label>
+            <span id="numPlayersValue">2</span>
+          </div>
+          <div id="randomize-container">
+            <button id="randomizeOrderBtn" class="button outlined small">Randomize</button>
+          </div>
+          <div id="player-names-container">
+          </div>
         </div>
 
-        <div id="randomize-container">
-          <button id="randomizeOrderBtn" class="button outlined small">Randomize</button>
+        <div class="setup-section game-rules">
+          <h4 class="h5">Game Rules</h4>
+          <div class="range-container">
+            <label class="range">
+              <span class="label">Grid Size:</span>
+              <input type="range" id="gridSize" min="3" max="10" value="3">
+            </label>
+            <span id="gridSizeValue">3x3</span>
+          </div>
+          <div class="range-container">
+            <label class="range">
+              <span class="label">Match Length:</span>
+              <input type="range" id="matchLength" min="2" max="5" value="3">
+            </label>
+            <span id="matchLengthValue">3</span>
+          </div>
+          <div class="setting-group">
+            <label class="switch">
+              <input type="checkbox" role="switch" id="showLinesToggle" checked>
+              <span class="label">Show Match Lines</span>
+            </label>
+          </div>
         </div>
 
-        <div id="player-names-container">
+        <div class="setup-section word-selection">
+          <h4 class="h5">Word Selection</h4>
+          <div class="word-selection-container">
+            <div id="unit-selectors-container">
+            </div>
+            <button id="addUnitBtn" class="button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Add Word Unit</span>
+            </button>
+          </div>
         </div>
-
-        <hr class="divider">
-
-        <h4 class="h5">Game Rules</h4>
-        <div class="range-container">
-          <label class="range">
-            <span class="label">Grid Size:</span>
-            <input type="range" id="gridSize" min="3" max="10" value="3">
-          </label>
-          <span id="gridSizeValue">3x3</span>
-        </div>
-
-        <div class="range-container">
-          <label class="range">
-            <span class="label">Match Length:</span>
-            <input type="range" id="matchLength" min="2" max="5" value="3">
-          </label>
-          <span id="matchLengthValue">3</span>
-        </div>
-
-        <div class="setting-group">
-          <label class="switch">
-            <input type="checkbox" role="switch" id="showLinesToggle" checked>
-            <span class="label">Show Winning Lines</span>
-          </label>
-        </div>
-
-        <hr class="divider">
-
-        <h4 class="h5">Word Selection</h4>
-        <div id="unit-selectors-container">
-        </div>
-
-        <button id="addUnitBtn" class="button">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          <span>Add Word Unit</span>
-        </button>
       </div>
-      
+
       <div class="actions">
         <button id="startGameBtn" class="button filled">Start Game</button>
       </div>

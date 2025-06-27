@@ -677,10 +677,25 @@ document.addEventListener("DOMContentLoaded", () => {
       `[data-index='${indices[indices.length - 1]}']`
     )
 
-    indices.forEach((index) => {
-      const cell = gameBoard.querySelector(`[data-index='${index}']`)
+    indices.forEach((cellIndex, arrayIndex) => {
+      const cell = gameBoard.querySelector(`[data-index='${cellIndex}']`)
       cell.classList.add("highlight")
       cell.style.setProperty("--player-color", playerColor)
+
+      // Add the pulse class and a staggered animation delay
+      cell.classList.add("pulse")
+      const delay = arrayIndex * 100 // 100ms delay between each pulse
+      cell.style.animationDelay = `${delay}ms`
+
+      // Remove the class and style after the animation finishes
+      cell.addEventListener(
+        "animationend",
+        () => {
+          cell.classList.remove("pulse")
+          cell.style.removeProperty("animation-delay")
+        },
+        { once: true }
+      )
     })
 
     if (gameState.showLines && firstCell && lastCell) {
@@ -688,7 +703,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     return null
   }
-
   function endGame() {
     playSound("gameOver")
     const gameDialog = document.getElementById("game-over-dialog")

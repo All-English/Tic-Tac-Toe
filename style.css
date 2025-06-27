@@ -185,6 +185,10 @@ main {
   --_bg-color: var(--player-color);
 }
 
+.cell.pulse {
+  animation: pulse 0.6s var(--ease-in-out-3);
+}
+
 .range-container,
 .phonics-unit-container {
   display: grid;
@@ -321,4 +325,25 @@ dialog#game-over-dialog::backdrop {
 
 .setting-group {
   margin-block-start: var(--size-4);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* New keyframes for the pulse effect */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }

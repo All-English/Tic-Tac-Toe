@@ -315,6 +315,10 @@ dialog#game-over-dialog::backdrop {
   font-weight: var(--font-weight-7);
 }
 
+.cell.blocked::after {
+  animation: var(--animation-shake-x);
+}
+
 .setting-group {
   margin-block-start: var(--size-4);
 }

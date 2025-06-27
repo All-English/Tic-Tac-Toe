@@ -445,7 +445,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const index = parseInt(cell.dataset.index)
     if (gameState.board[index] !== null) return
 
+    // Check for a block *before* placing the new piece
     const wasBlock = checkForBlock(index)
+    // Now, place the piece
     gameState.board[index] = gameState.currentPlayer
 
     const move = {
@@ -463,10 +465,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const pointsScored = checkForWins(move)
 
+    // Play sounds and trigger animations based on the outcome
     if (pointsScored > 0) {
       playSoundSequentially("score", pointsScored)
     } else if (wasBlock) {
       playSound("block")
+      // Add animation class and remove it when finished so it can play again
+      cell.classList.add("blocked")
+      cell.addEventListener(
+        "animationend",
+        () => {
+          cell.classList.remove("blocked")
+        },
+        { once: true }
+      )
     } else {
       playSound("click")
     }
@@ -481,7 +493,6 @@ document.addEventListener("DOMContentLoaded", () => {
       updatePlayerHighlight()
     }
   }
-
   function undoLastMove() {
     if (gameState.moveHistory.length === 0) return
     const lastMove = gameState.moveHistory.pop()

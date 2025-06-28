@@ -5,8 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let gameState = {}
   let areGameEventListenersAttached = false
   let playerSetupList = []
+  let wordCache = []
 
-  // ✅ Updated sound file extensions and added a simple sound system
   const sounds = {
     click: new Audio("sounds/click.mp3"),
     block: new Audio("sounds/block.mp3"),
@@ -16,6 +16,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- DOM ELEMENTS ---
   const setupView = document.getElementById("game-setup")
+  const gameView = document.getElementById("game-view")
+  const playerInfoList = document.getElementById("player-info-list")
+  const gameBoard = document.getElementById("game-board")
   const numPlayersInput = document.getElementById("numPlayers")
   const numPlayersValue = document.getElementById("numPlayersValue")
   const playerNamesContainer = document.getElementById("player-names-container")
@@ -42,13 +45,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const gameDialog = document.getElementById("game-over-dialog")
 
     const goBackToSettings = () => {
-      const gameView = document.getElementById("game-view")
       gameView.classList.add("hidden")
-
-      document.getElementById("player-info-list").innerHTML = ""
-      document.getElementById("game-board").innerHTML = ""
+      playerInfoList.innerHTML = ""
+      gameBoard.innerHTML = ""
       gameState = {}
-
       setupView.classList.remove("hidden")
     }
 
@@ -60,7 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
     })
 
     document.addEventListener("keydown", (e) => {
-      const gameView = document.getElementById("game-view")
       if (gameView.classList.contains("hidden")) return
       if (e.key === "Backspace") {
         undoLastMove()
@@ -70,9 +69,332 @@ document.addEventListener("DOMContentLoaded", () => {
     areGameEventListenersAttached = true
   }
 
-  // --- FUNCTIONS ---
+  // --- MAIN RENDER FUNCTION ---
 
-  // ✅ New sound functions to handle sequential playback
+  function render() {
+    renderPlayerInfo()
+    renderBoard()
+    renderWinLines()
+  }
+
+  // --- RENDERING SUB-FUNCTIONS ---
+
+  function renderBoard() {
+    gameBoard.style.gridTemplateColumns = `repeat(${gameState.gridSize}, 1fr)`
+    if (gameState.gridSize > 8) {
+      gameBoard.classList.add("large-grid")
+    } else {
+      gameBoard.classList.remove("large-grid")
+    }
+
+    for (let i = 0; i < gameState.gridSize * gameState.gridSize; i++) {
+      let cell = gameBoard.querySelector(`[data-index='${i}']`)
+      // If cell doesn't exist, create it once
+      if (!cell) {
+        cell = document.createElement("button")
+        cell.classList.add("button", "cell")
+        cell.dataset.index = i
+        const wordObject = wordCache[i] || { word: "?", target: "" }
+        cell.innerHTML = highlightTargetSounds(
+          wordObject.word,
+          wordObject.target
+        )
+        cell.addEventListener("click", handleCellClick)
+        gameBoard.appendChild(cell)
+      }
+
+      // Update dynamic properties based on state
+      const cellState = gameState.board[i]
+      cell.disabled = cellState !== null
+
+      if (cellState !== null) {
+        cell.dataset.playerSymbol = playerSymbols[cellState]
+        cell.style.setProperty(
+          "--player-color",
+          gameState.playerColors[cellState]
+        )
+      } else {
+        cell.removeAttribute("data-player-symbol")
+        cell.style.removeProperty("--player-color")
+      }
+
+      // Declaratively add/remove the highlight class based on state
+      if (gameState.highlightedCells.has(i)) {
+        cell.classList.add("highlight")
+      } else {
+        cell.classList.remove("highlight")
+      }
+    }
+  }
+
+  function renderPlayerInfo() {
+    const { numPlayers, scores, currentPlayer, playerColors, playerNames } =
+      gameState
+    for (let i = 0; i < numPlayers; i++) {
+      const playerBlockId = `player-info-block-${i}`
+      let playerBlock = document.getElementById(playerBlockId)
+      if (!playerBlock) {
+        playerBlock = document.createElement("div")
+        playerBlock.id = playerBlockId
+        playerBlock.className = "card outlined player-info-block"
+        playerInfoList.appendChild(playerBlock)
+        playerBlock.innerHTML = `
+          <hgroup><h3 class="h6" data-role="name"></h3></hgroup>
+          <div class="content" data-role="score"></div>
+        `
+      }
+      const nameHeader = playerBlock.querySelector('[data-role="name"]')
+      const scoreDiv = playerBlock.querySelector('[data-role="score"]')
+      nameHeader.textContent = `${playerNames[i]} (${playerSymbols[i]})`
+      scoreDiv.textContent = `Score: ${scores[i]}`
+      playerBlock.style.setProperty("--player-color", playerColors[i])
+      if (i === currentPlayer) {
+        playerBlock.classList.add("current-player")
+      } else {
+        playerBlock.classList.remove("current-player")
+      }
+    }
+  }
+
+  function renderWinLines() {
+    const existingLines = new Set(
+      Array.from(gameBoard.querySelectorAll(".strike-through-line")).map(
+        (el) => el.id
+      )
+    )
+    const requiredLines = new Set(
+      gameState.winLinesToDraw.map((line) => line.id)
+    )
+
+    // Remove lines that are in the DOM but not in the state
+    existingLines.forEach((lineId) => {
+      if (!requiredLines.has(lineId)) {
+        document.getElementById(lineId)?.remove()
+      }
+    })
+
+    // Add lines that are in the state but not in the DOM
+    gameState.winLinesToDraw.forEach((lineData) => {
+      if (!existingLines.has(lineData.id)) {
+        const startCell = gameBoard.querySelector(
+          `[data-index='${lineData.start}']`
+        )
+        const endCell = gameBoard.querySelector(
+          `[data-index='${lineData.end}']`
+        )
+        if (startCell && endCell) {
+          const lineElement = drawLine(startCell, endCell, lineData.color)
+          lineElement.id = lineData.id
+        }
+      }
+    })
+  }
+
+  // --- LOGIC / STATE MANAGEMENT FUNCTIONS ---
+
+  function handleCellClick(event) {
+    const cell = event.target.closest(".cell")
+    if (!cell) return
+    const index = parseInt(cell.dataset.index)
+    if (gameState.board[index] !== null) return
+
+    const wasBlock = checkForBlock(index)
+
+    const move = {
+      index: index,
+      player: gameState.currentPlayer,
+      scoredLines: [],
+    }
+
+    const newBoard = [...gameState.board]
+    newBoard[index] = gameState.currentPlayer
+
+    const pointsScored = checkForWins(move, newBoard)
+
+    if (pointsScored > 0) {
+      playSoundSequentially("score", pointsScored)
+    } else if (wasBlock) {
+      playSound("block")
+      cell.classList.add("blocked")
+      cell.addEventListener(
+        "animationend",
+        () => {
+          cell.classList.remove("blocked")
+        },
+        { once: true }
+      )
+    } else {
+      playSound("click")
+    }
+
+    const newMoveHistory = [...gameState.moveHistory, move]
+    const newMovesMade = gameState.movesMade + 1
+    let nextPlayer = (gameState.currentPlayer + 1) % gameState.numPlayers
+
+    gameState = {
+      ...gameState,
+      board: newBoard, // Use the new board from this move
+      movesMade: newMovesMade,
+      moveHistory: newMoveHistory,
+    }
+
+    if (gameState.movesMade === gameState.gridSize * gameState.gridSize) {
+      endGame()
+    } else {
+      gameState = { ...gameState, currentPlayer: nextPlayer }
+      render() // Single call to re-render UI
+    }
+  }
+
+  function undoLastMove() {
+    if (gameState.moveHistory.length === 0) return
+
+    const lastMove = gameState.moveHistory[gameState.moveHistory.length - 1]
+
+    // Revert all state properties based on the last move
+    const newBoard = [...gameState.board]
+    newBoard[lastMove.index] = null
+
+    let newScores = [...gameState.scores]
+    let newCompletedLines = new Set(gameState.completedLines)
+    let newHighlightedCells = new Set(gameState.highlightedCells)
+    let newWinLinesToDraw = [...gameState.winLinesToDraw]
+
+    if (lastMove.scoredLines.length > 0) {
+      newScores[lastMove.player] -= lastMove.scoredLines.length
+
+      const remainingLines = Array.from(newCompletedLines).filter(
+        (lineId) => !lastMove.scoredLines.includes(lineId)
+      )
+      newCompletedLines = new Set(remainingLines)
+
+      newHighlightedCells.clear()
+      remainingLines.forEach((lineId) => {
+        const indices = lineId.split(",").map(Number)
+        indices.forEach((index) => newHighlightedCells.add(index))
+      })
+
+      const lastMoveLineIds = new Set(
+        lastMove.scoredLines.map(
+          (lineId) =>
+            `line-${lineId.split(",")[0]}-${
+              lineId.split(",")[lineId.split(",").length - 1]
+            }`
+        )
+      )
+
+      newWinLinesToDraw = newWinLinesToDraw.filter(
+        (line) => !lastMoveLineIds.has(line.id)
+      )
+    }
+
+    // Set the new, reverted state
+    gameState = {
+      ...gameState,
+      board: newBoard,
+      scores: newScores,
+      completedLines: newCompletedLines,
+      highlightedCells: newHighlightedCells,
+      winLinesToDraw: newWinLinesToDraw,
+      movesMade: gameState.movesMade - 1,
+      currentPlayer: lastMove.player,
+      moveHistory: gameState.moveHistory.slice(0, -1),
+    }
+
+    render() // Re-render after state change
+  }
+
+  function checkForWins(move, currentBoard) {
+    const {
+      currentPlayer,
+      gridSize,
+      matchLength,
+      completedLines,
+      playerColors,
+    } = gameState
+    let newPoints = 0
+
+    const potentialWins = getWinningLines(
+      currentBoard,
+      currentPlayer,
+      gridSize,
+      matchLength
+    )
+    const newWinningLines = potentialWins.filter(
+      (line) => !completedLines.has(lineToString(line))
+    )
+
+    if (newWinningLines.length > 0) {
+      const newScores = [...gameState.scores]
+      newScores[currentPlayer] += newWinningLines.length
+
+      const newCompletedLines = new Set(completedLines)
+      const newHighlightedCells = new Set(gameState.highlightedCells)
+      const newWinLinesToDraw = [...gameState.winLinesToDraw]
+
+      newWinningLines.forEach((line) => {
+        const lineId = lineToString(line)
+        newCompletedLines.add(lineId)
+
+        line.forEach((cellIndex) => newHighlightedCells.add(cellIndex))
+        if (gameState.showLines) {
+          const sortedLine = [...line].sort((a, b) => a - b)
+          newWinLinesToDraw.push({
+            id: `line-${sortedLine[0]}-${sortedLine[sortedLine.length - 1]}`,
+            start: sortedLine[0],
+            end: sortedLine[sortedLine.length - 1],
+            color: playerColors[currentPlayer],
+          })
+        }
+
+        newPoints++
+        if (move) {
+          move.scoredLines.push(lineId)
+        }
+      })
+
+      // Update the master state object
+      gameState = {
+        ...gameState,
+        scores: newScores,
+        completedLines: newCompletedLines,
+        highlightedCells: newHighlightedCells,
+        winLinesToDraw: newWinLinesToDraw,
+      }
+    }
+    return newPoints
+  }
+
+  function checkForBlock(moveIndex) {
+    let wasBlock = false
+    const originalPlayer = gameState.currentPlayer
+    for (
+      let opponentIndex = 0;
+      opponentIndex < gameState.numPlayers;
+      opponentIndex++
+    ) {
+      if (opponentIndex === originalPlayer) continue
+      const tempBoard = [...gameState.board]
+      tempBoard[moveIndex] = opponentIndex
+      const potentialWins = getWinningLines(
+        tempBoard,
+        opponentIndex,
+        gameState.gridSize,
+        gameState.matchLength
+      )
+      const newWins = potentialWins.filter(
+        (line) => !gameState.completedLines.has(lineToString(line))
+      )
+      if (newWins.length > 0) {
+        wasBlock = true
+        break
+      }
+    }
+    return wasBlock
+  }
+
+  // --- UTILITY FUNCTIONS ---
+
   function playSound(soundName) {
     const audio = sounds[soundName]
     if (audio) {
@@ -84,27 +406,183 @@ document.addEventListener("DOMContentLoaded", () => {
   async function playSoundSequentially(soundName, times) {
     const audio = sounds[soundName]
     if (!audio) return
-
     for (let i = 0; i < times; i++) {
       await new Promise((resolve) => {
-        const playAudio = () => {
-          audio.currentTime = 0
-          audio.play().catch((e) => {
-            console.error(`Could not play sound: ${e}`)
-            resolve() // Resolve even if there's an error to not block the loop
-          })
-        }
+        audio.currentTime = 0
         audio.onended = () => resolve()
-        playAudio()
+        audio.play().catch((e) => {
+          console.error(`Could not play sound: ${e}`)
+          resolve()
+        })
       })
     }
+  }
+
+  function lineToString(line) {
+    return [...line].sort((a, b) => a - b).join(",")
+  }
+
+  function getWinningLines(board, player, gridSize, matchLength) {
+    const newWins = []
+    for (let r = 0; r < gridSize; r++) {
+      for (let c = 0; c < gridSize; c++) {
+        if (c <= gridSize - matchLength) {
+          const line = Array.from(
+            { length: matchLength },
+            (_, i) => r * gridSize + c + i
+          )
+          if (line.every((index) => board[index] === player)) newWins.push(line)
+        }
+        if (r <= gridSize - matchLength) {
+          const line = Array.from(
+            { length: matchLength },
+            (_, i) => (r + i) * gridSize + c
+          )
+          if (line.every((index) => board[index] === player)) newWins.push(line)
+        }
+        if (r <= gridSize - matchLength && c <= gridSize - matchLength) {
+          const line = Array.from(
+            { length: matchLength },
+            (_, i) => (r + i) * gridSize + (c + i)
+          )
+          if (line.every((index) => board[index] === player)) newWins.push(line)
+        }
+        if (r <= gridSize - matchLength && c >= matchLength - 1) {
+          const line = Array.from(
+            { length: matchLength },
+            (_, i) => (r + i) * gridSize + (c - i)
+          )
+          if (line.every((index) => board[index] === player)) newWins.push(line)
+        }
+      }
+    }
+    return newWins
+  }
+
+  function drawLine(startCell, endCell, color) {
+    const gameBoard = document.getElementById("game-board")
+    const boardRect = gameBoard.getBoundingClientRect()
+    const startRect = startCell.getBoundingClientRect()
+    const endRect = endCell.getBoundingClientRect()
+
+    const line = document.createElement("div")
+    line.classList.add("strike-through-line")
+    line.style.backgroundColor = color
+
+    const startX = startRect.left + startRect.width / 2 - boardRect.left
+    const startY = startRect.top + startRect.height / 2 - boardRect.top
+    const endX = endRect.left + endRect.width / 2 - boardRect.left
+    const endY = endRect.top + endRect.height / 2 - boardRect.top
+
+    const length = Math.sqrt(
+      Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)
+    )
+    const angle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI)
+
+    line.style.width = `${length}px`
+    line.style.left = `${startX}px`
+    line.style.top = `${startY}px`
+    line.style.transform = `rotate(${angle}deg)`
+
+    // Use a slight delay to ensure the line appears after the state has been updated
+    setTimeout(() => {
+      gameBoard.appendChild(line)
+      line.style.width = `${length}px` // Re-apply for transition
+      line.style.opacity = "1"
+    }, 50)
+
+    return line
+  }
+
+  // --- SETUP PHASE FUNCTIONS (Imperative, run before game starts) ---
+
+  function initGame(isNewGame) {
+    let settings = {}
+    if (isNewGame) {
+      settings.playerNames = playerSetupList.map((p) => p.name)
+      settings.numPlayers = parseInt(numPlayersInput.value)
+      settings.gridSize = parseInt(gridSizeInput.value)
+      settings.matchLength = parseInt(matchLengthInput.value)
+      settings.selectedUnits = [
+        ...document.querySelectorAll(".phonics-unit-select"),
+      ]
+        .map((select) => select.value)
+        .filter((value) => value)
+      const shuffledColors = [...COLOR_PALETTE].sort(() => 0.5 - Math.random())
+      settings.playerColors = shuffledColors.slice(0, settings.numPlayers)
+      settings.showLines = showLinesToggle.checked
+      if (settings.selectedUnits.length === 0) {
+        alert("Please select at least one word unit to start the game.")
+        return
+      }
+    } else {
+      settings = {
+        playerNames: gameState.playerNames,
+        numPlayers: gameState.numPlayers,
+        gridSize: gameState.gridSize,
+        matchLength: gameState.matchLength,
+        selectedUnits: gameState.selectedUnits,
+        playerColors: gameState.playerColors,
+        showLines: gameState.showLines,
+      }
+    }
+
+    wordCache = getCombinedWords(
+      settings.selectedUnits,
+      settings.gridSize * settings.gridSize
+    )
+
+    gameState = {
+      ...settings,
+      board: Array(settings.gridSize * settings.gridSize).fill(null),
+      scores: Array(settings.numPlayers).fill(0),
+      currentPlayer: 0,
+      movesMade: 0,
+      completedLines: new Set(),
+      moveHistory: [],
+      highlightedCells: new Set(),
+      winLinesToDraw: [],
+    }
+
+    setupView.classList.add("hidden")
+    gameView.classList.remove("hidden")
+
+    render()
+    setupGameEventListeners()
+  }
+
+  function getCombinedWords(selectedUnits, totalWordsNeeded) {
+    const finalWords = []
+    const uniqueUnits = [...new Set(selectedUnits)]
+    const wordsPerUnit = Math.floor(totalWordsNeeded / uniqueUnits.length)
+    let remainder = totalWordsNeeded % uniqueUnits.length
+    uniqueUnits.forEach((unitValue) => {
+      const [level, unit] = unitValue.split("|")
+      const unitData = smartPhonicsWordBank[level][unit]
+      const wordPool = [...unitData.words]
+      const targetSound = unitData.targetSound
+      let wordsToTake = wordsPerUnit
+      if (remainder > 0) {
+        wordsToTake++
+        remainder--
+      }
+      if (wordPool.length === 0) return
+      for (let i = 0; i < wordsToTake; i++) {
+        const word = wordPool[i % wordPool.length]
+        finalWords.push({ word, target: targetSound })
+      }
+    })
+    for (let i = finalWords.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[finalWords[i], finalWords[j]] = [finalWords[j], finalWords[i]]
+    }
+    return finalWords
   }
 
   function getDragAfterElement(container, y) {
     const draggableElements = [
       ...container.querySelectorAll(".player-name-field:not(.dragging)"),
     ]
-
     return draggableElements.reduce(
       (closest, child) => {
         const box = child.getBoundingClientRect()
@@ -121,10 +599,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function randomizePlayerOrder() {
     if (playerSetupList.length < 2) return
-
     const originalOrderJSON = JSON.stringify(playerSetupList)
     let attempts = 0
-
     do {
       for (let i = playerSetupList.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1))
@@ -138,33 +614,27 @@ document.addEventListener("DOMContentLoaded", () => {
       JSON.stringify(playerSetupList) === originalOrderJSON &&
       attempts < 10
     )
-
     renderNameInputs()
   }
 
   function renderNameInputs() {
     playerNamesContainer.innerHTML = ""
-
     playerSetupList.forEach((player, index) => {
       const field = document.createElement("label")
       field.className = "field player-name-field"
       field.draggable = true
       field.dataset.playerId = player.id
-
       field.addEventListener("dragstart", () => field.classList.add("dragging"))
       field.addEventListener("dragend", () =>
         field.classList.remove("dragging")
       )
-
       const label = document.createElement("span")
       label.className = "label"
       label.textContent = `Player ${index + 1} Name`
-
       const input = document.createElement("input")
       input.type = "text"
       input.className = "player-name-input"
       input.value = player.name
-
       input.addEventListener("input", (e) => {
         const playerId = parseInt(field.dataset.playerId)
         const playerToUpdate = playerSetupList.find((p) => p.id === playerId)
@@ -172,7 +642,6 @@ document.addEventListener("DOMContentLoaded", () => {
           playerToUpdate.name = e.target.value
         }
       })
-
       field.appendChild(label)
       field.appendChild(input)
       playerNamesContainer.appendChild(field)
@@ -214,12 +683,21 @@ document.addEventListener("DOMContentLoaded", () => {
     unitSelectorsContainer.appendChild(container)
   }
 
+  function syncSliders() {
+    const newGridSize = parseInt(gridSizeInput.value, 10)
+    gridSizeValue.textContent = `${newGridSize}x${newGridSize}`
+    const newMaxMatchLength = Math.min(newGridSize, 5)
+    matchLengthInput.max = newMaxMatchLength
+    if (parseInt(matchLengthInput.value) > newMaxMatchLength) {
+      matchLengthInput.value = newMaxMatchLength
+    }
+    matchLengthValue.textContent = matchLengthInput.value
+  }
+
   function updateSliderValues() {
     const newCount = parseInt(numPlayersInput.value, 10)
     numPlayersValue.textContent = newCount
-
     const currentCount = playerSetupList.length
-
     if (newCount > currentCount) {
       for (let i = currentCount; i < newCount; i++) {
         playerSetupList.push({ id: Date.now() + i, name: `Player ${i + 1}` })
@@ -227,18 +705,13 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (newCount < currentCount) {
       playerSetupList.splice(newCount)
     }
-
-    const defaultGridSize = newCount + 1
-    gridSizeInput.value = defaultGridSize
-    gridSizeValue.textContent = `${defaultGridSize}x${defaultGridSize}`
-
     renderNameInputs()
+    syncSliders()
   }
 
   function selectRandomUnit() {
     const firstSelector = document.querySelector(".phonics-unit-select")
     if (!firstSelector) return
-
     const options = Array.from(firstSelector.options).filter(
       (opt) => !opt.disabled
     )
@@ -292,430 +765,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return `<span class="word-wrapper">${resultHTML}</span>`
   }
 
-  function initGame(isNewGame) {
-    let settings = {}
-    if (isNewGame) {
-      settings.playerNames = playerSetupList.map((p) => p.name)
-      settings.numPlayers = parseInt(numPlayersInput.value)
-      settings.gridSize = parseInt(gridSizeInput.value)
-      settings.matchLength = parseInt(matchLengthInput.value)
-      settings.selectedUnits = [
-        ...document.querySelectorAll(".phonics-unit-select"),
-      ]
-        .map((select) => select.value)
-        .filter((value) => value)
-
-      const shuffledColors = [...COLOR_PALETTE].sort(() => 0.5 - Math.random())
-      settings.playerColors = shuffledColors.slice(0, settings.numPlayers)
-
-      settings.showLines = showLinesToggle.checked
-
-      if (settings.selectedUnits.length === 0) {
-        alert("Please select at least one word unit to start the game.")
-        return
-      }
-    } else {
-      settings = {
-        numPlayers: gameState.numPlayers,
-        gridSize: gameState.gridSize,
-        playerNames: gameState.playerNames,
-        selectedUnits: gameState.selectedUnits,
-        playerColors: gameState.playerColors,
-        showLines: gameState.showLines,
-        matchLength: gameState.matchLength,
-      }
-    }
-    gameState = {
-      ...settings,
-      board: Array(settings.gridSize * settings.gridSize).fill(null),
-      scores: Array(settings.numPlayers).fill(0),
-      currentPlayer: 0,
-      movesMade: 0,
-      completedLines: new Set(),
-      moveHistory: [],
-    }
-
-    const words = getCombinedWords(
-      gameState.selectedUnits,
-      gameState.gridSize * gameState.gridSize
-    )
-
-    setupView.classList.add("hidden")
-    document.getElementById("game-view").classList.remove("hidden")
-
-    renderBoard(words)
-    renderPlayerInfo()
-
-    setupGameEventListeners()
-  }
-
-  function getCombinedWords(selectedUnits, totalWordsNeeded) {
-    const finalWords = []
-    const uniqueUnits = [...new Set(selectedUnits)]
-    const wordsPerUnit = Math.floor(totalWordsNeeded / uniqueUnits.length)
-    let remainder = totalWordsNeeded % uniqueUnits.length
-    uniqueUnits.forEach((unitValue) => {
-      const [level, unit] = unitValue.split("|")
-      const unitData = smartPhonicsWordBank[level][unit]
-      const wordPool = [...unitData.words]
-      const targetSound = unitData.targetSound
-      let wordsToTake = wordsPerUnit
-      if (remainder > 0) {
-        wordsToTake++
-        remainder--
-      }
-      if (wordPool.length === 0) return
-      for (let i = 0; i < wordsToTake; i++) {
-        const word = wordPool[i % wordPool.length]
-        finalWords.push({ word, target: targetSound })
-      }
-    })
-    for (let i = finalWords.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[finalWords[i], finalWords[j]] = [finalWords[j], finalWords[i]]
-    }
-    return finalWords
-  }
-
-  function renderBoard(words) {
-    const gameBoard = document.getElementById("game-board")
-    gameBoard.innerHTML = ""
-    gameBoard.style.gridTemplateColumns = `repeat(${gameState.gridSize}, 1fr)`
-
-    if (gameState.gridSize > 8) {
-      gameBoard.classList.add("large-grid")
-    } else {
-      gameBoard.classList.remove("large-grid")
-    }
-
-    for (let i = 0; i < gameState.gridSize * gameState.gridSize; i++) {
-      const cell = document.createElement("button")
-      cell.classList.add("button", "cell")
-      cell.dataset.index = i
-      const wordObject = words[i] || { word: "?", target: "" }
-      cell.innerHTML = highlightTargetSounds(wordObject.word, wordObject.target)
-      cell.addEventListener("click", handleCellClick)
-      gameBoard.appendChild(cell)
-    }
-  }
-
-  function renderPlayerInfo() {
-    const playerInfoList = document.getElementById("player-info-list")
-    playerInfoList.innerHTML = ""
-    for (let i = 0; i < gameState.numPlayers; i++) {
-      const playerBlock = document.createElement("div")
-      playerBlock.className = "card outlined player-info-block"
-      playerBlock.id = `player-${i}-info-block`
-      const playerColor = gameState.playerColors[i]
-      playerBlock.style.setProperty("--player-color", playerColor)
-      const hgroup = document.createElement("hgroup")
-      const nameHeader = document.createElement("h3")
-      nameHeader.className = "h6"
-      nameHeader.textContent = `${gameState.playerNames[i]} (${playerSymbols[i]})`
-      hgroup.appendChild(nameHeader)
-      const contentDiv = document.createElement("div")
-      contentDiv.className = "content"
-      contentDiv.id = `player-${i}-score`
-      contentDiv.textContent = `Score: ${gameState.scores[i]}`
-      playerBlock.appendChild(hgroup)
-      playerBlock.appendChild(contentDiv)
-      playerInfoList.appendChild(playerBlock)
-    }
-    updatePlayerHighlight()
-  }
-
-  function updatePlayerHighlight() {
-    const playerInfoList = document.getElementById("player-info-list")
-    playerInfoList.querySelectorAll(".player-info-block").forEach((el) => {
-      el.classList.remove("current-player")
-    })
-    const currentPlayerBlock = document.getElementById(
-      `player-${gameState.currentPlayer}-info-block`
-    )
-    if (currentPlayerBlock) {
-      currentPlayerBlock.classList.add("current-player")
-    }
-  }
-
-  function handleCellClick(event) {
-    const cell = event.target.closest(".cell")
-    if (!cell) return
-
-    const index = parseInt(cell.dataset.index)
-    if (gameState.board[index] !== null) return
-
-    // Check for a block *before* placing the new piece
-    const wasBlock = checkForBlock(index)
-    // Now, place the piece
-    gameState.board[index] = gameState.currentPlayer
-
-    const move = {
-      index: index,
-      player: gameState.currentPlayer,
-      scoredLines: [],
-      lineElements: [],
-    }
-
-    cell.dataset.playerSymbol = playerSymbols[gameState.currentPlayer]
-    cell.dataset.playerId = gameState.currentPlayer
-    const playerColor = gameState.playerColors[gameState.currentPlayer]
-    cell.style.setProperty("--player-color", playerColor)
-    cell.disabled = true
-
-    const pointsScored = checkForWins(move)
-
-    // Play sounds and trigger animations based on the outcome
-    if (pointsScored > 0) {
-      playSoundSequentially("score", pointsScored)
-    } else if (wasBlock) {
-      playSound("block")
-      // Add animation class and remove it when finished so it can play again
-      cell.classList.add("blocked")
-      cell.addEventListener(
-        "animationend",
-        () => {
-          cell.classList.remove("blocked")
-        },
-        { once: true }
-      )
-    } else {
-      playSound("click")
-    }
-
-    gameState.moveHistory.push(move)
-    gameState.movesMade++
-    if (gameState.movesMade === gameState.gridSize * gameState.gridSize) {
-      endGame()
-    } else {
-      gameState.currentPlayer =
-        (gameState.currentPlayer + 1) % gameState.numPlayers
-      updatePlayerHighlight()
-    }
-  }
-  function undoLastMove() {
-    if (gameState.moveHistory.length === 0) return
-    const lastMove = gameState.moveHistory.pop()
-    gameState.movesMade--
-    gameState.currentPlayer = lastMove.player
-    gameState.board[lastMove.index] = null
-    const cell = document.querySelector(
-      `#game-board .cell[data-index='${lastMove.index}']`
-    )
-    cell.removeAttribute("data-player-symbol")
-    cell.removeAttribute("data-player-id")
-    cell.style.removeProperty("--player-color")
-    cell.disabled = false
-
-    lastMove.lineElements.forEach((line) => line.remove())
-
-    if (lastMove.scoredLines.length > 0) {
-      gameState.scores[lastMove.player] -= lastMove.scoredLines.length
-      lastMove.scoredLines.forEach((lineId) => {
-        gameState.completedLines.delete(lineId)
-        const indices = lineId.split(",").map(Number)
-        indices.forEach((index) => {
-          const scoredCell = document.querySelector(
-            `#game-board .cell[data-index='${index}']`
-          )
-          if (scoredCell) {
-            const isStillHighlighted = Array.from(
-              gameState.completedLines
-            ).some((l) => l.split(",").includes(String(index)))
-            if (!isStillHighlighted) {
-              scoredCell.classList.remove("highlight")
-              scoredCell.style.removeProperty("--player-color")
-            }
-          }
-        })
-      })
-    }
-    updateScoreDisplay(lastMove.player)
-    updatePlayerHighlight()
-  }
-
-  function updateScoreDisplay(playerIndex) {
-    const scoreDiv = document.getElementById(`player-${playerIndex}-score`)
-    if (scoreDiv)
-      scoreDiv.textContent = `Score: ${gameState.scores[playerIndex]}`
-  }
-
-  function lineToString(line) {
-    return [...line].sort((a, b) => a - b).join(",")
-  }
-
-  function getWinningLines(board, player, gridSize, matchLength) {
-    const newWins = []
-    for (let r = 0; r < gridSize; r++) {
-      for (let c = 0; c < gridSize; c++) {
-        // Horizontal
-        if (c <= gridSize - matchLength) {
-          const line = Array.from(
-            { length: matchLength },
-            (_, i) => r * gridSize + c + i
-          )
-          if (line.every((index) => board[index] === player)) newWins.push(line)
-        }
-        // Vertical
-        if (r <= gridSize - matchLength) {
-          const line = Array.from(
-            { length: matchLength },
-            (_, i) => (r + i) * gridSize + c
-          )
-          if (line.every((index) => board[index] === player)) newWins.push(line)
-        }
-        // Diagonal down-right
-        if (r <= gridSize - matchLength && c <= gridSize - matchLength) {
-          const line = Array.from(
-            { length: matchLength },
-            (_, i) => (r + i) * gridSize + (c + i)
-          )
-          if (line.every((index) => board[index] === player)) newWins.push(line)
-        }
-        // Diagonal down-left
-        if (r <= gridSize - matchLength && c >= matchLength - 1) {
-          const line = Array.from(
-            { length: matchLength },
-            (_, i) => (r + i) * gridSize + (c - i)
-          )
-          if (line.every((index) => board[index] === player)) newWins.push(line)
-        }
-      }
-    }
-    return newWins
-  }
-
-  function checkForBlock(moveIndex) {
-    let wasBlock = false
-    const originalPlayer = gameState.currentPlayer
-    for (
-      let opponentIndex = 0;
-      opponentIndex < gameState.numPlayers;
-      opponentIndex++
-    ) {
-      if (opponentIndex === originalPlayer) continue
-      const tempBoard = [...gameState.board]
-      tempBoard[moveIndex] = opponentIndex
-      const potentialWins = getWinningLines(
-        tempBoard,
-        opponentIndex,
-        gameState.gridSize,
-        gameState.matchLength
-      )
-      const newWins = potentialWins.filter(
-        (line) => !gameState.completedLines.has(lineToString(line))
-      )
-      if (newWins.length > 0) {
-        wasBlock = true
-        break
-      }
-    }
-    return wasBlock
-  }
-
-  function checkForWins(move) {
-    const { gridSize, board, currentPlayer, completedLines, matchLength } =
-      gameState // Use matchLength from state
-    let newPoints = 0
-
-    const potentialWins = getWinningLines(
-      board,
-      currentPlayer,
-      gridSize,
-      matchLength
-    )
-    const newWinningLines = potentialWins.filter(
-      (line) => !completedLines.has(lineToString(line))
-    )
-
-    newWinningLines.forEach((line) => {
-      const lineId = lineToString(line)
-      completedLines.add(lineId)
-      const lineElement = highlightWin(line, currentPlayer)
-      newPoints++
-      if (move) {
-        move.scoredLines.push(lineId)
-        if (lineElement) move.lineElements.push(lineElement)
-      }
-    })
-
-    if (newPoints > 0) {
-      gameState.scores[currentPlayer] += newPoints
-      updateScoreDisplay(currentPlayer)
-    }
-
-    return newPoints
-  }
-
-  function drawLine(startCell, endCell, color) {
-    const gameBoard = document.getElementById("game-board")
-    const boardRect = gameBoard.getBoundingClientRect()
-    const startRect = startCell.getBoundingClientRect()
-    const endRect = endCell.getBoundingClientRect()
-
-    const line = document.createElement("div")
-    line.classList.add("strike-through-line")
-    line.style.backgroundColor = color
-
-    const startX = startRect.left + startRect.width / 2 - boardRect.left
-    const startY = startRect.top + startRect.height / 2 - boardRect.top
-    const endX = endRect.left + endRect.width / 2 - boardRect.left
-    const endY = endRect.top + endRect.height / 2 - boardRect.top
-
-    const length = Math.sqrt(
-      Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)
-    )
-    const angle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI)
-
-    line.style.width = `${length}px`
-    line.style.left = `${startX}px`
-    line.style.top = `${startY}px`
-    line.style.transform = `rotate(${angle}deg)`
-    line.style.transformOrigin = `left center`
-
-    gameBoard.appendChild(line)
-
-    requestAnimationFrame(() => {
-      line.style.width = `${length}px` // Animate to full width
-      line.style.opacity = 1 // Animate to full visibility
-    })
-
-    return line
-  }
-
-  function highlightWin(indices, playerIndex) {
-    const playerColor = gameState.playerColors[playerIndex]
-    const gameBoard = document.getElementById("game-board")
-    const firstCell = gameBoard.querySelector(`[data-index='${indices[0]}']`)
-    const lastCell = gameBoard.querySelector(
-      `[data-index='${indices[indices.length - 1]}']`
-    )
-
-    indices.forEach((cellIndex, arrayIndex) => {
-      const cell = gameBoard.querySelector(`[data-index='${cellIndex}']`)
-      cell.classList.add("highlight")
-      cell.style.setProperty("--player-color", playerColor)
-
-      // Add the pulse class and a staggered animation delay
-      cell.classList.add("pulse")
-      const delay = arrayIndex * 100 // 100ms delay between each pulse
-      cell.style.animationDelay = `${delay}ms`
-
-      // Remove the class and style after the animation finishes
-      cell.addEventListener(
-        "animationend",
-        () => {
-          cell.classList.remove("pulse")
-          cell.style.removeProperty("animation-delay")
-        },
-        { once: true }
-      )
-    })
-
-    if (gameState.showLines && firstCell && lastCell) {
-      return drawLine(firstCell, lastCell, playerColor)
-    }
-    return null
-  }
   function endGame() {
     playSound("gameOver")
     const gameDialog = document.getElementById("game-over-dialog")
@@ -761,43 +810,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const isWinner = winners.includes(player.originalIndex)
       const winnerClass = isWinner ? "winner" : ""
       finalScoresHTML += `
-                <div class="score-line ${winnerClass}">
-                    ${isWinner ? trophyIcon : ""}
-                    <span>${player.name}: ${player.score}</span>
-                </div>
-            `
+        <div class="score-line ${winnerClass}">
+            ${isWinner ? trophyIcon : ""}
+            <span>${player.name}: ${player.score}</span>
+        </div>
+      `
     })
 
     finalScoresHTML += `</div>`
     dialogContent.innerHTML = winnerHTML + finalScoresHTML
 
-    setTimeout(() => {
-      gameDialog.showModal()
-    }, 3000) // Delay for 3 seconds (3000 milliseconds)
-
-    // Add event listener to close dialog when clicking outside its content (on the backdrop).
-    gameDialog.addEventListener("click", (event) => {
-      if (event.target === gameDialog) {
-        // Check if the click was directly on the dialog element itself
-        gameDialog.close() // Close the dialog
-      }
-    })
-  }
-
-  function syncSliders() {
-    const newGridSize = parseInt(gridSizeInput.value, 10)
-    gridSizeValue.textContent = `${newGridSize}x${newGridSize}`
-
-    // The absolute max for match length is 5, or the grid size, whichever is smaller
-    const newMaxMatchLength = Math.min(newGridSize, 5)
-    matchLengthInput.max = newMaxMatchLength
-
-    // If the current match length is now invalid, lower it
-    if (parseInt(matchLengthInput.value) > newMaxMatchLength) {
-      matchLengthInput.value = newMaxMatchLength
-    }
-
-    matchLengthValue.textContent = matchLengthInput.value
+    gameDialog.showModal()
   }
 
   // --- INITIALIZE and ATTACH LISTENERS ---
@@ -811,7 +834,7 @@ document.addEventListener("DOMContentLoaded", () => {
   matchLengthInput.addEventListener("input", () => {
     matchLengthValue.textContent = matchLengthInput.value
   })
-  
+
   playerNamesContainer.addEventListener("dragover", (e) => {
     e.preventDefault()
     const afterElement = getDragAfterElement(playerNamesContainer, e.clientY)
@@ -867,5 +890,4 @@ document.addEventListener("DOMContentLoaded", () => {
   updateSliderValues()
   createUnitSelector()
   selectRandomUnit()
-  syncSliders()
 })

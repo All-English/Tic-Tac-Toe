@@ -413,6 +413,17 @@ label:has(#showLinesToggle) .label {
   white-space: nowrap;
 }
 
+.field-hint {
+  color: var(--text-2);
+  font-size: var(--font-size-0);
+  text-align: center;
+  margin-inline: auto;
+  margin-top: calc(var(--size-2) * -1);
+  /* Pulls text closer to the slider */
+  max-width: 28ch;
+  /* Constrains line length for readability */
+}
+
 /* New keyframes for the pulse effect */
 @keyframes pulse {
   0% {

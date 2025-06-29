@@ -1,6 +1,25 @@
 import { smartPhonicsWordBank, playerSymbols, COLOR_PALETTE } from "./config.js"
 
 document.addEventListener("DOMContentLoaded", () => {
+  // --- THEME SWITCHER LOGIC ---
+  const darkModeToggle = document.getElementById("darkModeToggle")
+  const htmlElement = document.documentElement
+
+  const setInitialTheme = () => {
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches
+    htmlElement.className = prefersDark ? "dark" : "light"
+    darkModeToggle.checked = prefersDark
+  }
+
+  const handleThemeChange = (e) => {
+    htmlElement.className = e.target.checked ? "dark" : "light"
+  }
+
+  darkModeToggle.addEventListener("change", handleThemeChange)
+  setInitialTheme() // Set theme on initial load
+  
   // --- STATE ---
   let gameState = {}
   let areGameEventListenersAttached = false

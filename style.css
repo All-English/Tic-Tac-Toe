@@ -32,6 +32,26 @@
 @import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/inputs/text-field.css";
 @import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/data-display/list.css";
 
+
+/* THEME */
+
+:root {
+  --palette-hue: var(--oklch-blue);
+  --palette-chroma: 0.89;
+  --palette-hue-rotate-by: 0;
+
+  --surface-default: light-dark(var(--color-1), var(--color-13));
+  --surface-filled: light-dark(var(--color-3), var(--color-15));
+  --surface-tonal: light-dark(var(--color-3), var(--color-12));
+  --surface-elevated: light-dark(var(--color-1), var(--color-12));
+
+  --surface-card: light-dark(var(--color-2), var(--color-14));
+
+  --border-color: light-dark(var(--color-4), var(--color-12));
+
+  --violet: oklch(from var(--color-9) l 0.2 290);
+}
+
 /* CUSTOM STYLES */
 
 body {
@@ -39,9 +59,34 @@ body {
   place-content: center;
   gap: var(--size-5);
   padding: var(--size-5);
-  background-color: var(--blue-0);
-  color: var(--text-color-1);
   font-family: 'Parkinsans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.theme-switcher-container {
+  position: absolute;
+  top: var(--size-3);
+  right: var(--size-3);
+  z-index: 10;
+}
+
+.switch>[role=switch] {
+  --_icon-sun: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3ccircle cx='12' cy='12' r='4'%3e%3c/circle%3e%3cpath d='M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41'%3e%3c/path%3e%3c/svg%3e");
+  --_icon-moon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23292f33' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z'%3e%3c/path%3e%3c/svg%3e");
+}
+
+.switch>[role=switch]::after {
+  content: "";
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 60%;
+}
+
+.light .switch>[role=switch]::after {
+  background-image: var(--_icon-sun);
+}
+
+.dark .switch>[role=switch]:checked::after {
+  background-image: var(--_icon-moon);
 }
 
 main {
@@ -93,7 +138,6 @@ main {
 
 .content>.setup-section>.h5 {
   /* Updated selector */
-  color: var(--text-color-2);
   border-bottom: 1px solid var(--border-color);
   padding-bottom: var(--size-1);
   margin-block-end: var(--size-4);
@@ -153,8 +197,9 @@ main {
 }
 
 .cell {
-  --_bg-color: var(--blue-1);
-  --_border-color: var(--blue-3);
+  /* --_bg-color: var(--blue-1); */
+  --_bg-color: var(--surface-card);
+  --_border-color: var(--border-color);
   --_text-color: var(--text-color-1);
   --_border-radius: 0;
 
@@ -180,7 +225,7 @@ main {
 }
 
 .cell:not(:disabled):hover {
-  --_bg-color: oklch(from var(--blue-1) calc(l + 0.05) c h);
+  --_bg-color: oklch(from var(--surface-card) calc(l + 0.05) c h);
 }
 
 .cell::after {
@@ -191,7 +236,7 @@ main {
   place-content: center;
   font-size: var(--font-size-fluid-3);
   color: var(--player-color, var(--text-color-1));
-  background-color: oklch(from var(--surface-default) l c h / 0.85);
+  background-color: oklch(from var(--surface-card) l c h / 0.85);
   backdrop-filter: blur(5px);
   opacity: 0;
   transform: scale(0.8);
@@ -225,7 +270,7 @@ main {
 }
 
 dialog#game-over-dialog {
-  --_bg-color: var(--blue-1);
+  --_bg-color: var(--surface-tonal);
   min-width: 50ch;
   padding: var(--size-5);
   border-radius: var(--radius-3);
@@ -242,7 +287,7 @@ dialog#game-over-dialog[open] {
 }
 
 dialog#game-over-dialog::backdrop {
-  background-color: oklch(from var(--blue-9) l c h / 0.5);
+  background-color: oklch(from var(--surface-tonal) l c h / 0.5);
   backdrop-filter: blur(4px);
   transition: backdrop-filter .3s ease-out, background-color .3s ease-out;
 }
@@ -309,15 +354,15 @@ dialog#game-over-dialog::backdrop {
   flex-grow: 1;
   text-align: center;
   gap: var(--size-1);
-  --_bg-color: oklch(from var(--player-color, var(--gray-4)) 95% 0.02 h);
-  --_border-color: oklch(from var(--player-color, var(--gray-4)) 85% 0.05 h);
+  --_bg-color: light-dark(oklch(from var(--player-color) 95% 0.02 h), oklch(from var(--player-color) 25% 0.02 h));
+  --_border-color: light-dark(oklch(from var(--player-color) 85% 0.05 h), oklch(from var(--player-color) 15% 0.05 h));
   transition:
     transform 0.3s var(--ease-3),
     box-shadow 0.3s var(--ease-3);
 }
 
 .player-info-block h3 {
-  color: var(--player-color, var(--text-color-1));
+  color: var(--player-color);
 }
 
 .player-info-block.current-player {

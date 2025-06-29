@@ -131,14 +131,13 @@ document.addEventListener("DOMContentLoaded", () => {
         cell = document.createElement("button")
         cell.classList.add("button", "cell")
         cell.dataset.index = i
-        const wordObject = wordCache[i] || { word: "?", target: "" }
-        cell.innerHTML = highlightTargetSounds(
-          wordObject.word,
-          wordObject.target
-        )
         cell.addEventListener("click", handleCellClick)
         gameBoard.appendChild(cell)
       }
+
+      // ALWAYS update the word content on every render
+      const wordObject = wordCache[i] || { word: "?", target: "" }
+      cell.innerHTML = highlightTargetSounds(wordObject.word, wordObject.target)
 
       // Update dynamic properties based on state
       const cellState = gameState.board[i]
@@ -163,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
-
+  
   function renderPlayerInfo() {
     const { numPlayers, scores, currentPlayer, playerColors, playerNames } =
       gameState
@@ -868,7 +867,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   themeHueSelect.addEventListener("change", handleHueChange)
-  
+
   // --- INITIALIZE and ATTACH LISTENERS ---
 
   numPlayersInput.addEventListener("input", updateSliderValues)

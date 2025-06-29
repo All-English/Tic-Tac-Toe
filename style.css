@@ -424,6 +424,34 @@ label:has(#showLinesToggle) .label {
   /* Constrains line length for readability */
 }
 
+#view-container {
+  display: grid;
+  perspective: 1000px;
+  /* Creates a 3D space for transformations */
+}
+
+.view {
+  grid-area: 1 / 1;
+  /* Place both views in the same grid cell */
+  transition: opacity 0.4s var(--ease-out-3), transform 0.4s var(--ease-out-3);
+  backface-visibility: hidden;
+  /* Prevents flickering during transform */
+}
+
+/* State for the INACTIVE view */
+.view:not(.is-active) {
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+}
+
+/* State for the ACTIVE view */
+.view.is-active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
 /* New keyframes for the pulse effect */
 @keyframes pulse {
   0% {

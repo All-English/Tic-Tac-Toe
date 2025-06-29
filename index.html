@@ -16,100 +16,102 @@
     </label>
   </header>
   <main>
-    <div id="game-setup" class="card outlined">
-      <hgroup>
-        <h2 class="h3">Phonics Tic-Tac-Toe Setup</h2>
-        <p>Configure your game and start playing!</p>
-      </hgroup>
-      <div class="content">
-        <div class="setup-section player-setup">
-          <h4 class="h5">Player Setup</h4>
-          <div class="range-container">
-            <label class="range">
-              <span class="label">Number of Players:</span>
-              <input type="range" id="numPlayers" min="2" max="5" value="2">
-            </label>
-            <span id="numPlayersValue">2</span>
-          </div>
-          <div id="randomize-container">
-            <button id="randomizeOrderBtn" class="button outlined small">Randomize</button>
-          </div>
-          <div id="player-names-container">
-          </div>
-        </div>
-
-        <div class="setup-section game-rules">
-          <h4 class="h5">Game Rules</h4>
-          <div class="range-container">
-            <label class="range">
-              <span class="label">Grid Size:</span>
-              <input type="range" id="gridSize" min="3" max="10" value="3">
-            </label>
-            <span id="gridSizeValue">3x3</span>
-          </div>
-          <div class="range-container">
-            <label class="range">
-              <span class="label">Match Length:</span>
-              <input type="range" id="matchLength" min="2" max="5" value="3">
-            </label>
-            <span id="matchLengthValue">3</span>
-          </div>
-          <p class="field-hint">The number of words in a row to score a point.</p>
-          <div class="setting-group">
-            <label class="switch">
-              <input type="checkbox" role="switch" id="showLinesToggle" checked>
-              <span class="label">Show Match Lines</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="setup-section word-selection">
-          <h4 class="h5">Word Selection</h4>
-          <div class="word-selection-container">
-            <div id="unit-selectors-container">
+    <div id="view-container">
+      <div id="game-setup" class="card outlined view is-active">
+        <hgroup>
+          <h2 class="h3">Phonics Tic-Tac-Toe Setup</h2>
+          <p>Configure your game and start playing!</p>
+        </hgroup>
+        <div class="content">
+          <div class="setup-section player-setup">
+            <h4 class="h5">Player Setup</h4>
+            <div class="range-container">
+              <label class="range">
+                <span class="label">Number of Players:</span>
+                <input type="range" id="numPlayers" min="2" max="5" value="2">
+              </label>
+              <span id="numPlayersValue">2</span>
             </div>
-            <button id="addUnitBtn" class="button">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-              <span>Add Word Unit</span>
-            </button>
+            <div id="randomize-container">
+              <button id="randomizeOrderBtn" class="button outlined small">Randomize</button>
+            </div>
+            <div id="player-names-container">
+            </div>
           </div>
+
+          <div class="setup-section game-rules">
+            <h4 class="h5">Game Rules</h4>
+            <div class="range-container">
+              <label class="range">
+                <span class="label">Grid Size:</span>
+                <input type="range" id="gridSize" min="3" max="10" value="3">
+              </label>
+              <span id="gridSizeValue">3x3</span>
+            </div>
+            <div class="range-container">
+              <label class="range">
+                <span class="label">Match Length:</span>
+                <input type="range" id="matchLength" min="2" max="5" value="3">
+              </label>
+              <span id="matchLengthValue">3</span>
+            </div>
+            <p class="field-hint">The number of words in a row to score a point.</p>
+            <div class="setting-group">
+              <label class="switch">
+                <input type="checkbox" role="switch" id="showLinesToggle" checked>
+                <span class="label">Show Match Lines</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="setup-section word-selection">
+            <h4 class="h5">Word Selection</h4>
+            <div class="word-selection-container">
+              <div id="unit-selectors-container">
+              </div>
+              <button id="addUnitBtn" class="button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Add Word Unit</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <label class="field">
+            <span class="label">Theme Color</span>
+            <select id="themeHueSelect">
+              <option value="var(--oklch-red)">Red</option>
+              <option value="var(--oklch-pink)">Pink</option>
+              <option value="var(--oklch-purple)">Purple</option>
+              <option value="var(--oklch-violet)">Violet</option>
+              <option value="var(--oklch-indigo)">Indigo</option>
+              <option value="var(--oklch-blue)" selected>Blue</option>
+              <option value="var(--oklch-cyan)">Cyan</option>
+              <option value="var(--oklch-teal)">Teal</option>
+              <option value="var(--oklch-green)">Green</option>
+              <option value="var(--oklch-lime)">Lime</option>
+              <option value="var(--oklch-yellow)">Yellow</option>
+              <option value="var(--oklch-orange)">Orange</option>
+            </select>
+          </label>
+          <button id="startGameBtn" class="button filled">Start Game</button>
         </div>
       </div>
 
-      <div class="actions">
-        <label class="field">
-          <span class="label">Theme Color</span>
-          <select id="themeHueSelect">
-            <option value="var(--oklch-red)">Red</option>
-            <option value="var(--oklch-pink)">Pink</option>
-            <option value="var(--oklch-purple)">Purple</option>
-            <option value="var(--oklch-violet)">Violet</option>
-            <option value="var(--oklch-indigo)">Indigo</option>
-            <option value="var(--oklch-blue)" selected>Blue</option>
-            <option value="var(--oklch-cyan)">Cyan</option>
-            <option value="var(--oklch-teal)">Teal</option>
-            <option value="var(--oklch-green)">Green</option>
-            <option value="var(--oklch-lime)">Lime</option>
-            <option value="var(--oklch-yellow)">Yellow</option>
-            <option value="var(--oklch-orange)">Orange</option>
-          </select>
-        </label>
-        <button id="startGameBtn" class="button filled">Start Game</button>
-      </div>
-    </div>
-
-    <div id="game-view" class="hidden">
-      <div id="player-info-list">
-      </div>
-      <div id="game-board">
-      </div>
-      <div id="game-controls">
-        <button id="resetGameBtn" class="button outlined">Reset Game</button>
-        <button id="settings-btn" class="button">Back to Settings</button>
+      <div id="game-view" class="view">
+        <div id="player-info-list">
+        </div>
+        <div id="game-board">
+        </div>
+        <div id="game-controls">
+          <button id="resetGameBtn" class="button outlined">Reset Game</button>
+          <button id="settings-btn" class="button">Back to Settings</button>
+        </div>
       </div>
     </div>
   </main>

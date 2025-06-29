@@ -67,11 +67,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   const handleBackToSettings = () => {
-    gameView.classList.add("hidden")
+    gameView.classList.remove("is-active")
     playerInfoList.innerHTML = ""
     gameBoard.innerHTML = ""
     gameState = {}
-    setupView.classList.remove("hidden")
+    setupView.classList.add("is-active")
     // Clean up the listeners when returning to the setup screen.
     removeGameEventListeners()
   }
@@ -162,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
-  
+
   function renderPlayerInfo() {
     const { numPlayers, scores, currentPlayer, playerColors, playerNames } =
       gameState
@@ -580,8 +580,8 @@ document.addEventListener("DOMContentLoaded", () => {
       winLinesToDraw: [],
     }
 
-    setupView.classList.add("hidden")
-    gameView.classList.remove("hidden")
+    setupView.classList.remove("is-active")
+    gameView.classList.add("is-active")
 
     render()
     addGameEventListeners() // Use the new function to add listeners.

@@ -33,40 +33,58 @@ document.addEventListener("DOMContentLoaded", () => {
   const startGameBtn = document.getElementById("startGameBtn")
   const showLinesToggle = document.getElementById("showLinesToggle")
   const randomizeOrderBtn = document.getElementById("randomizeOrderBtn")
+  const gameDialog = document.getElementById("game-over-dialog")
 
-  // --- EVENT LISTENERS ---
+  // --- EVENT HANDLER FUNCTIONS ---
+  // We define named handlers so we can remove them later.
+  const handleReset = () => initGame(false)
+  const handlePlayAgain = () => {
+    gameDialog.close()
+    initGame(false)
+  }
+  const handleKeydown = (e) => {
+    if (e.key === "Backspace") {
+      undoLastMove()
+    }
+  }
+  const handleBackToSettings = () => {
+    gameView.classList.add("hidden")
+    playerInfoList.innerHTML = ""
+    gameBoard.innerHTML = ""
+    gameState = {}
+    setupView.classList.remove("hidden")
+    // Clean up the listeners when returning to the setup screen.
+    removeGameEventListeners()
+  }
 
-  function setupGameEventListeners() {
+  // --- EVENT LISTENER MANAGEMENT ---
+
+  function addGameEventListeners() {
     if (areGameEventListenersAttached) return
-
     const resetGameBtn = document.getElementById("resetGameBtn")
     const backToSettingsBtn = document.getElementById("settings-btn")
     const playAgainBtn = document.getElementById("play-again-btn")
-    const gameDialog = document.getElementById("game-over-dialog")
 
-    const goBackToSettings = () => {
-      gameView.classList.add("hidden")
-      playerInfoList.innerHTML = ""
-      gameBoard.innerHTML = ""
-      gameState = {}
-      setupView.classList.remove("hidden")
-    }
-
-    resetGameBtn.addEventListener("click", () => initGame(false))
-    backToSettingsBtn.addEventListener("click", goBackToSettings)
-    playAgainBtn.addEventListener("click", () => {
-      gameDialog.close()
-      initGame(false)
-    })
-
-    document.addEventListener("keydown", (e) => {
-      if (gameView.classList.contains("hidden")) return
-      if (e.key === "Backspace") {
-        undoLastMove()
-      }
-    })
+    resetGameBtn.addEventListener("click", handleReset)
+    backToSettingsBtn.addEventListener("click", handleBackToSettings)
+    playAgainBtn.addEventListener("click", handlePlayAgain)
+    document.addEventListener("keydown", handleKeydown)
 
     areGameEventListenersAttached = true
+  }
+
+  function removeGameEventListeners() {
+    if (!areGameEventListenersAttached) return
+    const resetGameBtn = document.getElementById("resetGameBtn")
+    const backToSettingsBtn = document.getElementById("settings-btn")
+    const playAgainBtn = document.getElementById("play-again-btn")
+
+    resetGameBtn.removeEventListener("click", handleReset)
+    backToSettingsBtn.removeEventListener("click", handleBackToSettings)
+    playAgainBtn.removeEventListener("click", handlePlayAgain)
+    document.removeEventListener("keydown", handleKeydown)
+
+    areGameEventListenersAttached = false
   }
 
   // --- MAIN RENDER FUNCTION ---
@@ -548,7 +566,7 @@ document.addEventListener("DOMContentLoaded", () => {
     gameView.classList.remove("hidden")
 
     render()
-    setupGameEventListeners()
+    addGameEventListeners() // Use the new function to add listeners.
   }
 
   function getCombinedWords(selectedUnits, totalWordsNeeded) {
@@ -767,7 +785,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function endGame() {
     playSound("gameOver")
-    const gameDialog = document.getElementById("game-over-dialog")
     const dialogTitle = document.getElementById("dialog-title")
     const dialogContent = document.getElementById("dialog-content")
     let winnerText

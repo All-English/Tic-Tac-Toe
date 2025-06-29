@@ -98,6 +98,7 @@ main {
 #game-setup {
   max-width: 60ch;
   margin-inline: auto;
+  background-color: var(--surface-card);
 }
 
 #game-setup>hgroup {
@@ -105,6 +106,10 @@ main {
 }
 
 #game-setup .actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--size-4);
   justify-content: center;
 }
 

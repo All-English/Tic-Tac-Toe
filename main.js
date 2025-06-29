@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   darkModeToggle.addEventListener("change", handleThemeChange)
   setInitialTheme() // Set theme on initial load
-  
+
   // --- STATE ---
   let gameState = {}
   let areGameEventListenersAttached = false
@@ -859,6 +859,16 @@ document.addEventListener("DOMContentLoaded", () => {
     gameDialog.showModal()
   }
 
+  // --- THEME HUE SWITCHER LOGIC ---
+  const themeHueSelect = document.getElementById("themeHueSelect")
+
+  const handleHueChange = (e) => {
+    const newHue = e.target.value
+    document.documentElement.style.setProperty("--palette-hue", newHue)
+  }
+
+  themeHueSelect.addEventListener("change", handleHueChange)
+  
   // --- INITIALIZE and ATTACH LISTENERS ---
 
   numPlayersInput.addEventListener("input", updateSliderValues)

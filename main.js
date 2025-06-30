@@ -1,4 +1,4 @@
-import { smartPhonicsWordBank, playerSymbols, COLOR_PALETTE } from "./config.js"
+import { smartPhonicsWordBank, playerSymbols } from "./config.js"
 
 document.addEventListener("DOMContentLoaded", () => {
   // --- THEME SWITCHER LOGIC ---
@@ -530,6 +530,21 @@ document.addEventListener("DOMContentLoaded", () => {
     return line
   }
 
+  function generatePlayerColors() {
+    const colors = []
+    const initialShift = 45 // Start Player 1's hue 45 degrees away from the primary theme color
+    const hueShiftAmount = 55 // Shift each subsequent player's hue by another 55 degrees
+    const maxPlayers = 5 // Always generate a full palette for 5 players
+
+    for (let i = 0; i < maxPlayers; i++) {
+      // We use --color-9 as the base, which is the default for --primary
+      const totalShift = initialShift + i * hueShiftAmount
+      const shiftedColor = `oklch(from var(--color-9) l c calc(h + ${totalShift}))`
+      colors.push(shiftedColor)
+    }
+    return colors
+  }
+
   // --- SETUP PHASE FUNCTIONS (Imperative, run before game starts) ---
 
   function initGame(isNewGame) {
@@ -544,7 +559,10 @@ document.addEventListener("DOMContentLoaded", () => {
       ]
         .map((select) => select.value)
         .filter((value) => value)
-      const shuffledColors = [...COLOR_PALETTE].sort(() => 0.5 - Math.random())
+      const dynamicColorPalette = generatePlayerColors()
+      const shuffledColors = [...dynamicColorPalette].sort(
+        () => 0.5 - Math.random()
+      )
       settings.playerColors = shuffledColors.slice(0, settings.numPlayers)
       settings.showLines = showLinesToggle.checked
       if (settings.selectedUnits.length === 0) {
@@ -857,7 +875,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setTimeout(() => {
       gameDialog.showModal()
-    }, 3000)  }
+    }, 3000)
+  }
 
   // --- THEME HUE SWITCHER LOGIC ---
   const themeHueSelect = document.getElementById("themeHueSelect")

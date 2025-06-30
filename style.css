@@ -48,8 +48,6 @@
   --surface-card: light-dark(var(--color-2), var(--color-14));
 
   --border-color: light-dark(var(--color-4), var(--color-12));
-
-  --violet: oklch(from var(--color-9) l 0.2 290);
 }
 
 /* CUSTOM STYLES */

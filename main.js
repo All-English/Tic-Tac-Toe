@@ -275,6 +275,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (gameState.movesMade === gameState.gridSize * gameState.gridSize) {
+      render()
       endGame()
     } else {
       gameState = { ...gameState, currentPlayer: nextPlayer }

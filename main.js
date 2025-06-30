@@ -56,6 +56,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- EVENT HANDLER FUNCTIONS ---
   // We define named handlers so we can remove them later.
+  const handleCloseDialog = () => {
+    gameDialog.close()
+  }
   const handleReset = () => initGame(false)
   const handlePlayAgain = () => {
     gameDialog.close()
@@ -83,10 +86,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const resetGameBtn = document.getElementById("resetGameBtn")
     const backToSettingsBtn = document.getElementById("settings-btn")
     const playAgainBtn = document.getElementById("play-again-btn")
+    const closeDialogBtn = document.getElementById("close-dialog-btn")
 
     resetGameBtn.addEventListener("click", handleReset)
     backToSettingsBtn.addEventListener("click", handleBackToSettings)
     playAgainBtn.addEventListener("click", handlePlayAgain)
+    closeDialogBtn.addEventListener("click", handleCloseDialog)
     document.addEventListener("keydown", handleKeydown)
 
     areGameEventListenersAttached = true
@@ -97,10 +102,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const resetGameBtn = document.getElementById("resetGameBtn")
     const backToSettingsBtn = document.getElementById("settings-btn")
     const playAgainBtn = document.getElementById("play-again-btn")
+    const closeDialogBtn = document.getElementById("close-dialog-btn")
 
     resetGameBtn.removeEventListener("click", handleReset)
     backToSettingsBtn.removeEventListener("click", handleBackToSettings)
     playAgainBtn.removeEventListener("click", handlePlayAgain)
+    closeDialogBtn.removeEventListener("click", handleCloseDialog)
     document.removeEventListener("keydown", handleKeydown)
 
     areGameEventListenersAttached = false

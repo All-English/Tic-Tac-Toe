@@ -307,10 +307,6 @@ dialog#game-over-dialog::backdrop {
   justify-content: center;
 }
 
-#play-again-btn {
-  margin-bottom: var(--size-2);
-}
-
 #dialog-content {
   text-align: center;
 }

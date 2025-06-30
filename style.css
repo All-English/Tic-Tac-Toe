@@ -130,7 +130,10 @@ main {
   justify-items: center;
 }
 
-#startGameBtn {
+.button-group {
+  display: flex;
+  gap: var(--size-3);
+  justify-content: center;
   margin-bottom: var(--size-3);
 }
 

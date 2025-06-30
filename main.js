@@ -886,7 +886,42 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 3000)
   }
 
+  function resetSettings() {
+    // Reset sliders and toggles to their default values
+    numPlayersInput.value = 2
+    gridSizeInput.value = 3
+    matchLengthInput.value = 3
+    showLinesToggle.checked = true
+
+    // Reset theme color dropdown and trigger the change
+    themeHueSelect.value = "var(--oklch-blue)"
+    themeHueSelect.dispatchEvent(new Event("change"))
+
+    // Remove all but the first word unit selector
+    const allUnitSelectors = unitSelectorsContainer.querySelectorAll(
+      ".phonics-unit-container"
+    )
+    allUnitSelectors.forEach((selector, index) => {
+      if (index > 0) {
+        selector.remove()
+      }
+    })
+
+    // Reset the first (or only) word selector to its initial state
+    const firstSelector = unitSelectorsContainer.querySelector(
+      ".phonics-unit-select"
+    )
+    if (firstSelector) {
+      firstSelector.selectedIndex = 0
+    }
+
+    // Call existing functions to update the UI
+    updateSliderValues()
+    syncSliders()
+  }
+
   // --- THEME HUE SWITCHER LOGIC ---
+
   const themeHueSelect = document.getElementById("themeHueSelect")
 
   const handleHueChange = (e) => {
@@ -898,6 +933,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- INITIALIZE and ATTACH LISTENERS ---
 
+  const resetSettingsBtn = document.getElementById("resetSettingsBtn")
+  resetSettingsBtn.addEventListener("click", resetSettings)
   numPlayersInput.addEventListener("input", updateSliderValues)
   gridSizeInput.addEventListener("input", syncSliders)
   addUnitBtn.addEventListener("click", createUnitSelector)

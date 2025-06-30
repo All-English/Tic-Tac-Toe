@@ -855,8 +855,9 @@ document.addEventListener("DOMContentLoaded", () => {
     finalScoresHTML += `</div>`
     dialogContent.innerHTML = winnerHTML + finalScoresHTML
 
-    gameDialog.showModal()
-  }
+    setTimeout(() => {
+      gameDialog.showModal()
+    }, 3000)  }
 
   // --- THEME HUE SWITCHER LOGIC ---
   const themeHueSelect = document.getElementById("themeHueSelect")

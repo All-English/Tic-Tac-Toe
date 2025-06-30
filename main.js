@@ -664,24 +664,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return finalWords
   }
 
-  function getDragAfterElement(container, y) {
-    const draggableElements = [
-      ...container.querySelectorAll(".player-name-field:not(.dragging)"),
-    ]
-    return draggableElements.reduce(
-      (closest, child) => {
-        const box = child.getBoundingClientRect()
-        const offset = y - box.top - box.height / 2
-        if (offset < 0 && offset > closest.offset) {
-          return { offset: offset, element: child }
-        } else {
-          return closest
-        }
-      },
-      { offset: Number.NEGATIVE_INFINITY }
-    ).element
-  }
-
   function randomizePlayerOrder() {
     if (playerSetupList.length < 2) return
     const originalOrderJSON = JSON.stringify(playerSetupList)
@@ -1026,57 +1008,50 @@ document.addEventListener("DOMContentLoaded", () => {
 
   playerNamesContainer.addEventListener("dragover", (e) => {
     e.preventDefault()
-    const afterElement = getDragAfterElement(playerNamesContainer, e.clientY)
+    const draggingEl = playerNamesContainer.querySelector(".dragging")
+    const targetEl = e.target.closest(".player-name-field")
 
-    playerNamesContainer
-      .querySelectorAll(".drag-over-top, .drag-over-bottom")
-      .forEach((el) => {
-        el.classList.remove("drag-over-top", "drag-over-bottom")
-      })
+    // Clear previous highlights from all other fields
+    playerNamesContainer.querySelectorAll(".drop-target").forEach((el) => {
+      el.classList.remove("drop-target")
+    })
 
-    if (afterElement) {
-      afterElement.classList.add("drag-over-top")
-    } else {
-      const lastElement = playerNamesContainer.querySelector(
-        ".player-name-field:not(.dragging):last-child"
-      )
-      if (lastElement) {
-        lastElement.classList.add("drag-over-bottom")
-      }
+    // Add highlight to the field we are currently over
+    if (targetEl && targetEl !== draggingEl) {
+      targetEl.classList.add("drop-target")
     }
   })
 
   playerNamesContainer.addEventListener("drop", (e) => {
     e.preventDefault()
-    playerNamesContainer
-      .querySelectorAll(".drag-over-top, .drag-over-bottom")
-      .forEach((el) => {
-        el.classList.remove("drag-over-top", "drag-over-bottom")
-      })
+    const draggingEl = playerNamesContainer.querySelector(".dragging")
+    const dropTarget = playerNamesContainer.querySelector(".drop-target")
 
-    const dragging = playerNamesContainer.querySelector(".dragging")
-    if (!dragging) return
-
-    const draggingId = parseInt(dragging.dataset.playerId)
-    const afterElement = getDragAfterElement(playerNamesContainer, e.clientY)
-
-    const draggedItemIndex = playerSetupList.findIndex(
-      (p) => p.id === draggingId
-    )
-    const [draggedItem] = playerSetupList.splice(draggedItemIndex, 1)
-
-    if (afterElement == null) {
-      playerSetupList.push(draggedItem)
-    } else {
-      const afterId = parseInt(afterElement.dataset.playerId)
-      const dropIndex = playerSetupList.findIndex((p) => p.id === afterId)
-      playerSetupList.splice(dropIndex, 0, draggedItem)
+    // If we aren't dropping on a valid target, cancel the drop
+    if (!draggingEl || !dropTarget) {
+      if (dropTarget) dropTarget.classList.remove("drop-target")
+      return
     }
 
+    dropTarget.classList.remove("drop-target")
+
+    const fromId = parseInt(draggingEl.dataset.playerId)
+    const toId = parseInt(dropTarget.dataset.playerId)
+
+    if (fromId === toId) return // Dropped on itself
+
+    const fromIndex = playerSetupList.findIndex((p) => p.id === fromId)
+    const toIndex = playerSetupList.findIndex((p) => p.id === toId)
+
+    // Move the item in the array
+    const [itemToMove] = playerSetupList.splice(fromIndex, 1)
+    playerSetupList.splice(toIndex, 0, itemToMove)
+
+    // Re-render the inputs with the new order
     renderNameInputs()
   })
 
-  // --- EVENT LISTENERS for Pre-Game Order Setup ---
+  // --- EVENT LISTENERS for between rounds player order setup ---
   const playerOrderList = document.getElementById("player-order-list")
   const randomizeTurnOrderBtn = document.getElementById(
     "randomize-turn-order-btn"

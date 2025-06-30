@@ -167,16 +167,6 @@ main {
   opacity: 0.5;
 }
 
-/* This class indicates the item will be dropped BEFORE this element */
-.player-name-field.drag-over-top {
-  border-top: 3px solid var(--primary);
-}
-
-/* This new class indicates the item will be dropped AFTER this element */
-.player-name-field.drag-over-bottom {
-  border-bottom: 3px solid var(--primary);
-}
-
 #game-view:not(.hidden) {
   display: grid;
   place-items: center;
@@ -222,7 +212,8 @@ main {
   opacity: 0.5;
 }
 
-.player-order-item.drop-target {
+.player-order-item.drop-target,
+.player-name-field.drop-target {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
   background-color: var(--surface-2);

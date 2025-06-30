@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let areGameEventListenersAttached = false
   let playerSetupList = []
   let wordCache = []
+  let isMuted = false
 
   const sounds = {
     click: new Audio("sounds/click.mp3"),
@@ -53,6 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const showLinesToggle = document.getElementById("showLinesToggle")
   const randomizeOrderBtn = document.getElementById("randomizeOrderBtn")
   const gameDialog = document.getElementById("game-over-dialog")
+  const muteSoundsToggle = document.getElementById("muteSoundsToggle")
 
   // --- EVENT HANDLER FUNCTIONS ---
   // We define named handlers so we can remove them later.
@@ -440,6 +442,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- UTILITY FUNCTIONS ---
 
   function playSound(soundName) {
+    if (isMuted) return
     const audio = sounds[soundName]
     if (audio) {
       audio.currentTime = 0
@@ -448,6 +451,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function playSoundSequentially(soundName, times) {
+    if (isMuted) return
     const audio = sounds[soundName]
     if (!audio) return
     for (let i = 0; i < times; i++) {
@@ -940,7 +944,10 @@ document.addEventListener("DOMContentLoaded", () => {
   addUnitBtn.addEventListener("click", createUnitSelector)
   startGameBtn.addEventListener("click", () => initGame(true))
   randomizeOrderBtn.addEventListener("click", randomizePlayerOrder)
-
+  muteSoundsToggle.addEventListener("change", () => {
+    isMuted = muteSoundsToggle.checked
+  })
+  
   matchLengthInput.addEventListener("input", () => {
     matchLengthValue.textContent = matchLengthInput.value
   })

@@ -397,6 +397,9 @@ dialog#game-over-dialog::backdrop {
 }
 
 .setting-group {
+  display: grid;
+  gap: var(--size-3);
+  justify-items: start;
   margin-block-start: var(--size-4);
 }
 

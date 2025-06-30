@@ -137,10 +137,6 @@ main {
   margin-bottom: var(--size-3);
 }
 
-.hidden {
-  display: none;
-}
-
 #player-names-container {
   display: grid;
   gap: var(--size-3);
@@ -184,6 +180,7 @@ main {
 #game-view:not(.hidden) {
   display: grid;
   place-items: center;
+  align-content: center;
   gap: var(--size-5);
   width: fit-content;
   margin-inline: auto;
@@ -194,6 +191,46 @@ main {
   gap: var(--size-3);
   flex-wrap: wrap;
   justify-content: center;
+}
+
+.pre-game-controls {
+  display: grid;
+  gap: var(--size-4);
+  text-align: center;
+  margin-bottom: var(--size-5);
+}
+
+#player-order-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-3);
+  justify-content: center;
+}
+
+.player-order-item {
+  cursor: grab;
+  user-select: none;
+  padding: var(--size-2) var(--size-3);
+  border-radius: var(--radius-2);
+  border: 1px solid var(--border-color);
+  background-color: var(--surface-1);
+  box-shadow: var(--shadow-2);
+  transition: background-color 0.2s ease;
+}
+
+.player-order-item.dragging {
+  opacity: 0.5;
+}
+
+.player-order-item.drop-target {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  background-color: var(--surface-2);
+}
+
+/* New class to lock dragging when game starts */
+#player-order-list.locked .player-order-item {
+  cursor: default;
 }
 
 #game-board:not(.hidden) {
@@ -455,6 +492,10 @@ label:has(#showLinesToggle) .label {
   opacity: 1;
   transform: scale(1);
   pointer-events: auto;
+}
+
+.hidden {
+  display: none;
 }
 
 /* New keyframes for the pulse effect */

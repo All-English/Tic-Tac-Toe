@@ -26,6 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let playerSetupList = []
   let wordCache = []
   let isMuted = false
+  let isOrderLocked = false
 
   const sounds = {
     click: new Audio("sounds/click.mp3"),
@@ -238,6 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- LOGIC / STATE MANAGEMENT FUNCTIONS ---
 
   function handleCellClick(event) {
+    if (!isOrderLocked) return // Can't play until order is locked
     const cell = event.target.closest(".cell")
     if (!cell) return
     const index = parseInt(cell.dataset.index)
@@ -610,11 +612,28 @@ document.addEventListener("DOMContentLoaded", () => {
       winLinesToDraw: [],
     }
 
+    // This is where we decide whether to show the re-order screen or not
+    if (isNewGame) {
+      // This is the FIRST game, so lock the order and start immediately.
+      isOrderLocked = true
+      document.getElementById("player-order-setup").classList.add("hidden")
+      document.getElementById("player-info-list").classList.remove("hidden")
+      document.getElementById("player-order-list").classList.add("locked")
+      renderPlayerInfo()
+    } else {
+      // This is a RESET or PLAY AGAIN, so show the pre-game re-order screen.
+      isOrderLocked = false
+      document.getElementById("player-order-setup").classList.remove("hidden")
+      document.getElementById("player-info-list").classList.add("hidden")
+      document.getElementById("player-order-list").classList.remove("locked")
+      renderPlayerOrderList()
+    }
+
     setupView.classList.remove("is-active")
     gameView.classList.add("is-active")
 
-    render()
-    addGameEventListeners() // Use the new function to add listeners.
+    renderBoard()
+    addGameEventListeners()
   }
 
   function getCombinedWords(selectedUnits, totalWordsNeeded) {
@@ -924,6 +943,59 @@ document.addEventListener("DOMContentLoaded", () => {
     syncSliders()
   }
 
+  function renderPlayerOrderList() {
+    const container = document.getElementById("player-order-list")
+    container.innerHTML = ""
+    gameState.playerNames.forEach((name, index) => {
+      const item = document.createElement("div")
+      item.className = "player-order-item"
+      item.textContent = `${index + 1}. ${name}`
+      item.draggable = true
+      item.dataset.index = index
+      item.addEventListener("dragstart", handleDragStart)
+      item.addEventListener("dragend", handleDragEnd)
+      container.appendChild(item)
+    })
+  }
+
+  function randomizeTurnOrder() {
+    if (gameState.playerNames.length < 2) return // No need to shuffle one player
+
+    const originalOrderJSON = JSON.stringify(gameState.playerNames)
+    let attempts = 0
+
+    // Keep shuffling until the new order is different from the original
+    // Add a limit of 10 attempts as a safeguard against infinite loops
+    do {
+      for (let i = gameState.playerNames.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        // Shuffle both names and their corresponding colors to keep them linked
+        ;[gameState.playerNames[i], gameState.playerNames[j]] = [
+          gameState.playerNames[j],
+          gameState.playerNames[i],
+        ]
+        ;[gameState.playerColors[i], gameState.playerColors[j]] = [
+          gameState.playerColors[j],
+          gameState.playerColors[i],
+        ]
+      }
+      attempts++
+    } while (
+      JSON.stringify(gameState.playerNames) === originalOrderJSON &&
+      attempts < 10
+    )
+
+    renderPlayerOrderList()
+  }
+
+  function lockOrderAndStartGame() {
+    isOrderLocked = true
+    document.getElementById("player-order-setup").classList.add("hidden")
+    document.getElementById("player-info-list").classList.remove("hidden")
+    document.getElementById("player-order-list").classList.add("locked")
+    renderPlayerInfo() // Render the final order as score cards
+  }
+
   // --- THEME HUE SWITCHER LOGIC ---
 
   const themeHueSelect = document.getElementById("themeHueSelect")
@@ -947,7 +1019,7 @@ document.addEventListener("DOMContentLoaded", () => {
   muteSoundsToggle.addEventListener("change", () => {
     isMuted = muteSoundsToggle.checked
   })
-  
+
   matchLengthInput.addEventListener("input", () => {
     matchLengthValue.textContent = matchLengthInput.value
   })
@@ -1003,6 +1075,75 @@ document.addEventListener("DOMContentLoaded", () => {
 
     renderNameInputs()
   })
+
+  // --- EVENT LISTENERS for Pre-Game Order Setup ---
+  const playerOrderList = document.getElementById("player-order-list")
+  const randomizeTurnOrderBtn = document.getElementById(
+    "randomize-turn-order-btn"
+  )
+  const lockOrderBtn = document.getElementById("lock-order-btn")
+
+  const handleDragStart = (e) => {
+    if (isOrderLocked) return
+    e.target.classList.add("dragging")
+    e.dataTransfer.setData("text/plain", e.target.dataset.index)
+  }
+  const handleDragEnd = (e) => {
+    e.target.classList.remove("dragging")
+  }
+
+  playerOrderList.addEventListener("dragover", (e) => {
+    if (isOrderLocked) return
+    e.preventDefault()
+
+    const draggingEl = playerOrderList.querySelector(".dragging")
+    const targetEl = e.target.closest(".player-order-item")
+
+    // Clear previous highlights
+    playerOrderList.querySelectorAll(".drop-target").forEach((el) => {
+      el.classList.remove("drop-target")
+    })
+
+    // Add highlight to the element we are currently over
+    if (targetEl && targetEl !== draggingEl) {
+      targetEl.classList.add("drop-target")
+    }
+  })
+  
+  playerOrderList.addEventListener("drop", (e) => {
+    if (isOrderLocked) return
+    e.preventDefault()
+
+    const fromIndex = parseInt(e.dataTransfer.getData("text/plain"))
+    const dropTarget = playerOrderList.querySelector(".drop-target")
+
+    // If we're not dropping on a valid target, do nothing
+    if (!dropTarget) return
+
+    // Clean up the highlight class
+    dropTarget.classList.remove("drop-target")
+
+    // Find the target index for the drop
+    const toIndex = Array.from(playerOrderList.children).indexOf(dropTarget)
+
+    // Don't do anything if we are dropping in the same place
+    if (fromIndex === toIndex) return
+
+    // Move the items in the data arrays
+    const [nameToMove] = gameState.playerNames.splice(fromIndex, 1)
+    const [colorToMove] = gameState.playerColors.splice(fromIndex, 1)
+
+    // Note: The 'correctedToIndex' logic from before is not needed here
+    // because we are inserting relative to the target's position before the move.
+    gameState.playerNames.splice(toIndex, 0, nameToMove)
+    gameState.playerColors.splice(toIndex, 0, colorToMove)
+
+    // Re-render the list to show the final new order
+    renderPlayerOrderList()
+  })
+  
+  randomizeTurnOrderBtn.addEventListener("click", randomizeTurnOrder)
+  lockOrderBtn.addEventListener("click", lockOrderAndStartGame)
 
   updateSliderValues()
   createUnitSelector()

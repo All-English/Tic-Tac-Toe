@@ -594,6 +594,9 @@ document.addEventListener("DOMContentLoaded", () => {
         showLines: gameState.showLines,
       }
     }
+    gameBoard
+      .querySelectorAll(".strike-through-line")
+      .forEach((el) => el.remove())
 
     wordCache = getCombinedWords(
       settings.selectedUnits,

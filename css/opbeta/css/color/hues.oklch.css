@@ -1,0 +1,16 @@
+:where(:root) {
+	--oklch-red: 25;
+	/* I added brown */
+	--oklch-brown: 50;
+	--oklch-orange: 75;
+	--oklch-yellow: 100;
+	--oklch-lime: 125;
+	--oklch-green: 145;
+	--oklch-teal: 185;
+	--oklch-cyan: 210;
+	--oklch-blue: 240;
+	--oklch-indigo: 270;
+	--oklch-violet: 290;
+	--oklch-purple: 310;
+	--oklch-pink: 350;
+}

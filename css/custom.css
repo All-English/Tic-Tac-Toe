@@ -1,38 +1,3 @@
-@layer openprops, normalize, utils, theme, components.base, components.has-deps;
-
-@import url("https://fonts.googleapis.com/css2?family=Parkinsans:wght@300..800&display=swap");
-
-/* Open Props */
-@import "https://unpkg.com/open-props@2.0.0-beta.5/css/media-queries.css";
-@import "https://unpkg.com/open-props@2.0.0-beta.5/open-props.min.css" layer(openprops);
-@import "https://unpkg.com/open-props@2.0.0-beta.5/utilities.css" layer(openprops);
-@import "https://unpkg.com/open-props@2.0.0-beta.5/index.css" layer(openprops);
-@import "https://unpkg.com/open-props@2.0.0-beta.5/css/sizes/media.css" layer(openprops);
-@import "https://unpkg.com/open-props@2.0.0-beta.5/css/font/lineheight.css" layer(openprops);
-@import "https://unpkg.com/open-props@2.0.0-beta.5/hsl.css" layer(openprops);
-@import "https://unpkg.com/open-props@2.0.0-beta.5/css/color/hues.oklch.css" layer(openprops);
-
-/* Normalize, utils, theme */
-@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/normalize.css";
-@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/utils.css";
-@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/theme.css";
-
-/* Base components */
-@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/actions/button.css";
-@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/actions/icon-button.css";
-@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/data-display/card.css";
-@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/data-display/definition-list.css";
-@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/feedback/dialog.css";
-@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/inputs/range.css";
-@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/inputs/switch.css";
-
-/* Components with dependencies */
-@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/inputs/field.css";
-@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/inputs/select.css";
-@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/inputs/text-field.css";
-@import "https://cdn.jsdelivr.net/gh/felix-bohlin/ui@main/src/data-display/list.css";
-
-
 /* THEME */
 
 :root {

@@ -613,7 +613,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Add listeners that call the single update function
   darkModeToggle.addEventListener("change", updateTheme)
   themeHueSelect.addEventListener("change", updateTheme)
-  
+
   // --- SETUP PHASE FUNCTIONS (Imperative, run before game starts) ---
 
   function initGame(isNewGame) {
@@ -623,6 +623,9 @@ document.addEventListener("DOMContentLoaded", () => {
       settings.numPlayers = parseInt(numPlayersInput.value)
       settings.gridSize = parseInt(gridSizeInput.value)
       settings.matchLength = parseInt(matchLengthInput.value)
+      settings.gameMode = document.querySelector(
+        'input[name="game_mode"]:checked'
+      ).value 
       settings.selectedUnits = [
         ...document.querySelectorAll(".phonics-unit-select"),
       ]
@@ -644,6 +647,7 @@ document.addEventListener("DOMContentLoaded", () => {
         numPlayers: gameState.numPlayers,
         gridSize: gameState.gridSize,
         matchLength: gameState.matchLength,
+        gameMode: gameState.gameMode,
         selectedUnits: gameState.selectedUnits,
         playerColors: gameState.playerColors,
         showLines: gameState.showLines,
@@ -894,19 +898,42 @@ document.addEventListener("DOMContentLoaded", () => {
     playSound("gameOver")
     const dialogTitle = document.getElementById("dialog-title")
     const dialogContent = document.getElementById("dialog-content")
+
     let winnerText
-    let maxScore = -1
+    let bestScore
     let winners = []
-    for (let i = 0; i < gameState.numPlayers; i++) {
-      if (gameState.scores[i] > maxScore) {
-        maxScore = gameState.scores[i]
-        winners = [i]
-      } else if (gameState.scores[i] === maxScore && maxScore > 0) {
-        winners.push(i)
+
+    if (gameState.gameMode === "Stealth") {
+      // In Stealth mode, the lowest score wins
+      bestScore = Infinity
+      for (let i = 0; i < gameState.numPlayers; i++) {
+        if (gameState.scores[i] < bestScore) {
+          bestScore = gameState.scores[i]
+          winners = [i]
+        } else if (gameState.scores[i] === bestScore) {
+          winners.push(i)
+        }
+      }
+    } else {
+      // In Conquest mode, the highest score wins
+      bestScore = -1
+      for (let i = 0; i < gameState.numPlayers; i++) {
+        if (gameState.scores[i] > bestScore) {
+          bestScore = gameState.scores[i]
+          winners = [i]
+        } else if (gameState.scores[i] === bestScore && bestScore > 0) {
+          winners.push(i)
+        }
       }
     }
-    if (winners.length === 0 || maxScore === 0) {
+
+    if (
+      winners.length === 0 ||
+      (gameState.gameMode === "Conquest" && bestScore === 0)
+    ) {
       winnerText = "No one scored any points! It's a draw."
+    } else if (winners.length === gameState.numPlayers) {
+      winnerText = "It's a perfect tie!"
     } else if (winners.length > 1) {
       const winnerNames = winners
         .map((i) => gameState.playerNames[i])
@@ -915,6 +942,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       winnerText = `${gameState.playerNames[winners[0]]} wins!`
     }
+    
     dialogTitle.innerHTML = `Congratulations! 🎉`
     let winnerHTML = `<h3 class="h4 winner-text">${winnerText}</h3>`
 
@@ -950,6 +978,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function resetSettings() {
+    const conquestRadio = document.querySelector('input[name="game_mode"][value="Conquest"]');
+    if (conquestRadio) {
+      conquestRadio.checked = true;
+      // Trigger the change event to update the hint text
+      conquestRadio.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
     // Reset sliders and toggles to their default values
     numPlayersInput.value = 2
     gridSizeInput.value = 3
@@ -1045,12 +1080,25 @@ document.addEventListener("DOMContentLoaded", () => {
   addUnitBtn.addEventListener("click", createUnitSelector)
   startGameBtn.addEventListener("click", () => initGame(true))
   randomizeOrderBtn.addEventListener("click", randomizePlayerOrder)
+  
   muteSoundsToggle.addEventListener("change", () => {
     isMuted = muteSoundsToggle.checked
   })
-
   matchLengthInput.addEventListener("input", () => {
     matchLengthValue.textContent = matchLengthInput.value
+  })
+
+  const gameModeSelector = document.getElementById("gameModeSelector")
+  const gameModeHint = document.getElementById("gameModeHint")
+
+  gameModeSelector.addEventListener("change", (e) => {
+    if (e.target.name === "game_mode") {
+      if (e.target.value === "Conquest") {
+        gameModeHint.textContent = "Get the most points."
+      } else {
+        gameModeHint.textContent = "Get the fewest points."
+      }
+    }
   })
 
   playerNamesContainer.addEventListener("dragover", (e) => {

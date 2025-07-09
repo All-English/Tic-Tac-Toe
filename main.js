@@ -835,12 +835,14 @@ document.addEventListener("DOMContentLoaded", () => {
     label.className = "field"
     const select = document.createElement("select")
     select.className = "phonics-unit-select"
+
+    const allOptions = []
     const initialOption = document.createElement("option")
     initialOption.value = ""
     initialOption.textContent = "Select a word unit..."
     initialOption.disabled = true
-    initialOption.selected = true
-    select.appendChild(initialOption)
+    allOptions.push(initialOption)
+
     for (const level in smartPhonicsWordBank) {
       for (const unit in smartPhonicsWordBank[level]) {
         const option = document.createElement("option")
@@ -849,18 +851,53 @@ document.addEventListener("DOMContentLoaded", () => {
         option.textContent = `Level ${level.slice(-1)} - ${
           unit.slice(0, 1).toUpperCase() + unit.slice(1)
         }: ${unitData.targetSound}`
-        select.appendChild(option)
+        allOptions.push(option)
       }
     }
+    select.append(...allOptions)
+
+    // --- NEW LOGIC for auto-selecting next unit ---
+    const allSelectors = unitSelectorsContainer.querySelectorAll(
+      ".phonics-unit-select"
+    )
+    if (allSelectors.length > 0) {
+      const lastSelector = allSelectors[allSelectors.length - 1]
+      const lastIndex = lastSelector.selectedIndex
+
+      // Select the next option, or the previous if the last one was selected
+      let nextIndex = lastIndex + 1
+      if (nextIndex >= allOptions.length) {
+        nextIndex = lastIndex - 1
+      }
+      select.selectedIndex = Math.max(1, nextIndex) // Ensure it's not the disabled "Select..."
+    } else {
+      select.selectedIndex = 0 // Default for the very first selector
+    }
+
     label.appendChild(select)
     const removeBtn = document.createElement("button")
-    removeBtn.className = "icon-button"
+    removeBtn.className = "icon-button remove-unit-btn"
     removeBtn.setAttribute("aria-label", "Remove unit selector")
     removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
-    removeBtn.onclick = () => container.remove()
+    removeBtn.onclick = () => {
+      container.remove()
+      updateRemoveButtonsVisibility()
+    }
+
     container.appendChild(label)
     container.appendChild(removeBtn)
     unitSelectorsContainer.appendChild(container)
+    updateRemoveButtonsVisibility()
+  }
+
+  function updateRemoveButtonsVisibility() {
+    const allRemoveButtons =
+      unitSelectorsContainer.querySelectorAll(".remove-unit-btn")
+    const shouldBeVisible = allRemoveButtons.length > 1
+
+    allRemoveButtons.forEach((btn) => {
+      btn.classList.toggle("hidden", !shouldBeVisible)
+    })
   }
 
   function syncSliders() {
@@ -899,6 +936,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const randomIndex = Math.floor(Math.random() * options.length)
       options[randomIndex].selected = true
     }
+
+    updateRemoveButtonsVisibility()
   }
 
   function highlightTargetSounds(word, targetSoundString) {

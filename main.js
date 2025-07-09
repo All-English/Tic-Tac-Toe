@@ -199,6 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
+  
   function renderWinLines() {
     const existingLines = new Set(
       Array.from(gameBoard.querySelectorAll(".strike-through-line")).map(
@@ -476,29 +477,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (nextPlayer === currentPlayerIndex) return -1
     }
     return nextPlayer
-  }
-
-  function isPlayableMoveAvailable(board, player) {
-    const emptyCells = board
-      .map((cell, index) => (cell === null ? index : null))
-      .filter((index) => index !== null)
-
-    for (const index of emptyCells) {
-      const tempBoard = [...board]
-      tempBoard[index] = player
-      const winningLines = getWinningLines(
-        tempBoard,
-        player,
-        gameState.gridSize,
-        gameState.matchLength
-      )
-      // If we find any move that does NOT create a winning line, a playable move exists.
-      if (winningLines.length === 0) {
-        return true
-      }
-    }
-    // If we loop through all empty cells and every single one creates a line, no playable moves are left.
-    return false
   }
 
   function playSound(soundName) {

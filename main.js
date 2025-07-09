@@ -1008,7 +1008,12 @@ document.addEventListener("DOMContentLoaded", () => {
       winnerText = `${gameState.playerNames[winners[0]]} wins!`
     }
 
-    dialogTitle.innerHTML = `Congratulations! 🎉`
+    if (winners.length > 0) {
+      dialogTitle.innerHTML = `Congratulations! 🎉`
+    } else {
+      dialogTitle.innerHTML = `Game Over`
+    }
+    
     let winnerHTML = `<h3 class="h4 winner-text">${winnerText}</h3>`
 
     const sortedPlayers = gameState.playerNames

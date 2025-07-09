@@ -108,30 +108,31 @@
         </div>
 
         <div class="actions">
-          <label class="field">
-            <span class="label">Theme Color</span>
-            <select id="themeHueSelect">
-              <option value="bw">Black & White</option>
-              <option value="var(--oklch-red)">Red</option>
-              <option value="var(--oklch-pink)">Pink</option>
-              <option value="var(--oklch-purple)">Purple</option>
-              <option value="var(--oklch-violet)">Violet</option>
-              <option value="var(--oklch-indigo)">Indigo</option>
-              <option value="var(--oklch-blue)" selected>Blue</option>
-              <option value="var(--oklch-cyan)">Cyan</option>
-              <option value="var(--oklch-teal)">Teal</option>
-              <option value="var(--oklch-green)">Green</option>
-              <option value="var(--oklch-lime)">Lime</option>
-              <option value="var(--oklch-yellow)">Yellow</option>
-              <option value="var(--oklch-orange)">Orange</option>
-            </select>
-          </label>
           <div class="button-group">
             <button id="resetSettingsBtn" class="button outlined">Reset Settings</button>
             <button id="startGameBtn" class="button filled">Start Game</button>
           </div>
         </div>
       </div>
+
+      <label class="field" id="main-theme-selector">
+        <span class="label">Theme Color</span>
+        <select id="themeHueSelect">
+          <option value="bw">Black & White</option>
+          <option value="var(--oklch-red)">Red</option>
+          <option value="var(--oklch-pink)">Pink</option>
+          <option value="var(--oklch-purple)">Purple</option>
+          <option value="var(--oklch-violet)">Violet</option>
+          <option value="var(--oklch-indigo)">Indigo</option>
+          <option value="var(--oklch-blue)" selected>Blue</option>
+          <option value="var(--oklch-cyan)">Cyan</option>
+          <option value="var(--oklch-teal)">Teal</option>
+          <option value="var(--oklch-green)">Green</option>
+          <option value="var(--oklch-lime)">Lime</option>
+          <option value="var(--oklch-yellow)">Yellow</option>
+          <option value="var(--oklch-orange)">Orange</option>
+        </select>
+      </label>
 
       <div id="game-view" class="view">
         <div id="player-order-setup" class="pre-game-controls">

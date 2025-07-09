@@ -156,6 +156,12 @@ main {
   opacity: 0.5;
 }
 
+#main-theme-selector {
+  justify-self: center;
+  margin-block-start: var(--size-fluid-3);
+  max-width: 30ch;
+}
+
 #game-view:not(.hidden) {
   display: grid;
   place-items: center;

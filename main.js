@@ -161,7 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
       currentPlayer,
       playerColors,
       playerNames,
-      eliminatedPlayers, // Get the new eliminatedPlayers array
+      eliminatedPlayers,
     } = gameState
 
     for (let i = 0; i < numPlayers; i++) {
@@ -1167,6 +1167,7 @@ document.addEventListener("DOMContentLoaded", () => {
           break
         case "Classic":
           gameModeHint.textContent = "The first score wins."
+          break
         case "Survivor":
           gameModeHint.textContent = "Get a point and you're out."
           break

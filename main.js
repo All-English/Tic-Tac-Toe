@@ -392,7 +392,21 @@ document.addEventListener("DOMContentLoaded", () => {
         const lineId = lineToString(line)
         newCompletedLines.add(lineId)
 
-        line.forEach((cellIndex) => newHighlightedCells.add(cellIndex))
+        line.forEach((cellIndex) => {
+          newHighlightedCells.add(cellIndex)
+
+          // --- NEW LOGIC TO TRIGGER PULSE ---
+          const cellToPulse = gameBoard.querySelector(
+            `[data-index='${cellIndex}']`
+          )
+          if (cellToPulse) {
+            cellToPulse.classList.remove("pulse") // Reset animation
+            void cellToPulse.offsetWidth // Force reflow
+            cellToPulse.classList.add("pulse")
+          }
+          // --- END NEW LOGIC ---
+        })
+
         if (gameState.showLines) {
           const sortedLine = [...line].sort((a, b) => a - b)
           newWinLinesToDraw.push({
@@ -424,15 +438,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const activePlayerCount =
           gameState.numPlayers - gameState.eliminatedPlayers.length
         if (activePlayerCount <= 1) {
-          shouldEndGame = true // Set flag to end game
+          shouldEndGame = true
         }
       }
 
       if (gameMode === "Classic") {
-        shouldEndGame = true // Set flag to end game
+        shouldEndGame = true
       }
     }
-
     return { pointsScored: newPoints, shouldEndGame: shouldEndGame }
   }
 

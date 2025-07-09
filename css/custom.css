@@ -43,8 +43,8 @@ html.theme-bw {
 body {
   display: grid;
   place-content: center;
-  gap: var(--size-5);
-  padding: var(--size-5);
+  gap: var(--size-fluid-4);
+  padding: var(--size-fluid-4);
   font-family: 'Parkinsans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
@@ -107,11 +107,11 @@ main {
 #randomize-container {
   display: flex;
   justify-content: center;
-  margin-bottom: var(--size-3);
+  margin-bottom: var(--size-fluid-2);
 }
 
 #unit-selectors-container {
-  margin-bottom: var(--size-3);
+  margin-bottom: var(--size-fluid-2);
 }
 
 .word-selection-container {
@@ -120,15 +120,15 @@ main {
 
 .button-group {
   display: flex;
-  gap: var(--size-3);
+  gap: var(--size-fluid-2);
   justify-content: center;
-  margin-bottom: var(--size-3);
+  margin-bottom: var(--size-fluid-2);
 }
 
 #player-names-container {
   display: grid;
-  gap: var(--size-3);
-  margin-block: var(--size-2) 0;
+  gap: var(--size-fluid-2);
+  margin-block: var(--size-fluid-1) 0;
 }
 
 .content>.setup-section>.h5 {

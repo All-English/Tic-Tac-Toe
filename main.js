@@ -266,7 +266,10 @@ document.addEventListener("DOMContentLoaded", () => {
       moveHistory: newMoveHistory,
     }
 
-    if (gameState.movesMade === gameState.gridSize * gameState.gridSize) {
+    if (
+      gameState.movesMade === gameState.gridSize * gameState.gridSize &&
+      gameState.gameMode !== "Traditional" // Don't call endGame if it was already called by checkForWins
+    ) {
       render()
       endGame()
     } else {
@@ -340,6 +343,7 @@ document.addEventListener("DOMContentLoaded", () => {
       matchLength,
       completedLines,
       playerColors,
+      gameMode, // Destructure gameMode for easy access
     } = gameState
     let newPoints = 0
 
@@ -354,8 +358,10 @@ document.addEventListener("DOMContentLoaded", () => {
     )
 
     if (newWinningLines.length > 0) {
+      const scoringPlayer = currentPlayer
+
       const newScores = [...gameState.scores]
-      newScores[currentPlayer] += newWinningLines.length
+      newScores[scoringPlayer] += newWinningLines.length
 
       const newCompletedLines = new Set(completedLines)
       const newHighlightedCells = new Set(gameState.highlightedCells)
@@ -372,10 +378,9 @@ document.addEventListener("DOMContentLoaded", () => {
             id: `line-${sortedLine[0]}-${sortedLine[sortedLine.length - 1]}`,
             start: sortedLine[0],
             end: sortedLine[sortedLine.length - 1],
-            color: playerColors[currentPlayer],
+            color: playerColors[scoringPlayer],
           })
         }
-
         newPoints++
         if (move) {
           move.scoredLines.push(lineId)
@@ -390,10 +395,16 @@ document.addEventListener("DOMContentLoaded", () => {
         highlightedCells: newHighlightedCells,
         winLinesToDraw: newWinLinesToDraw,
       }
+
+      // --- NEW LOGIC ---
+      // If in Traditional mode and a point was scored, end the game immediately.
+      if (gameMode === "Traditional") {
+        render() // Render the winning line
+        endGame()
+      }
     }
     return newPoints
   }
-
   function checkForBlock(moveIndex) {
     let wasBlock = false
     const originalPlayer = gameState.currentPlayer
@@ -1093,10 +1104,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   gameModeSelector.addEventListener("change", (e) => {
     if (e.target.name === "game_mode") {
-      if (e.target.value === "Conquest") {
-        gameModeHint.textContent = "Get the most points."
-      } else {
-        gameModeHint.textContent = "Get the fewest points."
+      switch (e.target.value) {
+        case "Conquest":
+          gameModeHint.textContent = "Get the most points."
+          break
+        case "Stealth":
+          gameModeHint.textContent = "Get the fewest points."
+          break
+        case "Traditional":
+          gameModeHint.textContent = "The first to score wins."
+          break
       }
     }
   })

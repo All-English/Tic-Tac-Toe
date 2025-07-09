@@ -195,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
-  
+
   function renderWinLines() {
     const existingLines = new Set(
       Array.from(gameBoard.querySelectorAll(".strike-through-line")).map(
@@ -353,15 +353,63 @@ document.addEventListener("DOMContentLoaded", () => {
     render() // Re-render after state change
   }
 
-  function checkForWins(move, currentBoard) {
+  function applyWinningLines(lines, scoringPlayer) {
     const {
-      currentPlayer,
-      gridSize,
-      matchLength,
+      scores,
       completedLines,
+      highlightedCells,
+      winLinesToDraw,
       playerColors,
-      gameMode,
     } = gameState
+
+    const newScores = [...scores]
+    const newCompletedLines = new Set(completedLines)
+    const newHighlightedCells = new Set(highlightedCells)
+    const newWinLinesToDraw = [...winLinesToDraw]
+
+    newScores[scoringPlayer] += lines.length
+
+    lines.forEach((line) => {
+      const lineId = lineToString(line)
+      newCompletedLines.add(lineId)
+
+      line.forEach((cellIndex) => {
+        newHighlightedCells.add(cellIndex)
+
+        const cellToPulse = gameBoard.querySelector(
+          `[data-index='${cellIndex}']`
+        )
+        if (cellToPulse) {
+          cellToPulse.classList.remove("pulse")
+          void cellToPulse.offsetWidth
+          cellToPulse.classList.add("pulse")
+        }
+      })
+
+      if (gameState.showLines) {
+        const sortedLine = [...line].sort((a, b) => a - b)
+        newWinLinesToDraw.push({
+          id: `line-${sortedLine[0]}-${sortedLine[sortedLine.length - 1]}`,
+          start: sortedLine[0],
+          end: sortedLine[sortedLine.length - 1],
+          color: playerColors[scoringPlayer],
+        })
+      }
+    })
+
+    // Update the master state object
+    gameState = {
+      ...gameState,
+      scores: newScores,
+      completedLines: newCompletedLines,
+      highlightedCells: newHighlightedCells,
+      winLinesToDraw: newWinLinesToDraw,
+    }
+  }
+
+  function checkForWins(move, currentBoard) {
+    const { currentPlayer, gridSize, matchLength, completedLines, gameMode } =
+      gameState
     let newPoints = 0
     let shouldEndGame = false
 
@@ -376,56 +424,10 @@ document.addEventListener("DOMContentLoaded", () => {
     )
 
     if (newWinningLines.length > 0) {
-      const scoringPlayer = currentPlayer
-      const newScores = [...gameState.scores]
-      newScores[scoringPlayer] += newWinningLines.length
+      newPoints = newWinningLines.length
+      applyWinningLines(newWinningLines, currentPlayer)
 
-      const newCompletedLines = new Set(completedLines)
-      const newHighlightedCells = new Set(gameState.highlightedCells)
-      const newWinLinesToDraw = [...gameState.winLinesToDraw]
-
-      newWinningLines.forEach((line) => {
-        const lineId = lineToString(line)
-        newCompletedLines.add(lineId)
-
-        line.forEach((cellIndex) => {
-          newHighlightedCells.add(cellIndex)
-
-          // --- NEW LOGIC TO TRIGGER PULSE ---
-          const cellToPulse = gameBoard.querySelector(
-            `[data-index='${cellIndex}']`
-          )
-          if (cellToPulse) {
-            cellToPulse.classList.remove("pulse") // Reset animation
-            void cellToPulse.offsetWidth // Force reflow
-            cellToPulse.classList.add("pulse")
-          }
-          // --- END NEW LOGIC ---
-        })
-
-        if (gameState.showLines) {
-          const sortedLine = [...line].sort((a, b) => a - b)
-          newWinLinesToDraw.push({
-            id: `line-${sortedLine[0]}-${sortedLine[sortedLine.length - 1]}`,
-            start: sortedLine[0],
-            end: sortedLine[sortedLine.length - 1],
-            color: playerColors[scoringPlayer],
-          })
-        }
-        newPoints++
-        if (move) {
-          move.scoredLines.push(lineId)
-        }
-      })
-
-      gameState = {
-        ...gameState,
-        scores: newScores,
-        completedLines: newCompletedLines,
-        highlightedCells: newHighlightedCells,
-        winLinesToDraw: newWinLinesToDraw,
-      }
-
+      // Add the scoring player to the eliminated list in Survivor mode
       if (
         gameMode === "Survivor" &&
         !gameState.eliminatedPlayers.includes(currentPlayer)
@@ -438,8 +440,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
+      // End the game immediately in Classic mode
       if (gameMode === "Classic") {
         shouldEndGame = true
+      }
+
+      // Update the move history with the scored lines after applying them
+      if (move) {
+        move.scoredLines.push(...newWinningLines.map(lineToString))
       }
     }
     return { pointsScored: newPoints, shouldEndGame: shouldEndGame }
@@ -999,7 +1007,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       dialogTitle.innerHTML = `Game Over`
     }
-    
+
     let winnerHTML = `<h3 class="h4 winner-text">${winnerText}</h3>`
 
     const sortedPlayers = gameState.playerNames

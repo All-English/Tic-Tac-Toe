@@ -134,8 +134,8 @@ main {
 .content>.setup-section>.h5 {
   /* Updated selector */
   border-bottom: 1px solid var(--border-color);
-  padding-bottom: var(--size-1);
-  margin-block-end: var(--size-4);
+  padding-bottom: var(--size-fluid-1);
+  margin-block-end: var(--size-fluid-2);
   text-align: center;
 }
 
@@ -220,7 +220,7 @@ main {
 #game-controls:not(.hidden) {
   display: flex;
   justify-content: center;
-  gap: var(--size-3);
+  gap: var(--size-fluid-2);
 }
 
 .toggle-button-group {
@@ -232,7 +232,6 @@ main {
 }
 
 .cell {
-  /* --_bg-color: var(--blue-1); */
   --_bg-color: var(--surface-card);
   --_border-color: var(--border-color);
   --_text-color: var(--text-color-1);
@@ -249,7 +248,7 @@ main {
   place-content: center;
 
   text-align: center;
-  min-width: 100px;
+  min-width: 10ch;
   transition: background-color 0.2s var(--ease-out-3);
 }
 
@@ -308,13 +307,13 @@ main {
 }
 
 .phonics-unit-container+.phonics-unit-container {
-  margin-top: var(--size-2);
+  margin-top: var(--size-fluid-1);
 }
 
 dialog#game-over-dialog {
   --_bg-color: var(--surface-tonal);
-  min-width: 50ch;
-  padding: var(--size-5);
+  max-width: 50ch;
+  padding: var(--size-fluid-3);
   border-radius: var(--radius-3);
   opacity: 0;
   transform: scale(0.95);
@@ -350,7 +349,7 @@ dialog#game-over-dialog::backdrop {
   color: var(--primary);
   display: inline-flex;
   align-items: center;
-  gap: var(--size-2);
+  gap: var(--size-fluid-1);
 }
 
 #game-over-dialog #dialog-title svg {
@@ -364,7 +363,7 @@ dialog#game-over-dialog::backdrop {
 
 #game-over-dialog .score-list {
   display: grid;
-  gap: var(--size-3);
+  gap: var(--size-fluid-2);
   margin-top: var(--size-4);
 }
 
@@ -372,7 +371,7 @@ dialog#game-over-dialog::backdrop {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: var(--size-2);
+  gap: var(--size-fluid-1);
   font-size: var(--font-size-2);
 }
 
@@ -388,10 +387,10 @@ dialog#game-over-dialog::backdrop {
 
 .player-info-block {
   font-size: var(--font-size-fluid-1);
-  padding-block: var(--size-1);
+  padding-block: var(--size-fluid-1);
   flex-grow: 1;
   text-align: center;
-  gap: var(--size-1);
+  gap: var(--size-fluid-1);
   --_bg-color: light-dark(oklch(from var(--player-color) 95% 0.02 h), oklch(from var(--player-color) 25% 0.02 h));
   --_border-color: light-dark(oklch(from var(--player-color) 85% 0.05 h), oklch(from var(--player-color) 15% 0.05 h));
   transition:
@@ -435,9 +434,9 @@ dialog#game-over-dialog::backdrop {
 
 .setting-group {
   display: grid;
-  gap: var(--size-3);
+  gap: var(--size-fluid-2);
   justify-items: start;
-  margin-block-start: var(--size-4);
+  margin-block-start: var(--size-fluid-3);
 }
 
 .setting-group>.label {
@@ -449,7 +448,7 @@ dialog#game-over-dialog::backdrop {
 
 .strike-through-line {
   position: absolute;
-  height: 5px;
+  height: var(--size-1);
   border-radius: var(--radius-round);
   box-shadow: var(--shadow-2);
   background-color: currentColor;
@@ -471,10 +470,9 @@ label:has(#showLinesToggle) .label {
   font-size: var(--font-size-0);
   text-align: center;
   margin-inline: auto;
-  margin-top: calc(var(--size-2) * -1);
-  /* Pulls text closer to the slider */
-  max-width: 28ch;
+  margin-top: calc(var(--size-fluid-1) * -1);
   /* Constrains line length for readability */
+  max-width: 28ch;
 }
 
 #view-container {

@@ -173,7 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
         playerBlock.className = "card outlined player-info-block"
         playerInfoList.appendChild(playerBlock)
         playerBlock.innerHTML = `
-          <hgroup><h3 class="h6" data-role="name"></h3></hgroup>
+          <hgroup><h3 data-role="name"></h3></hgroup>
           <div class="content" data-role="score"></div>
         `
       }

@@ -608,29 +608,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function updateTheme() {
-    const isDarkMode = darkModeToggle.checked
-    const selectedTheme = themeHueSelect.value
-
-    // Handle Dark/Light mode class
-    if (isDarkMode) {
-      htmlElement.classList.remove("light")
-      htmlElement.classList.add("dark")
-    } else {
-      htmlElement.classList.remove("dark")
-      htmlElement.classList.add("light")
-    }
-
-    // Handle Color/B&W mode class
-    if (selectedTheme === "bw") {
-      htmlElement.classList.add("theme-bw")
-      htmlElement.style.removeProperty("--palette-hue")
-    } else {
-      htmlElement.classList.remove("theme-bw")
-      htmlElement.style.setProperty("--palette-hue", selectedTheme)
-    }
-  }
-
   // --- UNIFIED THEME LOGIC ---
   const darkModeToggle = document.getElementById("darkModeToggle")
   const themeHueSelect = document.getElementById("themeHueSelect")

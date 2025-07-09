@@ -155,8 +155,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderPlayerInfo() {
-    const { numPlayers, scores, currentPlayer, playerColors, playerNames } =
-      gameState
+    const {
+      numPlayers,
+      scores,
+      currentPlayer,
+      playerColors,
+      playerNames,
+      eliminatedPlayers, // Get the new eliminatedPlayers array
+    } = gameState
+
     for (let i = 0; i < numPlayers; i++) {
       const playerBlockId = `player-info-block-${i}`
       let playerBlock = document.getElementById(playerBlockId)
@@ -175,14 +182,23 @@ document.addEventListener("DOMContentLoaded", () => {
       nameHeader.textContent = `${playerNames[i]} (${playerSymbols[i]})`
       scoreDiv.textContent = `Score: ${scores[i]}`
       playerBlock.style.setProperty("--player-color", playerColors[i])
+
+      // Toggle 'current-player' class
       if (i === currentPlayer) {
         playerBlock.classList.add("current-player")
       } else {
         playerBlock.classList.remove("current-player")
       }
+
+      // --- NEW LOGIC ---
+      // Toggle 'eliminated' class
+      if (eliminatedPlayers && eliminatedPlayers.includes(i)) {
+        playerBlock.classList.add("eliminated")
+      } else {
+        playerBlock.classList.remove("eliminated")
+      }
     }
   }
-
   function renderWinLines() {
     const existingLines = new Set(
       Array.from(gameBoard.querySelectorAll(".strike-through-line")).map(
@@ -220,24 +236,22 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- LOGIC / STATE MANAGEMENT FUNCTIONS ---
 
   function handleCellClick(event) {
-    if (!isOrderLocked) return // Can't play until order is locked
+    if (!isOrderLocked) return
     const cell = event.target.closest(".cell")
     if (!cell) return
     const index = parseInt(cell.dataset.index)
     if (gameState.board[index] !== null) return
 
     const wasBlock = checkForBlock(index)
-
     const move = {
       index: index,
       player: gameState.currentPlayer,
       scoredLines: [],
     }
-
     const newBoard = [...gameState.board]
     newBoard[index] = gameState.currentPlayer
 
-    const pointsScored = checkForWins(move, newBoard)
+    const { pointsScored, shouldEndGame } = checkForWins(move, newBoard)
 
     if (pointsScored > 0) {
       playSoundSequentially("score", pointsScored)
@@ -257,24 +271,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const newMoveHistory = [...gameState.moveHistory, move]
     const newMovesMade = gameState.movesMade + 1
-    let nextPlayer = (gameState.currentPlayer + 1) % gameState.numPlayers
 
     gameState = {
       ...gameState,
-      board: newBoard, // Use the new board from this move
+      board: newBoard,
       movesMade: newMovesMade,
       moveHistory: newMoveHistory,
     }
 
-    if (
-      gameState.movesMade === gameState.gridSize * gameState.gridSize &&
-      gameState.gameMode !== "Traditional" // Don't call endGame if it was already called by checkForWins
+    render()
+
+    if (shouldEndGame) {
+      endGame()
+    } else if (
+      gameState.movesMade ===
+      gameState.gridSize * gameState.gridSize
     ) {
-      render()
+      // End the game if the board is full
       endGame()
     } else {
+      // Otherwise, find the next active player and continue
+      const nextPlayer = getNextPlayerIndex(gameState.currentPlayer)
       gameState = { ...gameState, currentPlayer: nextPlayer }
-      render() // Single call to re-render UI
+      // Re-render to update the current player highlight
+      renderPlayerInfo()
     }
   }
 
@@ -343,9 +363,10 @@ document.addEventListener("DOMContentLoaded", () => {
       matchLength,
       completedLines,
       playerColors,
-      gameMode, // Destructure gameMode for easy access
+      gameMode,
     } = gameState
     let newPoints = 0
+    let shouldEndGame = false
 
     const potentialWins = getWinningLines(
       currentBoard,
@@ -359,7 +380,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (newWinningLines.length > 0) {
       const scoringPlayer = currentPlayer
-
       const newScores = [...gameState.scores]
       newScores[scoringPlayer] += newWinningLines.length
 
@@ -387,7 +407,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       })
 
-      // Update the master state object
       gameState = {
         ...gameState,
         scores: newScores,
@@ -396,15 +415,26 @@ document.addEventListener("DOMContentLoaded", () => {
         winLinesToDraw: newWinLinesToDraw,
       }
 
-      // --- NEW LOGIC ---
-      // If in Traditional mode and a point was scored, end the game immediately.
-      if (gameMode === "Traditional") {
-        render() // Render the winning line
-        endGame()
+      if (
+        gameMode === "Survivor" &&
+        !gameState.eliminatedPlayers.includes(currentPlayer)
+      ) {
+        gameState.eliminatedPlayers.push(currentPlayer)
+        const activePlayerCount =
+          gameState.numPlayers - gameState.eliminatedPlayers.length
+        if (activePlayerCount <= 1) {
+          shouldEndGame = true // Set flag to end game
+        }
+      }
+
+      if (gameMode === "Classic") {
+        shouldEndGame = true // Set flag to end game
       }
     }
-    return newPoints
+
+    return { pointsScored: newPoints, shouldEndGame: shouldEndGame }
   }
+
   function checkForBlock(moveIndex) {
     let wasBlock = false
     const originalPlayer = gameState.currentPlayer
@@ -434,6 +464,42 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --- UTILITY FUNCTIONS ---
+
+  function getNextPlayerIndex(currentPlayerIndex) {
+    const { numPlayers, eliminatedPlayers } = gameState
+    let nextPlayer = (currentPlayerIndex + 1) % numPlayers
+
+    // Keep looping until we find a player who is NOT eliminated
+    while (eliminatedPlayers.includes(nextPlayer)) {
+      nextPlayer = (nextPlayer + 1) % numPlayers
+      // Safeguard against infinite loops if all players are eliminated
+      if (nextPlayer === currentPlayerIndex) return -1
+    }
+    return nextPlayer
+  }
+
+  function isPlayableMoveAvailable(board, player) {
+    const emptyCells = board
+      .map((cell, index) => (cell === null ? index : null))
+      .filter((index) => index !== null)
+
+    for (const index of emptyCells) {
+      const tempBoard = [...board]
+      tempBoard[index] = player
+      const winningLines = getWinningLines(
+        tempBoard,
+        player,
+        gameState.gridSize,
+        gameState.matchLength
+      )
+      // If we find any move that does NOT create a winning line, a playable move exists.
+      if (winningLines.length === 0) {
+        return true
+      }
+    }
+    // If we loop through all empty cells and every single one creates a line, no playable moves are left.
+    return false
+  }
 
   function playSound(soundName) {
     if (isMuted) return
@@ -636,7 +702,7 @@ document.addEventListener("DOMContentLoaded", () => {
       settings.matchLength = parseInt(matchLengthInput.value)
       settings.gameMode = document.querySelector(
         'input[name="game_mode"]:checked'
-      ).value 
+      ).value
       settings.selectedUnits = [
         ...document.querySelectorAll(".phonics-unit-select"),
       ]
@@ -653,6 +719,11 @@ document.addEventListener("DOMContentLoaded", () => {
         return
       }
     } else {
+      // For subsequent rounds, let's re-shuffle colors for variety
+      const dynamicColorPalette = generatePlayerColors()
+      const shuffledColors = [...dynamicColorPalette].sort(
+        () => 0.5 - Math.random()
+      )
       settings = {
         playerNames: gameState.playerNames,
         numPlayers: gameState.numPlayers,
@@ -660,7 +731,7 @@ document.addEventListener("DOMContentLoaded", () => {
         matchLength: gameState.matchLength,
         gameMode: gameState.gameMode,
         selectedUnits: gameState.selectedUnits,
-        playerColors: gameState.playerColors,
+        playerColors: shuffledColors.slice(0, gameState.numPlayers),
         showLines: gameState.showLines,
       }
     }
@@ -683,18 +754,16 @@ document.addEventListener("DOMContentLoaded", () => {
       moveHistory: [],
       highlightedCells: new Set(),
       winLinesToDraw: [],
+      eliminatedPlayers: [],
     }
 
-    // This is where we decide whether to show the re-order screen or not
     if (isNewGame) {
-      // This is the FIRST game, so lock the order and start immediately.
       isOrderLocked = true
       document.getElementById("player-order-setup").classList.add("hidden")
       document.getElementById("player-info-list").classList.remove("hidden")
       document.getElementById("player-order-list").classList.add("locked")
       renderPlayerInfo()
     } else {
-      // This is a RESET or PLAY AGAIN, so show the pre-game re-order screen.
       isOrderLocked = false
       document.getElementById("player-order-setup").classList.remove("hidden")
       document.getElementById("player-info-list").classList.add("hidden")
@@ -704,7 +773,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setupView.classList.remove("is-active")
     gameView.classList.add("is-active")
-
     renderBoard()
     addGameEventListeners()
   }
@@ -914,7 +982,12 @@ document.addEventListener("DOMContentLoaded", () => {
     let bestScore
     let winners = []
 
-    if (gameState.gameMode === "Stealth") {
+    if (gameState.gameMode === "Survivor") {
+      // In Survivor mode, players with ZERO points win.
+      winners = gameState.scores
+        .map((score, index) => (score === 0 ? index : -1))
+        .filter((index) => index !== -1)
+    } else if (gameState.gameMode === "Stealth") {
       // In Stealth mode, the lowest score wins
       bestScore = Infinity
       for (let i = 0; i < gameState.numPlayers; i++) {
@@ -926,7 +999,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     } else {
-      // In Conquest mode, the highest score wins
+      // In Conquest or Classic mode, the highest score wins
       bestScore = -1
       for (let i = 0; i < gameState.numPlayers; i++) {
         if (gameState.scores[i] > bestScore) {
@@ -953,7 +1026,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       winnerText = `${gameState.playerNames[winners[0]]} wins!`
     }
-    
+
     dialogTitle.innerHTML = `Congratulations! 🎉`
     let winnerHTML = `<h3 class="h4 winner-text">${winnerText}</h3>`
 
@@ -985,26 +1058,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setTimeout(() => {
       gameDialog.showModal()
-    }, 3000)
+    }, 1500)
   }
 
   function resetSettings() {
-    const conquestRadio = document.querySelector('input[name="game_mode"][value="Conquest"]');
-    if (conquestRadio) {
-      conquestRadio.checked = true;
-      // Trigger the change event to update the hint text
-      conquestRadio.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-
     // Reset sliders and toggles to their default values
     numPlayersInput.value = 2
     gridSizeInput.value = 3
     matchLengthInput.value = 3
     showLinesToggle.checked = true
+    muteSoundsToggle.checked = false
 
     // Reset theme color dropdown and trigger the change
     themeHueSelect.value = "var(--oklch-blue)"
     themeHueSelect.dispatchEvent(new Event("change"))
+
+    // Reset the game mode to Conquest
+    const conquestRadio = document.querySelector(
+      'input[name="game_mode"][value="Conquest"]'
+    )
+    if (conquestRadio) {
+      conquestRadio.checked = true
+      // Trigger the change event to update the hint text
+      conquestRadio.dispatchEvent(new Event("change", { bubbles: true }))
+    }
 
     // Remove all but the first word unit selector
     const allUnitSelectors = unitSelectorsContainer.querySelectorAll(
@@ -1028,7 +1105,6 @@ document.addEventListener("DOMContentLoaded", () => {
     updateSliderValues()
     syncSliders()
   }
-
   function renderPlayerOrderList() {
     const container = document.getElementById("player-order-list")
     container.innerHTML = ""
@@ -1091,7 +1167,7 @@ document.addEventListener("DOMContentLoaded", () => {
   addUnitBtn.addEventListener("click", createUnitSelector)
   startGameBtn.addEventListener("click", () => initGame(true))
   randomizeOrderBtn.addEventListener("click", randomizePlayerOrder)
-  
+
   muteSoundsToggle.addEventListener("change", () => {
     isMuted = muteSoundsToggle.checked
   })
@@ -1111,8 +1187,10 @@ document.addEventListener("DOMContentLoaded", () => {
         case "Stealth":
           gameModeHint.textContent = "Get the fewest points."
           break
-        case "Traditional":
-          gameModeHint.textContent = "The first to score wins."
+        case "Classic":
+          gameModeHint.textContent = "The first score wins."
+        case "Survivor":
+          gameModeHint.textContent = "Get a point and you're out."
           break
       }
     }

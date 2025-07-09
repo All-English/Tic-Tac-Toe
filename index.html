@@ -43,7 +43,7 @@
             <h4 class="h5">Game Rules</h4>
             <div class="range-container">
               <label class="range">
-                <span class="label">Grid Size:</span>
+                <span class="label">Board Size:</span>
                 <input type="range" id="gridSize" min="3" max="10" value="3">
               </label>
               <span id="gridSizeValue">3x3</span>
@@ -60,8 +60,12 @@
                   <span>Stealth</span>
                 </label>
                 <label class="toggle-button">
-                  <input type="radio" name="game_mode" value="Traditional">
-                  <span>Traditional</span>
+                  <input type="radio" name="game_mode" value="Classic">
+                  <span>Classic</span>
+                </label>
+                <label class="toggle-button">
+                  <input type="radio" name="game_mode" value="Survivor">
+                  <span>Survivor</span>
                 </label>
               </div>
               <p class="field-hint" id="gameModeHint">Get the most points.</p>

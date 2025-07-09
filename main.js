@@ -1,25 +1,6 @@
 import { smartPhonicsWordBank, playerSymbols } from "./config.js"
 
 document.addEventListener("DOMContentLoaded", () => {
-  // --- THEME SWITCHER LOGIC ---
-  const darkModeToggle = document.getElementById("darkModeToggle")
-  const htmlElement = document.documentElement
-
-  const setInitialTheme = () => {
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches
-    htmlElement.className = prefersDark ? "dark" : "light"
-    darkModeToggle.checked = prefersDark
-  }
-
-  const handleThemeChange = (e) => {
-    htmlElement.className = e.target.checked ? "dark" : "light"
-  }
-
-  darkModeToggle.addEventListener("change", handleThemeChange)
-  setInitialTheme() // Set theme on initial load
-
   // --- STATE ---
   let gameState = {}
   let areGameEventListenersAttached = false
@@ -546,19 +527,93 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function generatePlayerColors() {
     const colors = []
-    const initialShift = 45 // Start Player 1's hue 45 degrees away from the primary theme color
-    const hueShiftAmount = 55 // Shift each subsequent player's hue by another 55 degrees
-    const maxPlayers = 5 // Always generate a full palette for 5 players
+    const selectedTheme = themeHueSelect.value
 
-    for (let i = 0; i < maxPlayers; i++) {
-      // We use --color-9 as the base, which is the default for --primary
-      const totalShift = initialShift + i * hueShiftAmount
-      const shiftedColor = `oklch(from var(--color-9) l c calc(h + ${totalShift}))`
-      colors.push(shiftedColor)
+    if (selectedTheme === "bw") {
+      // In B&W mode, use specific, vibrant colors for players.
+      return [
+        "var(--red)",
+        "var(--blue)",
+        "var(--green)",
+        "var(--orange)",
+        "var(--purple)",
+      ]
+    } else {
+      // For color themes, use the hue-shifting logic.
+      const initialShift = 45
+      const hueShiftAmount = 55
+      const maxPlayers = 5
+
+      for (let i = 0; i < maxPlayers; i++) {
+        const totalShift = initialShift + i * hueShiftAmount
+        const shiftedColor = `oklch(from var(--color-9) l c calc(h + ${totalShift}))`
+        colors.push(shiftedColor)
+      }
+      return colors
     }
-    return colors
   }
 
+  function updateTheme() {
+    const isDarkMode = darkModeToggle.checked
+    const selectedTheme = themeHueSelect.value
+
+    // Handle Dark/Light mode class
+    if (isDarkMode) {
+      htmlElement.classList.remove("light")
+      htmlElement.classList.add("dark")
+    } else {
+      htmlElement.classList.remove("dark")
+      htmlElement.classList.add("light")
+    }
+
+    // Handle Color/B&W mode class
+    if (selectedTheme === "bw") {
+      htmlElement.classList.add("theme-bw")
+      htmlElement.style.removeProperty("--palette-hue")
+    } else {
+      htmlElement.classList.remove("theme-bw")
+      htmlElement.style.setProperty("--palette-hue", selectedTheme)
+    }
+  }
+
+  // --- UNIFIED THEME LOGIC ---
+  const darkModeToggle = document.getElementById("darkModeToggle")
+  const themeHueSelect = document.getElementById("themeHueSelect")
+  const htmlElement = document.documentElement
+
+  function updateTheme() {
+    const isDarkMode = darkModeToggle.checked
+    const selectedTheme = themeHueSelect.value
+
+    // Handle Dark/Light mode class
+    if (isDarkMode) {
+      htmlElement.classList.remove("light")
+      htmlElement.classList.add("dark")
+    } else {
+      htmlElement.classList.remove("dark")
+      htmlElement.classList.add("light")
+    }
+
+    // Handle Color/B&W mode class
+    if (selectedTheme === "bw") {
+      htmlElement.classList.add("theme-bw")
+      htmlElement.style.removeProperty("--palette-hue")
+    } else {
+      htmlElement.classList.remove("theme-bw")
+      htmlElement.style.setProperty("--palette-hue", selectedTheme)
+    }
+  }
+
+  // Set the initial theme based on system preference and default dropdown value
+  darkModeToggle.checked = window.matchMedia(
+    "(prefers-color-scheme: dark)"
+  ).matches
+  updateTheme()
+
+  // Add listeners that call the single update function
+  darkModeToggle.addEventListener("change", updateTheme)
+  themeHueSelect.addEventListener("change", updateTheme)
+  
   // --- SETUP PHASE FUNCTIONS (Imperative, run before game starts) ---
 
   function initGame(isNewGame) {
@@ -981,17 +1036,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderPlayerInfo() // Render the final order as score cards
   }
 
-  // --- THEME HUE SWITCHER LOGIC ---
-
-  const themeHueSelect = document.getElementById("themeHueSelect")
-
-  const handleHueChange = (e) => {
-    const newHue = e.target.value
-    document.documentElement.style.setProperty("--palette-hue", newHue)
-  }
-
-  themeHueSelect.addEventListener("change", handleHueChange)
-
   // --- INITIALIZE and ATTACH LISTENERS ---
 
   const resetSettingsBtn = document.getElementById("resetSettingsBtn")
@@ -1087,7 +1131,7 @@ document.addEventListener("DOMContentLoaded", () => {
       targetEl.classList.add("drop-target")
     }
   })
-  
+
   playerOrderList.addEventListener("drop", (e) => {
     if (isOrderLocked) return
     e.preventDefault()
@@ -1119,7 +1163,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Re-render the list to show the final new order
     renderPlayerOrderList()
   })
-  
+
   randomizeTurnOrderBtn.addEventListener("click", randomizeTurnOrder)
   lockOrderBtn.addEventListener("click", lockOrderAndStartGame)
 

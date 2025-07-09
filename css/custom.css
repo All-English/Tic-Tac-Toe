@@ -13,6 +13,29 @@
   --surface-card: light-dark(var(--color-2), var(--color-14));
 
   --border-color: light-dark(var(--color-4), var(--color-12));
+
+  --purple: oklch(from var(--color-9) l 0.2 310);
+}
+
+/* Black & White Theme Definition */
+html.theme-bw {
+  --surface-default: light-dark(var(--gray-0), var(--gray-15));
+  --surface-elevated: light-dark(var(--gray-0), var(--gray-15));
+  --surface-tonal: light-dark(var(--gray-0), var(--gray-15));
+  --surface-filled: light-dark(var(--gray-1), var(--gray-14));
+
+  --surface-card: light-dark(var(--gray-0), var(--gray-15));
+
+  --border-color: light-dark(var(--gray-4), var(--gray-12));
+
+  --primary: light-dark(var(--gray-15), var(--gray-1));
+
+  & button {
+    --_bg-color: var(--surface-default);
+    --_border-color: var(--primary);
+    --_text-color: var(--primary);
+  }
+
 }
 
 /* CUSTOM STYLES */
@@ -168,7 +191,7 @@ main {
   padding: var(--size-2) var(--size-3);
   border-radius: var(--radius-2);
   border: 1px solid var(--border-color);
-  background-color: var(--surface-1);
+  background-color: var(--surface-elevated);
   box-shadow: var(--shadow-2);
   transition: background-color 0.2s ease;
 }
@@ -181,7 +204,7 @@ main {
 .player-name-field.drop-target {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
-  background-color: var(--surface-2);
+  background-color: var(--surface-filled);
 }
 
 /* New class to lock dragging when game starts */

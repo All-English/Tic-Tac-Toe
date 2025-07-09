@@ -115,6 +115,7 @@ main {
 }
 
 .word-selection-container {
+  display: grid;
   justify-items: center;
 }
 

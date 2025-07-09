@@ -991,9 +991,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (
       winners.length === 0 ||
-      (gameState.gameMode === "Conquest" && bestScore === 0)
+      ((gameState.gameMode === "Conquest" ||
+        gameState.gameMode === "Classic") &&
+        bestScore === 0)
     ) {
-      winnerText = "No one scored any points! It's a draw."
+      winnerText = "No one scored any points. It's a draw!"
+      winners = []
     } else if (winners.length === gameState.numPlayers) {
       winnerText = "It's a perfect tie!"
     } else if (winners.length > 1) {

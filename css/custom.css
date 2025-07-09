@@ -223,6 +223,14 @@ main {
   gap: var(--size-3);
 }
 
+.toggle-button-group {
+  display: flex;
+  flex-wrap: wrap;
+  /* Allow items to wrap to the next line */
+  gap: var(--size-2);
+  justify-content: center;
+}
+
 .cell {
   /* --_bg-color: var(--blue-1); */
   --_bg-color: var(--surface-card);

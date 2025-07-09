@@ -37,6 +37,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const randomizeOrderBtn = document.getElementById("randomizeOrderBtn")
   const gameDialog = document.getElementById("game-over-dialog")
   const muteSoundsToggle = document.getElementById("muteSoundsToggle")
+  const resetGameBtn = document.getElementById("resetGameBtn")
+  const backToSettingsBtn = document.getElementById("settings-btn")
+  const playAgainBtn = document.getElementById("play-again-btn")
+  const closeDialogBtn = document.getElementById("close-dialog-btn")
 
   // --- EVENT HANDLER FUNCTIONS ---
   // We define named handlers so we can remove them later.
@@ -67,10 +71,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function addGameEventListeners() {
     if (areGameEventListenersAttached) return
-    const resetGameBtn = document.getElementById("resetGameBtn")
-    const backToSettingsBtn = document.getElementById("settings-btn")
-    const playAgainBtn = document.getElementById("play-again-btn")
-    const closeDialogBtn = document.getElementById("close-dialog-btn")
 
     resetGameBtn.addEventListener("click", handleReset)
     backToSettingsBtn.addEventListener("click", handleBackToSettings)
@@ -83,10 +83,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function removeGameEventListeners() {
     if (!areGameEventListenersAttached) return
-    const resetGameBtn = document.getElementById("resetGameBtn")
-    const backToSettingsBtn = document.getElementById("settings-btn")
-    const playAgainBtn = document.getElementById("play-again-btn")
-    const closeDialogBtn = document.getElementById("close-dialog-btn")
 
     resetGameBtn.removeEventListener("click", handleReset)
     backToSettingsBtn.removeEventListener("click", handleBackToSettings)

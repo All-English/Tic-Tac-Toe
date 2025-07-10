@@ -222,6 +222,11 @@ main {
 #game-board:not(.hidden) {
   display: grid;
   position: relative;
+  border-radius: var(--radius-3);
+  overflow: hidden;
+  border: var(--border-size-1) solid var(--border-color);
+  gap: var(--border-size-1);
+  background-color: var(--border-color);
 }
 
 #game-controls:not(.hidden) {
@@ -232,7 +237,6 @@ main {
 
 .cell {
   --_bg-color: var(--surface-card);
-  --_border-color: var(--border-color);
   --_text-color: var(--text-color-1);
   --_border-radius: 0;
 

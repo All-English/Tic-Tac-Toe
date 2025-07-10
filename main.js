@@ -185,7 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const nameHeader = playerBlock.querySelector('[data-role="name"]')
       const scoreDiv = playerBlock.querySelector('[data-role="score"]')
       nameHeader.textContent = `${playerNames[i]} (${playerSymbols[i]})`
-      scoreDiv.textContent = `Score: ${scores[i]}`
+      scoreDiv.textContent = `${scores[i]}`
       playerBlock.style.setProperty("--player-color", playerColors[i])
 
       if (gameState.playerRadii && gameState.playerRadii[i]) {

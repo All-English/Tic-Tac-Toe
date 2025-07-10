@@ -160,6 +160,14 @@ main {
   justify-self: center;
   margin-block-start: var(--size-fluid-3);
   max-width: 30ch;
+  transition: opacity 0.4s var(--ease-out-3), transform 0.4s var(--ease-out-3);
+}
+
+/* When the setup view is NOT active, hide the theme selector */
+#game-setup:not(.is-active)~#main-theme-selector {
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
 }
 
 #game-view:not(.hidden) {
@@ -389,14 +397,15 @@ dialog#game-over-dialog::backdrop {
 }
 
 .player-info-block {
+  --_bg-color: light-dark(oklch(from var(--player-color) 95% 0.02 h), oklch(from var(--player-color) 25% 0.02 h));
+  --_border-color: light-dark(oklch(from var(--player-color) 85% 0.05 h), oklch(from var(--player-color) 15% 0.05 h));
   font-size: var(--font-size-fluid-1);
   padding-block: var(--size-fluid-1);
   flex-grow: 1;
   text-align: center;
-  gap: var(--size-fluid-1);
+  border-radius: var(--radius-2);
+  gap: 0;
   /* --border-radius: var(--radius-drawn-1); */
-  --_bg-color: light-dark(oklch(from var(--player-color) 95% 0.02 h), oklch(from var(--player-color) 25% 0.02 h));
-  --_border-color: light-dark(oklch(from var(--player-color) 85% 0.05 h), oklch(from var(--player-color) 15% 0.05 h));
   transition:
     transform 0.3s var(--ease-3),
     box-shadow 0.3s var(--ease-3);

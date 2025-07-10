@@ -509,6 +509,12 @@
   --radius-blob-3: 37% 63% 56% 44%/49% 56% 44% 51%;
   --radius-blob-4: 63% 37% 37% 63%/43% 37% 63% 57%;
   --radius-blob-5: 49% 51% 48% 52%/57% 44% 56% 43%;
+  --radius-drawn-1: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  --radius-drawn-2: 125px 10px 20px 185px / 25px 205px 205px 25px;
+  --radius-drawn-3: 15px 255px 15px 225px / 225px 15px 255px 15px;
+  --radius-drawn-4: 15px 25px 155px 25px / 225px 150px 25px 115px;
+  --radius-drawn-5: 250px 25px 15px 20px / 15px 80px 105px 115px;
+  --radius-drawn-6: 28px 100px 20px 15px / 150px 30px 205px 225px;
   --radius-conditional-1: clamp(0px, calc(100vw - 100%) * 1e5, var(--radius-1));
   --radius-conditional-2: clamp(0px, calc(100vw - 100%) * 1e5, var(--radius-2));
   --radius-conditional-3: clamp(0px, calc(100vw - 100%) * 1e5, var(--radius-3));

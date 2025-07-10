@@ -390,6 +390,7 @@ dialog#game-over-dialog::backdrop {
   flex-grow: 1;
   text-align: center;
   gap: var(--size-fluid-1);
+  /* --border-radius: var(--radius-drawn-1); */
   --_bg-color: light-dark(oklch(from var(--player-color) 95% 0.02 h), oklch(from var(--player-color) 25% 0.02 h));
   --_border-color: light-dark(oklch(from var(--player-color) 85% 0.05 h), oklch(from var(--player-color) 15% 0.05 h));
   transition:

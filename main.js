@@ -16,6 +16,15 @@ document.addEventListener("DOMContentLoaded", () => {
     gameOver: new Audio("sounds/game-over.mp3"),
   }
 
+  const playerRadii = [
+    "var(--radius-drawn-1)",
+    "var(--radius-drawn-2)",
+    "var(--radius-drawn-3)",
+    "var(--radius-drawn-4)",
+    "var(--radius-drawn-5)",
+    "var(--radius-drawn-6)",
+  ]
+
   // --- DOM ELEMENTS ---
   const setupView = document.getElementById("game-setup")
   const gameView = document.getElementById("game-view")
@@ -179,6 +188,10 @@ document.addEventListener("DOMContentLoaded", () => {
       scoreDiv.textContent = `Score: ${scores[i]}`
       playerBlock.style.setProperty("--player-color", playerColors[i])
 
+      if (gameState.playerRadii && gameState.playerRadii[i]) {
+        playerBlock.style.borderRadius = gameState.playerRadii[i]
+      }
+      
       // Toggle 'current-player' class
       if (i === currentPlayer) {
         playerBlock.classList.add("current-player")
@@ -685,6 +698,10 @@ document.addEventListener("DOMContentLoaded", () => {
         () => 0.5 - Math.random()
       )
       settings.playerColors = shuffledColors.slice(0, settings.numPlayers)
+
+      const shuffledRadii = [...playerRadii].sort(() => 0.5 - Math.random())
+      settings.playerRadii = shuffledRadii.slice(0, settings.numPlayers)
+
       settings.showLines = showLinesToggle.checked
       if (settings.selectedUnits.length === 0) {
         alert("Please select at least one word unit to start the game.")
@@ -727,6 +744,7 @@ document.addEventListener("DOMContentLoaded", () => {
       highlightedCells: new Set(),
       winLinesToDraw: [],
       eliminatedPlayers: [],
+      playerRadii: settings.playerRadii || [],
     }
 
     if (isNewGame) {

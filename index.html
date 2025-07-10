@@ -48,28 +48,6 @@
               </label>
               <span id="gridSizeValue">3x3</span>
             </div>
-            <div class="setting-group">
-              <span class="label">Game Mode</span>
-              <div class="toggle-button-group" id="gameModeSelector">
-                <label class="toggle-button">
-                  <input type="radio" name="game_mode" value="Conquest" checked>
-                  <span>Conquest</span>
-                </label>
-                <label class="toggle-button">
-                  <input type="radio" name="game_mode" value="Stealth">
-                  <span>Stealth</span>
-                </label>
-                <label class="toggle-button">
-                  <input type="radio" name="game_mode" value="Classic">
-                  <span>Classic</span>
-                </label>
-                <label class="toggle-button">
-                  <input type="radio" name="game_mode" value="Survivor">
-                  <span>Survivor</span>
-                </label>
-              </div>
-              <p class="field-hint" id="gameModeHint">Get the most points.</p>
-            </div>
             <div class="range-container">
               <label class="range">
                 <span class="label">Match Length:</span>
@@ -88,6 +66,25 @@
                 <span class="label">Mute Sounds</span>
               </label>
             </div>
+          </div>
+
+          <div class="setup-section game-mode-setup">
+            <h4 class="h5">Game Mode</h4>
+            <div class="toggle-button-group" id="gameModeSelector" role="group">
+              <button data-mode="Conquest" class="selected">
+                <span>Conquest</span>
+              </button>
+              <button data-mode="Stealth">
+                <span>Stealth</span>
+              </button>
+              <button data-mode="Classic">
+                <span>Classic</span>
+              </button>
+              <button data-mode="Survivor">
+                <span>Survivor</span>
+              </button>
+            </div>
+            <p class="field-hint" id="gameModeHint">Get the most points.</p>
           </div>
 
           <div class="setup-section word-selection">
@@ -152,7 +149,8 @@
           <button id="resetGameBtn" class="button outlined">Reset Game</button>
           <button id="settings-btn" class="button">Back to Settings</button>
         </div>
-      </div>    </div>
+      </div>
+    </div>
   </main>
 
   <dialog id="game-over-dialog" class="card elevated">

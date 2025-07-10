@@ -673,8 +673,8 @@ document.addEventListener("DOMContentLoaded", () => {
       settings.gridSize = parseInt(gridSizeInput.value)
       settings.matchLength = parseInt(matchLengthInput.value)
       settings.gameMode = document.querySelector(
-        'input[name="game_mode"]:checked'
-      ).value
+        "#gameModeSelector button.selected"
+      ).dataset.mode
       settings.selectedUnits = [
         ...document.querySelectorAll(".phonics-unit-select"),
       ]
@@ -1197,23 +1197,33 @@ document.addEventListener("DOMContentLoaded", () => {
   const gameModeSelector = document.getElementById("gameModeSelector")
   const gameModeHint = document.getElementById("gameModeHint")
 
-  gameModeSelector.addEventListener("change", (e) => {
-    if (e.target.name === "game_mode") {
-      switch (e.target.value) {
-        case "Conquest":
-          gameModeHint.textContent = "Get the most points."
-          break
-        case "Stealth":
-          gameModeHint.textContent = "Get the fewest points."
-          break
-        case "Classic":
-          gameModeHint.textContent = "The first score wins."
-          break
-        case "Survivor":
-          gameModeHint.textContent = "Get a point and you're out."
-          break
-      }
+  gameModeSelector.addEventListener("click", (e) => {
+    const clickedButton = e.target.closest("button")
+    if (!clickedButton) return
+
+    // Update hint text based on the button's data-mode
+    const gameMode = clickedButton.dataset.mode
+    switch (gameMode) {
+      case "Conquest":
+        gameModeHint.textContent = "Get the most points."
+        break
+      case "Stealth":
+        gameModeHint.textContent = "Get the fewest points."
+        break
+      case "Classic":
+        gameModeHint.textContent = "The first score wins."
+        break
+      case "Survivor":
+        gameModeHint.textContent = "Get a point and you're out."
+        break
     }
+
+    // Update the selected state visually
+    const buttons = gameModeSelector.querySelectorAll("button")
+    buttons.forEach((button) => {
+      button.classList.remove("selected")
+    })
+    clickedButton.classList.add("selected")
   })
 
   playerNamesContainer.addEventListener("dragover", (e) => {

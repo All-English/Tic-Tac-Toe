@@ -230,14 +230,6 @@ main {
   gap: var(--size-fluid-2);
 }
 
-.toggle-button-group {
-  display: flex;
-  flex-wrap: wrap;
-  /* Allow items to wrap to the next line */
-  gap: var(--size-2);
-  justify-content: center;
-}
-
 .cell {
   --_bg-color: var(--surface-card);
   --_border-color: var(--border-color);
@@ -448,7 +440,7 @@ dialog#game-over-dialog::backdrop {
 
 .setting-group>.label {
   font-size: var(--font-size-2);
-  color: var(--text-2);
+  color: var(--text-color-2);
   margin-bottom: calc(-1 * var(--size-2));
   font-weight: var(--font-weight-6);
 }
@@ -469,15 +461,16 @@ dialog#game-over-dialog::backdrop {
 }
 
 label:has(#showLinesToggle) .label {
+  color: var(--text-color-2);
   white-space: nowrap;
 }
 
 .field-hint {
-  color: var(--text-2);
-  font-size: var(--font-size-0);
+  color: var(--text-color-2);
+  font-size: var(--font-size-fluid-0);
   text-align: center;
   margin-inline: auto;
-  margin-top: calc(var(--size-fluid-1) * -1);
+  margin-block-start: var(--size-1);
   /* Constrains line length for readability */
   max-width: 28ch;
 }
@@ -538,6 +531,7 @@ label:has(#showLinesToggle) .label {
     display: grid;
     grid-template-areas:
       "players rules"
+      "game-mode game-mode"
       "words words";
     grid-template-columns: 1fr 1fr;
     gap: var(--size-5) var(--size-7);
@@ -552,7 +546,15 @@ label:has(#showLinesToggle) .label {
     grid-area: rules;
   }
 
+  .game-mode-setup {
+    grid-area: game-mode;
+  }
+
   .word-selection {
     grid-area: words;
+  }
+
+  .game-mode-setup>.h5 {
+    text-align: center;
   }
 }

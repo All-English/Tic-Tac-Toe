@@ -58,10 +58,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const handleCloseDialog = () => {
     gameDialog.close()
   }
-  const handleReset = () => initGame(false)
+  const handleReset = () => enterReorderMode()
   const handlePlayAgain = () => {
     gameDialog.close()
-    initGame(false)
+    enterReorderMode()
   }
   const handleKeydown = (e) => {
     if (e.key === "Backspace") {
@@ -69,12 +69,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   const handleBackToSettings = () => {
-    removeGameEventListeners();
+    removeGameEventListeners()
     isOrderLocked = false
-    playerInfoList.innerHTML = ""; // Clear old player cards
-    gameBoard.innerHTML = "";    // Clear old cells
-    gameState = { currentView: 'setup' }; // Reset state to show setup view
-    render();
+    playerInfoList.innerHTML = "" // Clear old player cards
+    gameBoard.innerHTML = "" // Clear old cells
+    gameState = { currentView: "setup" } // Reset state to show setup view
+    render()
   }
 
   // --- EVENT LISTENER MANAGEMENT ---
@@ -106,12 +106,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- MAIN RENDER FUNCTION ---
 
   function render() {
-    // First, always render the views to show/hide the correct containers
     renderViews()
 
-    // Then, only render the content for the specific active view
-    if (gameState.currentView === "pre-game") {
+    if (gameState.currentView === "reorder") {
       renderPlayerOrderList()
+      renderBoard()
     }
 
     if (gameState.currentView === "game") {
@@ -128,10 +127,9 @@ document.addEventListener("DOMContentLoaded", () => {
     setupView.classList.toggle("is-active", currentView === "setup")
     gameView.classList.toggle(
       "is-active",
-      currentView === "pre-game" || currentView === "game"
+      currentView === "reorder" || currentView === "game"
     )
 
-    // Get all the major components of the game view
     const playerOrderSetup = document.getElementById("player-order-setup")
     const playerInfoList = document.getElementById("player-info-list")
     const gameBoard = document.getElementById("game-board")
@@ -139,17 +137,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Toggle visibility of each component based on the precise view state
     if (playerOrderSetup) {
-      playerOrderSetup.classList.toggle("hidden", currentView !== "pre-game")
+      playerOrderSetup.classList.toggle("hidden", currentView !== "reorder")
     }
     if (playerInfoList) {
-      // We render this in 'game' state
       playerInfoList.classList.toggle("hidden", currentView !== "game")
     }
     if (gameBoard) {
-      gameBoard.classList.toggle("hidden", currentView !== "game")
+      // Show the board in BOTH reorder and game states
+      gameBoard.classList.toggle(
+        "hidden",
+        currentView !== "reorder" && currentView !== "game"
+      )
     }
     if (gameControls) {
-      gameControls.classList.toggle("hidden", currentView !== "game")
+      // Show controls in BOTH reorder and game states
+      gameControls.classList.toggle(
+        "hidden",
+        currentView !== "reorder" && currentView !== "game"
+      )
     }
   }
 
@@ -234,7 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (gameState.playerRadii && gameState.playerRadii[i]) {
         playerBlock.style.borderRadius = gameState.playerRadii[i]
       }
-      
+
       // Toggle 'current-player' class
       if (i === currentPlayer) {
         playerBlock.classList.add("current-player")
@@ -288,6 +293,16 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- LOGIC / STATE MANAGEMENT FUNCTIONS ---
 
   function handleCellClick(event) {
+    // Handle starting the game on first move
+    if (gameState.currentView === "reorder") {
+      // Only the new Player 1 can start the game with a move
+      if (gameState.currentPlayer === 0) {
+        initGame(false) // This locks the order and sets the view to 'game'
+      } else {
+        return // It's not Player 1's turn to start, so do nothing
+      }
+    }
+
     if (!isOrderLocked) return
     const cell = event.target.closest(".cell")
     if (!cell) return
@@ -348,6 +363,43 @@ document.addEventListener("DOMContentLoaded", () => {
       // Re-render to update the current player highlight
       renderPlayerInfo()
     }
+  }
+
+  function enterReorderMode() {
+    // Reset game state but keep players and settings
+    const settings = {
+      playerNames: gameState.playerNames,
+      playerColors: gameState.playerColors,
+      playerRadii: gameState.playerRadii,
+      numPlayers: gameState.numPlayers,
+      gridSize: gameState.gridSize,
+      matchLength: gameState.matchLength,
+      gameMode: gameState.gameMode,
+      selectedUnits: gameState.selectedUnits,
+      showLines: gameState.showLines,
+    }
+
+    gameBoard
+      .querySelectorAll(".strike-through-line")
+      .forEach((el) => el.remove())
+
+    gameState = {
+      ...settings,
+      board: Array(settings.gridSize * settings.gridSize).fill(null),
+      scores: Array(settings.numPlayers).fill(0),
+      currentPlayer: 0,
+      movesMade: 0,
+      completedLines: new Set(),
+      moveHistory: [],
+      highlightedCells: new Set(),
+      winLinesToDraw: [],
+      eliminatedPlayers: [],
+      currentView: "reorder", // Set the new view state
+    }
+
+    isOrderLocked = false // Unlock the order
+    addGameEventListeners()
+    render()
   }
 
   function undoLastMove() {
@@ -788,10 +840,12 @@ document.addEventListener("DOMContentLoaded", () => {
       winLinesToDraw: [],
       eliminatedPlayers: [],
       playerRadii: settings.playerRadii || [],
-      currentView: 'pre-game'
+      currentView: "game",
     }
 
-    addGameEventListeners();
+    isOrderLocked = true
+
+    addGameEventListeners()
     render()
   }
 
@@ -1216,9 +1270,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function lockOrderAndStartGame() {
-    isOrderLocked = true;
-    gameState = { ...gameState, currentView: 'game' };
-    render();
+    initGame(false)
   }
 
   // --- INITIALIZE and ATTACH LISTENERS ---

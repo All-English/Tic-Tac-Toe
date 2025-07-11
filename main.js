@@ -979,12 +979,39 @@ document.addEventListener("DOMContentLoaded", () => {
     removeBtn.onclick = () => {
       container.remove()
       updateRemoveButtonsVisibility()
+      updateUnitSelectorsState()
     }
 
     container.appendChild(label)
     container.appendChild(removeBtn)
     unitSelectorsContainer.appendChild(container)
     updateRemoveButtonsVisibility()
+    updateUnitSelectorsState()
+  }
+
+  function updateUnitSelectorsState() {
+    const allSelectors = document.querySelectorAll(".phonics-unit-select")
+
+    // First, gather all the values that are currently selected.
+    const selectedValues = new Set()
+    allSelectors.forEach((selector) => {
+      if (selector.value) {
+        selectedValues.add(selector.value)
+      }
+    })
+
+    // Now, loop through each selector again to disable/enable its options.
+    allSelectors.forEach((selector) => {
+      selector.querySelectorAll("option").forEach((option) => {
+        // An option should be disabled if...
+        // 1. It has a value.
+        // 2. That value is in our set of selected values.
+        // 3. That value is NOT the value of the CURRENT selector we're looping through.
+        const isSelectedElsewhere =
+          selectedValues.has(option.value) && selector.value !== option.value
+        option.disabled = isSelectedElsewhere
+      })
+    })
   }
 
   function updateRemoveButtonsVisibility() {
@@ -1376,6 +1403,12 @@ document.addEventListener("DOMContentLoaded", () => {
     renderNameInputs()
   })
 
+  unitSelectorsContainer.addEventListener("change", (e) => {
+    if (e.target.classList.contains("phonics-unit-select")) {
+      updateUnitSelectorsState()
+    }
+  })
+  
   // --- EVENT LISTENERS for between rounds player order setup ---
 
   const randomizeOrderBtn_game = document.getElementById(

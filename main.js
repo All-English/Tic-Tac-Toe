@@ -928,16 +928,18 @@ document.addEventListener("DOMContentLoaded", () => {
   function createUnitSelector() {
     const container = document.createElement("div")
     container.className = "phonics-unit-container"
+
     const label = document.createElement("label")
     label.className = "field"
+
     const select = document.createElement("select")
     select.className = "phonics-unit-select"
 
+    // Build the list of all possible options first
     const allOptions = []
     const initialOption = document.createElement("option")
     initialOption.value = ""
     initialOption.textContent = "Select a word unit..."
-    initialOption.disabled = true
     allOptions.push(initialOption)
 
     for (const level in smartPhonicsWordBank) {
@@ -953,22 +955,42 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     select.append(...allOptions)
 
-    // --- NEW LOGIC for auto-selecting next unit ---
     const allSelectors = unitSelectorsContainer.querySelectorAll(
       ".phonics-unit-select"
     )
+
     if (allSelectors.length > 0) {
+      // 1. Get all values that are already in use
+      const usedValues = new Set()
+      allSelectors.forEach((s) => {
+        if (s.value) usedValues.add(s.value)
+      })
+
       const lastSelector = allSelectors[allSelectors.length - 1]
       const lastIndex = lastSelector.selectedIndex
 
-      // Select the next option, or the previous if the last one was selected
-      let nextIndex = lastIndex + 1
-      if (nextIndex >= allOptions.length) {
-        nextIndex = lastIndex - 1
+      // 2. Search for the next available option, starting from the last-selected index
+      let foundNext = false
+      for (let i = 1; i < allOptions.length; i++) {
+        // Use modulo to wrap around the list if we reach the end
+        const potentialIndex = (lastIndex + i) % allOptions.length
+        const potentialOption = allOptions[potentialIndex]
+
+        // 3. If the option is valid and NOT already used, select it and stop.
+        if (potentialOption.value && !usedValues.has(potentialOption.value)) {
+          select.selectedIndex = potentialIndex
+          foundNext = true
+          break
+        }
       }
-      select.selectedIndex = Math.max(1, nextIndex) // Ensure it's not the disabled "Select..."
+
+      // 4. If all options are taken, default to placeholder
+      if (!foundNext) {
+        select.selectedIndex = 0
+      }
     } else {
-      select.selectedIndex = 0 // Default for the very first selector
+      // Default behavior for the very first selector
+      select.selectedIndex = 0
     }
 
     label.appendChild(select)
@@ -976,6 +998,7 @@ document.addEventListener("DOMContentLoaded", () => {
     removeBtn.className = "icon-button remove-unit-btn"
     removeBtn.setAttribute("aria-label", "Remove unit selector")
     removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
+
     removeBtn.onclick = () => {
       container.remove()
       updateRemoveButtonsVisibility()

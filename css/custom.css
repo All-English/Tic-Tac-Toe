@@ -370,7 +370,7 @@ dialog#game-over-dialog::backdrop {
 .player-info-block h3 {
   color: var(--player-color);
 }
- 
+
 .player-info-block.current-player {
   /* This combines the one-off bounce with the looping glow */
   animation:
@@ -477,8 +477,8 @@ label:has(#showLinesToggle) .label {
 
 /* --- Reorder Mode Styles --- */
 
-#reorder-controls {
-  padding-block: var(--size-3);
+#reorder-controls .button-group {
+  margin: 0;
 }
 
 /* Make player cards look and feel draggable during reorder mode */

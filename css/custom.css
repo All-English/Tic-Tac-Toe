@@ -490,7 +490,8 @@ label:has(#showLinesToggle) .label {
   opacity: 0.5;
 }
 
-.player-info-block.drop-target {
+.player-info-block.drop-target,
+.player-name-field.drop-target {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
   background-color: var(--surface-filled);

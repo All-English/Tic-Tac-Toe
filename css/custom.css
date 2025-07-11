@@ -482,12 +482,18 @@ label:has(#showLinesToggle) .label {
 }
 
 /* Make player cards look and feel draggable during reorder mode */
-.game-view.reorder-active .player-info-block {
+.reorder-active .player-info-block {
   cursor: grab;
 }
 
-.game-view.reorder-active .player-info-block.dragging {
+.reorder-active .player-info-block.dragging {
   opacity: 0.5;
+}
+
+.player-info-block.drop-target {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  background-color: var(--surface-filled);
 }
 
 .hidden {

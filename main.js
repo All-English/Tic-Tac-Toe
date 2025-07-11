@@ -3,10 +3,13 @@ import { smartPhonicsWordBank, playerSymbols } from "./config.js"
 document.addEventListener("DOMContentLoaded", () => {
   // --- STATE ---
   let gameState = {
-    currentView: "setup", // Set the initial view
+    currentView: "setup",
+    setup: {
+      players: [],
+      // We can add other setup-specific state here later
+    },
   }
   let areGameEventListenersAttached = false
-  let playerSetupList = []
   let wordCache = []
   let isMuted = false
   let isOrderLocked = false
@@ -75,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
     isOrderLocked = false
     playerInfoList.innerHTML = "" // Clear old player cards
     gameBoard.innerHTML = "" // Clear old cells
-    gameState = { currentView: "setup" } // Reset state to show setup view
+    gameState = { ...gameState, currentView: "setup" }
     render()
   }
 
@@ -768,7 +771,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isFromSetup) {
       // This block runs ONLY when you click "Start Game" from the main setup screen.
       // It reads all the values directly from the DOM inputs.
-      settings.playerNames = playerSetupList.map((p) => p.name)
+      settings.playerNames = gameState.setup.players.map((p) => p.name)
       settings.numPlayers = parseInt(numPlayersInput.value)
       settings.gridSize = parseInt(gridSizeInput.value)
       settings.matchLength = parseInt(matchLengthInput.value)
@@ -858,20 +861,29 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function randomizePlayerOrder() {
-    if (playerSetupList.length < 2) return
-    const originalOrderJSON = JSON.stringify(playerSetupList)
+    if (gameState.setup.players.length < 2) return
+    const originalOrderJSON = JSON.stringify(gameState.setup.players)
     let attempts = 0
     do {
-      for (let i = playerSetupList.length - 1; i > 0; i--) {
+      const playersToShuffle = [...gameState.setup.players] // Create a mutable copy
+      for (let i = playersToShuffle.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1))
-        ;[playerSetupList[i], playerSetupList[j]] = [
-          playerSetupList[j],
-          playerSetupList[i],
+        ;[playersToShuffle[i], playersToShuffle[j]] = [
+          playersToShuffle[j],
+          playersToShuffle[i],
         ]
+      }
+      // Now, update the actual state with the shuffled copy
+      gameState = {
+        ...gameState,
+        setup: {
+          ...gameState.setup,
+          players: playersToShuffle,
+        },
       }
       attempts++
     } while (
-      JSON.stringify(playerSetupList) === originalOrderJSON &&
+      JSON.stringify(gameState.setup.players) === originalOrderJSON &&
       attempts < 10
     )
     renderNameInputs()
@@ -879,7 +891,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderNameInputs() {
     playerNamesContainer.innerHTML = ""
-    playerSetupList.forEach((player, index) => {
+    gameState.setup.players.forEach((player, index) => {
       const field = document.createElement("label")
       field.className = "field player-name-field"
       field.draggable = true
@@ -897,9 +909,14 @@ document.addEventListener("DOMContentLoaded", () => {
       input.value = player.name
       input.addEventListener("input", (e) => {
         const playerId = parseInt(field.dataset.playerId)
-        const playerToUpdate = playerSetupList.find((p) => p.id === playerId)
-        if (playerToUpdate) {
-          playerToUpdate.name = e.target.value
+        gameState = {
+          ...gameState,
+          setup: {
+            ...gameState.setup,
+            players: gameState.setup.players.map((p) =>
+              p.id === playerId ? { ...p, name: e.target.value } : p
+            ),
+          },
         }
       })
       field.appendChild(label)
@@ -994,13 +1011,29 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateSliderValues() {
     const newCount = parseInt(numPlayersInput.value, 10)
     numPlayersValue.textContent = newCount
-    const currentCount = playerSetupList.length
+    const currentCount = gameState.setup.players.length
     if (newCount > currentCount) {
+      const newPlayers = []
       for (let i = currentCount; i < newCount; i++) {
-        playerSetupList.push({ id: Date.now() + i, name: `Player ${i + 1}` })
+        newPlayers.push({ id: Date.now() + i, name: `Player ${i + 1}` })
+      }
+      // Create new state object by spreading the new players into the list
+      gameState = {
+        ...gameState,
+        setup: {
+          ...gameState.setup,
+          players: [...gameState.setup.players, ...newPlayers],
+        },
       }
     } else if (newCount < currentCount) {
-      playerSetupList.splice(newCount)
+      // Create new state object by slicing the players list
+      gameState = {
+        ...gameState,
+        setup: {
+          ...gameState.setup,
+          players: gameState.setup.players.slice(0, newCount),
+        },
+      }
     }
     renderNameInputs()
     syncSliders()
@@ -1325,13 +1358,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (fromId === toId) return // Dropped on itself
 
-    const fromIndex = playerSetupList.findIndex((p) => p.id === fromId)
-    const toIndex = playerSetupList.findIndex((p) => p.id === toId)
+    const fromIndex = gameState.setup.players.findIndex((p) => p.id === fromId)
+    const toIndex = gameState.setup.players.findIndex((p) => p.id === toId)
 
-    // Move the item in the array
-    const [itemToMove] = playerSetupList.splice(fromIndex, 1)
-    playerSetupList.splice(toIndex, 0, itemToMove)
+    const newPlayers = [...gameState.setup.players]
+    const [itemToMove] = newPlayers.splice(fromIndex, 1)
+    newPlayers.splice(toIndex, 0, itemToMove)
 
+    gameState = {
+      ...gameState,
+      setup: {
+        ...gameState.setup,
+        players: newPlayers,
+      },
+    }
     // Re-render the inputs with the new order
     renderNameInputs()
   })

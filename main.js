@@ -106,10 +106,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- MAIN RENDER FUNCTION ---
 
   function render() {
-    renderViews();
-    renderPlayerInfo()
-    renderBoard()
-    renderWinLines()
+    // First, always render the views to show/hide the correct containers
+    renderViews()
+
+    // Then, only render the content for the specific active view
+    if (gameState.currentView === "pre-game") {
+      renderPlayerOrderList()
+    }
+
+    if (gameState.currentView === "game") {
+      renderPlayerInfo()
+      renderBoard()
+      renderWinLines()
+    }
   }
 
   function renderViews() {
@@ -233,7 +242,6 @@ document.addEventListener("DOMContentLoaded", () => {
         playerBlock.classList.remove("current-player")
       }
 
-      // --- NEW LOGIC ---
       // Toggle 'eliminated' class
       if (eliminatedPlayers && eliminatedPlayers.includes(i)) {
         playerBlock.classList.add("eliminated")

@@ -2,7 +2,9 @@ import { smartPhonicsWordBank, playerSymbols } from "./config.js"
 
 document.addEventListener("DOMContentLoaded", () => {
   // --- STATE ---
-  let gameState = {}
+  let gameState = {
+    currentView: "setup", // Set the initial view
+  }
   let areGameEventListenersAttached = false
   let playerSetupList = []
   let wordCache = []
@@ -67,13 +69,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   const handleBackToSettings = () => {
-    gameView.classList.remove("is-active")
-    playerInfoList.innerHTML = ""
-    gameBoard.innerHTML = ""
-    gameState = {}
-    setupView.classList.add("is-active")
-    // Clean up the listeners when returning to the setup screen.
-    removeGameEventListeners()
+    removeGameEventListeners();
+    isOrderLocked = false
+    playerInfoList.innerHTML = ""; // Clear old player cards
+    gameBoard.innerHTML = "";    // Clear old cells
+    gameState = { currentView: 'setup' }; // Reset state to show setup view
+    render();
   }
 
   // --- EVENT LISTENER MANAGEMENT ---
@@ -105,9 +106,42 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- MAIN RENDER FUNCTION ---
 
   function render() {
+    renderViews();
     renderPlayerInfo()
     renderBoard()
     renderWinLines()
+  }
+
+  function renderViews() {
+    const { currentView } = gameState
+
+    // Main view visibility
+    setupView.classList.toggle("is-active", currentView === "setup")
+    gameView.classList.toggle(
+      "is-active",
+      currentView === "pre-game" || currentView === "game"
+    )
+
+    // Get all the major components of the game view
+    const playerOrderSetup = document.getElementById("player-order-setup")
+    const playerInfoList = document.getElementById("player-info-list")
+    const gameBoard = document.getElementById("game-board")
+    const gameControls = document.getElementById("game-controls")
+
+    // Toggle visibility of each component based on the precise view state
+    if (playerOrderSetup) {
+      playerOrderSetup.classList.toggle("hidden", currentView !== "pre-game")
+    }
+    if (playerInfoList) {
+      // We render this in 'game' state
+      playerInfoList.classList.toggle("hidden", currentView !== "game")
+    }
+    if (gameBoard) {
+      gameBoard.classList.toggle("hidden", currentView !== "game")
+    }
+    if (gameControls) {
+      gameControls.classList.toggle("hidden", currentView !== "game")
+    }
   }
 
   // --- RENDERING SUB-FUNCTIONS ---
@@ -734,6 +768,7 @@ document.addEventListener("DOMContentLoaded", () => {
     )
 
     gameState = {
+      ...gameState,
       ...settings,
       board: Array(settings.gridSize * settings.gridSize).fill(null),
       scores: Array(settings.numPlayers).fill(0),
@@ -745,26 +780,11 @@ document.addEventListener("DOMContentLoaded", () => {
       winLinesToDraw: [],
       eliminatedPlayers: [],
       playerRadii: settings.playerRadii || [],
+      currentView: 'pre-game'
     }
 
-    if (isNewGame) {
-      isOrderLocked = true
-      document.getElementById("player-order-setup").classList.add("hidden")
-      document.getElementById("player-info-list").classList.remove("hidden")
-      document.getElementById("player-order-list").classList.add("locked")
-      renderPlayerInfo()
-    } else {
-      isOrderLocked = false
-      document.getElementById("player-order-setup").classList.remove("hidden")
-      document.getElementById("player-info-list").classList.add("hidden")
-      document.getElementById("player-order-list").classList.remove("locked")
-      renderPlayerOrderList()
-    }
-
-    setupView.classList.remove("is-active")
-    gameView.classList.add("is-active")
-    renderBoard()
-    addGameEventListeners()
+    addGameEventListeners();
+    render()
   }
 
   function getCombinedWords(selectedUnits, totalWordsNeeded) {
@@ -1188,11 +1208,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function lockOrderAndStartGame() {
-    isOrderLocked = true
-    document.getElementById("player-order-setup").classList.add("hidden")
-    document.getElementById("player-info-list").classList.remove("hidden")
-    document.getElementById("player-order-list").classList.add("locked")
-    renderPlayerInfo() // Render the final order as score cards
+    isOrderLocked = true;
+    gameState = { ...gameState, currentView: 'game' };
+    render();
   }
 
   // --- INITIALIZE and ATTACH LISTENERS ---

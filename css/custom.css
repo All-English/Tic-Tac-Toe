@@ -186,47 +186,6 @@ main {
   justify-content: center;
 }
 
-.pre-game-controls {
-  display: grid;
-  gap: var(--size-4);
-  text-align: center;
-  margin-bottom: var(--size-5);
-}
-
-#player-order-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--size-3);
-  justify-content: center;
-}
-
-.player-order-item {
-  cursor: grab;
-  user-select: none;
-  padding: var(--size-2) var(--size-3);
-  border-radius: var(--radius-2);
-  border: 1px solid var(--border-color);
-  background-color: var(--surface-elevated);
-  box-shadow: var(--shadow-2);
-  transition: background-color 0.2s ease;
-}
-
-.player-order-item.dragging {
-  opacity: 0.5;
-}
-
-.player-order-item.drop-target,
-.player-name-field.drop-target {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-  background-color: var(--surface-filled);
-}
-
-/* New class to lock dragging when game starts */
-#player-order-list.locked .player-order-item {
-  cursor: default;
-}
-
 #game-board:not(.hidden) {
   display: grid;
   position: relative;
@@ -514,6 +473,21 @@ label:has(#showLinesToggle) .label {
   opacity: 1;
   transform: scale(1);
   pointer-events: auto;
+}
+
+/* --- Reorder Mode Styles --- */
+
+#reorder-controls {
+  padding-block: var(--size-3);
+}
+
+/* Make player cards look and feel draggable during reorder mode */
+.game-view.reorder-active .player-info-block {
+  cursor: grab;
+}
+
+.game-view.reorder-active .player-info-block.dragging {
+  opacity: 0.5;
 }
 
 .hidden {

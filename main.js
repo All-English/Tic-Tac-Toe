@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const gameView = document.getElementById("game-view")
   const playerInfoList = document.getElementById("player-info-list")
   const gameBoard = document.getElementById("game-board")
+  const gameControls = document.getElementById("game-controls")
   const numPlayersInput = document.getElementById("numPlayers")
   const numPlayersValue = document.getElementById("numPlayersValue")
   const playerNamesContainer = document.getElementById("player-names-container")
@@ -54,11 +55,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeDialogBtn = document.getElementById("close-dialog-btn")
 
   // --- EVENT HANDLER FUNCTIONS ---
-  // We define named handlers so we can remove them later.
   const handleCloseDialog = () => {
     gameDialog.close()
   }
+
   const handleReset = () => enterReorderMode()
+
   const handlePlayAgain = () => {
     gameDialog.close()
     enterReorderMode()
@@ -108,14 +110,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function render() {
     renderViews()
 
-    if (gameState.currentView === "reorder") {
-      renderPlayerOrderList()
-      renderBoard()
-    }
+    renderPlayerInfo()
+    renderBoard()
 
     if (gameState.currentView === "game") {
-      renderPlayerInfo()
-      renderBoard()
       renderWinLines()
     }
   }
@@ -123,39 +121,33 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderViews() {
     const { currentView } = gameState
 
-    // Main view visibility
     setupView.classList.toggle("is-active", currentView === "setup")
     gameView.classList.toggle(
       "is-active",
       currentView === "reorder" || currentView === "game"
     )
 
-    const playerOrderSetup = document.getElementById("player-order-setup")
-    const playerInfoList = document.getElementById("player-info-list")
-    const gameBoard = document.getElementById("game-board")
-    const gameControls = document.getElementById("game-controls")
+    // Add/remove a class to the game view itself to control reorder UI
+    gameView.classList.toggle("reorder-active", currentView === "reorder")
 
-    // Toggle visibility of each component based on the precise view state
-    if (playerOrderSetup) {
-      playerOrderSetup.classList.toggle("hidden", currentView !== "reorder")
+    const reorderControls = document.getElementById("reorder-controls")
+    if (reorderControls) {
+      reorderControls.classList.toggle("hidden", currentView !== "reorder")
     }
-    if (playerInfoList) {
-      playerInfoList.classList.toggle("hidden", currentView !== "game")
-    }
-    if (gameBoard) {
-      // Show the board in BOTH reorder and game states
-      gameBoard.classList.toggle(
-        "hidden",
-        currentView !== "reorder" && currentView !== "game"
-      )
-    }
-    if (gameControls) {
-      // Show controls in BOTH reorder and game states
-      gameControls.classList.toggle(
-        "hidden",
-        currentView !== "reorder" && currentView !== "game"
-      )
-    }
+
+    // The rest of the logic remains similar but simplified
+    playerInfoList.classList.toggle(
+      "hidden",
+      currentView !== "reorder" && currentView !== "game"
+    )
+    gameBoard.classList.toggle(
+      "hidden",
+      currentView !== "reorder" && currentView !== "game"
+    )
+    gameControls.classList.toggle(
+      "hidden",
+      currentView !== "reorder" && currentView !== "game"
+    )
   }
 
   // --- RENDERING SUB-FUNCTIONS ---
@@ -208,52 +200,50 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderPlayerInfo() {
+    playerInfoList.innerHTML = "" // Clear the list to re-render in new order
+
     const {
-      numPlayers,
+      playerNames,
       scores,
       currentPlayer,
       playerColors,
-      playerNames,
+      playerRadii,
       eliminatedPlayers,
+      currentView,
     } = gameState
+    const isReordering = currentView === "reorder"
 
-    for (let i = 0; i < numPlayers; i++) {
-      const playerBlockId = `player-info-block-${i}`
-      let playerBlock = document.getElementById(playerBlockId)
-      if (!playerBlock) {
-        playerBlock = document.createElement("div")
-        playerBlock.id = playerBlockId
-        playerBlock.className = "card outlined player-info-block"
-        playerInfoList.appendChild(playerBlock)
-        playerBlock.innerHTML = `
-          <hgroup><h3 data-role="name"></h3></hgroup>
-          <div class="content" data-role="score"></div>
-        `
+    playerNames.forEach((name, i) => {
+      const playerBlock = document.createElement("div")
+      playerBlock.id = `player-info-block-${i}`
+      playerBlock.className = "card outlined player-info-block"
+      playerBlock.dataset.index = i // Set index for drag-drop
+
+      // Add drag-and-drop functionality only in reorder mode
+      if (isReordering) {
+        playerBlock.draggable = true
+        playerBlock.addEventListener("dragstart", handleDragStart)
+        playerBlock.addEventListener("dragend", handleDragEnd)
       }
-      const nameHeader = playerBlock.querySelector('[data-role="name"]')
-      const scoreDiv = playerBlock.querySelector('[data-role="score"]')
-      nameHeader.textContent = `${playerNames[i]} (${playerSymbols[i]})`
-      scoreDiv.textContent = `${scores[i]}`
+
+      playerBlock.innerHTML = `
+      <hgroup><h3 data-role="name">${name} (${playerSymbols[i]})</h3></hgroup>
+      <div class="content" data-role="score">${scores[i]}</div>
+    `
+
       playerBlock.style.setProperty("--player-color", playerColors[i])
-
-      if (gameState.playerRadii && gameState.playerRadii[i]) {
-        playerBlock.style.borderRadius = gameState.playerRadii[i]
+      if (playerRadii && playerRadii[i]) {
+        playerBlock.style.borderRadius = playerRadii[i]
       }
 
-      // Toggle 'current-player' class
-      if (i === currentPlayer) {
-        playerBlock.classList.add("current-player")
-      } else {
-        playerBlock.classList.remove("current-player")
-      }
+      playerBlock.classList.toggle(
+        "current-player",
+        i === currentPlayer && !isReordering
+      )
+      playerBlock.classList.toggle("eliminated", eliminatedPlayers?.includes(i))
 
-      // Toggle 'eliminated' class
-      if (eliminatedPlayers && eliminatedPlayers.includes(i)) {
-        playerBlock.classList.add("eliminated")
-      } else {
-        playerBlock.classList.remove("eliminated")
-      }
-    }
+      playerInfoList.appendChild(playerBlock)
+    })
   }
 
   function renderWinLines() {
@@ -366,7 +356,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function enterReorderMode() {
-    // Reset game state but keep players and settings
     const settings = {
       playerNames: gameState.playerNames,
       playerColors: gameState.playerColors,
@@ -394,10 +383,11 @@ document.addEventListener("DOMContentLoaded", () => {
       highlightedCells: new Set(),
       winLinesToDraw: [],
       eliminatedPlayers: [],
-      currentView: "reorder", // Set the new view state
+      currentView: "reorder",
     }
 
-    isOrderLocked = false // Unlock the order
+    isOrderLocked = false
+
     addGameEventListeners()
     render()
   }
@@ -772,9 +762,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- SETUP PHASE FUNCTIONS (Imperative, run before game starts) ---
 
-  function initGame(isNewGame) {
+  function initGame(isFromSetup) {
     let settings = {}
-    if (isNewGame) {
+
+    if (isFromSetup) {
+      // This block runs ONLY when you click "Start Game" from the main setup screen.
+      // It reads all the values directly from the DOM inputs.
       settings.playerNames = playerSetupList.map((p) => p.name)
       settings.numPlayers = parseInt(numPlayersInput.value)
       settings.gridSize = parseInt(gridSizeInput.value)
@@ -787,6 +780,12 @@ document.addEventListener("DOMContentLoaded", () => {
       ]
         .map((select) => select.value)
         .filter((value) => value)
+
+      if (settings.selectedUnits.length === 0) {
+        alert("Please select at least one word unit to start the game.")
+        return
+      }
+
       const dynamicColorPalette = generatePlayerColors()
       const shuffledColors = [...dynamicColorPalette].sort(
         () => 0.5 - Math.random()
@@ -797,41 +796,23 @@ document.addEventListener("DOMContentLoaded", () => {
       settings.playerRadii = shuffledRadii.slice(0, settings.numPlayers)
 
       settings.showLines = showLinesToggle.checked
-      if (settings.selectedUnits.length === 0) {
-        alert("Please select at least one word unit to start the game.")
-        return
-      }
-    } else {
-      // For subsequent rounds, let's re-shuffle colors for variety
-      const dynamicColorPalette = generatePlayerColors()
-      const shuffledColors = [...dynamicColorPalette].sort(
-        () => 0.5 - Math.random()
-      )
-      settings = {
-        playerNames: gameState.playerNames,
-        numPlayers: gameState.numPlayers,
-        gridSize: gameState.gridSize,
-        matchLength: gameState.matchLength,
-        gameMode: gameState.gameMode,
-        selectedUnits: gameState.selectedUnits,
-        playerColors: shuffledColors.slice(0, gameState.numPlayers),
-        showLines: gameState.showLines,
-      }
-    }
-    gameBoard
-      .querySelectorAll(".strike-through-line")
-      .forEach((el) => el.remove())
 
+      // The initial gameState is built entirely from the setup screen settings.
+      gameState = { ...settings }
+    }
+
+    // This part runs for BOTH a new game from setup AND a reset/reordered game.
+    // It takes the existing settings (which might have been reordered)
+    // and resets the game-specific state properties for a fresh round.
     wordCache = getCombinedWords(
-      settings.selectedUnits,
-      settings.gridSize * settings.gridSize
+      gameState.selectedUnits,
+      gameState.gridSize * gameState.gridSize
     )
 
     gameState = {
-      ...gameState,
-      ...settings,
-      board: Array(settings.gridSize * settings.gridSize).fill(null),
-      scores: Array(settings.numPlayers).fill(0),
+      ...gameState, // Carries over settings like player order, colors, etc.
+      board: Array(gameState.gridSize * gameState.gridSize).fill(null),
+      scores: Array(gameState.numPlayers).fill(0),
       currentPlayer: 0,
       movesMade: 0,
       completedLines: new Set(),
@@ -839,14 +820,13 @@ document.addEventListener("DOMContentLoaded", () => {
       highlightedCells: new Set(),
       winLinesToDraw: [],
       eliminatedPlayers: [],
-      playerRadii: settings.playerRadii || [],
-      currentView: "game",
+      currentView: "game", // The game is now officially active
     }
 
-    isOrderLocked = true
+    isOrderLocked = true // Lock the order and enable cell clicks
 
     addGameEventListeners()
-    render()
+    render() // Render the final game state
   }
 
   function getCombinedWords(selectedUnits, totalWordsNeeded) {
@@ -1224,33 +1204,18 @@ document.addEventListener("DOMContentLoaded", () => {
     updateSliderValues()
     syncSliders()
   }
-  function renderPlayerOrderList() {
-    const container = document.getElementById("player-order-list")
-    container.innerHTML = ""
-    gameState.playerNames.forEach((name, index) => {
-      const item = document.createElement("div")
-      item.className = "player-order-item"
-      item.textContent = `${index + 1}. ${name}`
-      item.draggable = true
-      item.dataset.index = index
-      item.addEventListener("dragstart", handleDragStart)
-      item.addEventListener("dragend", handleDragEnd)
-      container.appendChild(item)
-    })
-  }
 
   function randomizeTurnOrder() {
     if (gameState.playerNames.length < 2) return // No need to shuffle one player
 
+    // Keep shuffling until the new order is different from the original
+    // This is a great way to ensure a noticeable change for the user
     const originalOrderJSON = JSON.stringify(gameState.playerNames)
     let attempts = 0
-
-    // Keep shuffling until the new order is different from the original
-    // Add a limit of 10 attempts as a safeguard against infinite loops
     do {
       for (let i = gameState.playerNames.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1))
-        // Shuffle both names and their corresponding colors to keep them linked
+        // Shuffle names, colors, and radii together to keep them linked
         ;[gameState.playerNames[i], gameState.playerNames[j]] = [
           gameState.playerNames[j],
           gameState.playerNames[i],
@@ -1259,6 +1224,10 @@ document.addEventListener("DOMContentLoaded", () => {
           gameState.playerColors[j],
           gameState.playerColors[i],
         ]
+        ;[gameState.playerRadii[i], gameState.playerRadii[j]] = [
+          gameState.playerRadii[j],
+          gameState.playerRadii[i],
+        ]
       }
       attempts++
     } while (
@@ -1266,11 +1235,11 @@ document.addEventListener("DOMContentLoaded", () => {
       attempts < 10
     )
 
-    renderPlayerOrderList()
+    renderPlayerInfo()
   }
 
   function lockOrderAndStartGame() {
-    initGame(false)
+    initGame(true) // Call with 'true' to indicate it's from the setup screen
   }
 
   // --- INITIALIZE and ATTACH LISTENERS ---
@@ -1368,11 +1337,14 @@ document.addEventListener("DOMContentLoaded", () => {
   })
 
   // --- EVENT LISTENERS for between rounds player order setup ---
-  const playerOrderList = document.getElementById("player-order-list")
-  const randomizeTurnOrderBtn = document.getElementById(
-    "randomize-turn-order-btn"
+
+  const randomizeOrderBtn_game = document.getElementById(
+    "randomizeOrderBtn_game"
   )
-  const lockOrderBtn = document.getElementById("lock-order-btn")
+  const startGameBtn_game = document.getElementById("startGameBtn_game")
+
+  randomizeOrderBtn_game.addEventListener("click", randomizeTurnOrder)
+  startGameBtn_game.addEventListener("click", () => initGame(false))
 
   const handleDragStart = (e) => {
     if (isOrderLocked) return
@@ -1383,58 +1355,59 @@ document.addEventListener("DOMContentLoaded", () => {
     e.target.classList.remove("dragging")
   }
 
-  playerOrderList.addEventListener("dragover", (e) => {
+  // Re-wire drag and drop to the player info list
+  playerInfoList.addEventListener("dragover", (e) => {
+    // Can't reorder if the game is locked/in progress
     if (isOrderLocked) return
     e.preventDefault()
 
-    const draggingEl = playerOrderList.querySelector(".dragging")
-    const targetEl = e.target.closest(".player-order-item")
+    const draggingEl = playerInfoList.querySelector(
+      ".player-info-block.dragging"
+    )
+    const targetEl = e.target.closest(".player-info-block")
 
-    // Clear previous highlights
-    playerOrderList.querySelectorAll(".drop-target").forEach((el) => {
+    // Clear previous highlights from all other cards
+    playerInfoList.querySelectorAll(".drop-target").forEach((el) => {
       el.classList.remove("drop-target")
     })
 
-    // Add highlight to the element we are currently over
+    // Add highlight to the card we are currently hovering over
     if (targetEl && targetEl !== draggingEl) {
       targetEl.classList.add("drop-target")
     }
   })
 
-  playerOrderList.addEventListener("drop", (e) => {
+  playerInfoList.addEventListener("drop", (e) => {
     if (isOrderLocked) return
     e.preventDefault()
 
     const fromIndex = parseInt(e.dataTransfer.getData("text/plain"))
-    const dropTarget = playerOrderList.querySelector(".drop-target")
+    const dropTarget = playerInfoList.querySelector(
+      ".player-info-block.drop-target"
+    )
 
-    // If we're not dropping on a valid target, do nothing
+    // If we aren't dropping on a valid target, cancel the drop
     if (!dropTarget) return
 
-    // Clean up the highlight class
     dropTarget.classList.remove("drop-target")
 
-    // Find the target index for the drop
-    const toIndex = Array.from(playerOrderList.children).indexOf(dropTarget)
+    const toIndex = Array.from(playerInfoList.children).indexOf(dropTarget)
 
     // Don't do anything if we are dropping in the same place
     if (fromIndex === toIndex) return
 
-    // Move the items in the data arrays
+    // Move the items in all three data arrays to keep them synced
     const [nameToMove] = gameState.playerNames.splice(fromIndex, 1)
     const [colorToMove] = gameState.playerColors.splice(fromIndex, 1)
+    const [radiusToMove] = gameState.playerRadii.splice(fromIndex, 1)
 
-    // Note: The 'correctedToIndex' logic from before is not needed here
-    // because we are inserting relative to the target's position before the move.
     gameState.playerNames.splice(toIndex, 0, nameToMove)
     gameState.playerColors.splice(toIndex, 0, colorToMove)
+    gameState.playerRadii.splice(toIndex, 0, radiusToMove)
 
-    // Re-render the list to show the final new order
-    renderPlayerOrderList()
+    // Re-render the player info cards to show the final new order
+    renderPlayerInfo()
   })
-
-  randomizeTurnOrderBtn.addEventListener("click", randomizeTurnOrder)
-  lockOrderBtn.addEventListener("click", lockOrderAndStartGame)
 
   updateSliderValues()
   createUnitSelector()

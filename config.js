@@ -357,4 +357,93 @@ export const smartPhonicsWordBank = {
   },
 }
 
+export const englishVoices = [
+  {
+    name: "Aria",
+    voice_id: "9BWtsMINqrJLrRacOk9x",
+    gender: "FEMALE",
+    description:
+      "A middle-aged female with an African-American accent. Calm with a hint of rasp.",
+    use_case: "INFORMATIVE_EDUCATIONAL",
+  },
+  {
+    name: "Laura",
+    voice_id: "FGY2WhTYpPnrIDTdsKH5",
+    gender: "FEMALE",
+    description:
+      "This young adult female voice delivers sunny enthusiasm with a quirky attitude.",
+    use_case: "SOCIAL_MEDIA",
+  },
+  {
+    name: "River",
+    voice_id: "SAz9YHcvj6GT2YYXdXww",
+    gender: "NEUTRAL",
+    description:
+      "A relaxed, neutral voice ready for narrations or conversational projects.",
+    use_case: "CONVERSATIONAL",
+  },
+  {
+    name: "Liam",
+    voice_id: "TX3LPaxmHKxFdv7VOQHJ",
+    gender: "MALE",
+    description:
+      "A young adult with energy and warmth - suitable for reels and shorts.",
+    use_case: "SOCIAL_MEDIA",
+  },
+  {
+    name: "Matilda",
+    voice_id: "XrExE9yKIg1WjnnlVkGX",
+    gender: "FEMALE",
+    description:
+      "A professional woman with a pleasing alto pitch. Suitable for many use cases.",
+    use_case: "INFORMATIVE_EDUCATIONAL",
+  },
+  {
+    name: "Will",
+    voice_id: "bIHbv24MWmeRgasZH58o",
+    gender: "MALE",
+    description: "Conversational and laid back.",
+    use_case: "CONVERSATIONAL",
+  },
+  {
+    name: "Jessica",
+    voice_id: "cgSgspJ2msm6clMCkdW9",
+    gender: "FEMALE",
+    description:
+      "Young and popular, this playful American female voice is perfect for trendy content.",
+    use_case: "CONVERSATIONAL",
+  },
+  {
+    name: "Eric",
+    voice_id: "cjVigY5qzO86Huf0OWal",
+    gender: "MALE",
+    description:
+      "A smooth tenor pitch from a man in his 40s - perfect for agentic use cases.",
+    use_case: "CONVERSATIONAL",
+  },
+  {
+    name: "Chris",
+    voice_id: "iP95p4xoKVk53GoZ742B",
+    gender: "MALE",
+    description:
+      "Natural and real, this down-to-earth voice is great across many use-cases.",
+    use_case: "CONVERSATIONAL",
+  },
+  {
+    name: "Brian",
+    voice_id: "nPczCjzI2devNBz1zQrb",
+    gender: "MALE",
+    description:
+      "Middle-aged man with a resonant and comforting tone. Great for narrations and advertisements.",
+    use_case: "SOCIAL_MEDIA",
+  },
+  {
+    name: "Bill",
+    voice_id: "pqHfZKP75CvOlQylNhV4",
+    gender: "MALE",
+    description: "Friendly and comforting voice ready to narrate your stories.",
+    use_case: "ADVERTISEMENT",
+  },
+]
+
 export const playerSymbols = ["X", "O", "△", "□", "☆"]

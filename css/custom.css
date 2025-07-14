@@ -87,7 +87,7 @@ main {
 }
 
 #game-setup {
-  max-width: 60ch;
+  max-width: 70ch;
   margin-inline: auto;
   background-color: var(--surface-card);
 }
@@ -117,6 +117,11 @@ main {
 .word-selection-container {
   display: grid;
   justify-items: center;
+}
+
+/* We also need to center the text inside the hint paragraph */
+#api-settings-section {
+  text-align: center;
 }
 
 .button-group {
@@ -261,13 +266,13 @@ main {
   animation: pulse 0.6s var(--ease-in-out-3);
 }
 
-.range-container {
+/* .range-container {
   display: grid;
   gap: var(--size-2);
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto auto;
   align-items: center;
   margin-block-start: var(--size-5);
-}
+} */
 
 .phonics-unit-container {
   display: grid;
@@ -555,10 +560,12 @@ label:has(#showLinesToggle) .label {
   #game-setup .content {
     display: grid;
     grid-template-areas:
+      /* "game-mode game-mode" */
+      "players game-mode"
       "players rules"
-      "game-mode game-mode"
-      "words words";
-    grid-template-columns: 1fr 1fr;
+      "words rules"
+      "api-settings api-settings";
+    grid-template-columns: auto;
     gap: var(--size-5) var(--size-7);
     align-items: start;
   }
@@ -577,6 +584,10 @@ label:has(#showLinesToggle) .label {
 
   .word-selection {
     grid-area: words;
+  }
+
+  .api-settings {
+    grid-area: api-settings;
   }
 
   .game-mode-setup>.h5 {

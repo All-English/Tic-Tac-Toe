@@ -27,10 +27,9 @@
             <h4 class="h5">Player Setup</h4>
             <div class="range-container">
               <label class="range">
-                <span class="label">Number of Players:</span>
+                <span class="label">Number of Players: </span><span id="numPlayersValue">2</span>
                 <input type="range" id="numPlayers" min="2" max="5" value="2">
               </label>
-              <span id="numPlayersValue">2</span>
             </div>
             <div id="randomize-container">
               <button id="randomizeOrderBtn" class="button outlined small">Randomize</button>
@@ -43,17 +42,15 @@
             <h4 class="h5">Game Rules</h4>
             <div class="range-container">
               <label class="range">
-                <span class="label">Board Size:</span>
+                <span class="label">Board Size: </span><span id="gridSizeValue">3x3</span>
                 <input type="range" id="gridSize" min="3" max="10" value="3">
               </label>
-              <span id="gridSizeValue">3x3</span>
             </div>
             <div class="range-container">
               <label class="range">
-                <span class="label">Words in a Row:</span>
+                <span class="label">Words in a Row: </span><span id="matchLengthValue">3</span>
                 <input type="range" id="matchLength" min="2" max="5" value="3">
               </label>
-              <span id="matchLengthValue">3</span>
             </div>
             <p class="field-hint">The number of words in a row to score a point.</p>
             <div class="setting-group">
@@ -64,6 +61,10 @@
               <label class="switch">
                 <input type="checkbox" role="switch" id="muteSoundsToggle">
                 <span class="label">Mute Sounds</span>
+              </label>
+              <label class="switch">
+                <input type="checkbox" role="switch" id="pronounceWordsToggle">
+                <span class="label">Pronounce Words</span>
               </label>
             </div>
           </div>
@@ -102,6 +103,17 @@
               </button>
             </div>
           </div>
+
+          <div class="setup-section api-settings" id="api-settings-section">
+            <h4 class="h5">API Settings</h4>
+            <label class="field" id="api-key-field">
+              <span class="label">ElevenLabs API Key</span>
+              <input type="password" id="elevenlabs-api-key" placeholder="Paste your key here...">
+            </label>
+            <p class="field-hint">An ElevenLabs API key is needed for the text-to-speech functionality. Your key is stored
+              securely in your browser and never leaves your computer.</p>
+          </div>
+
         </div>
 
         <div class="actions">
@@ -138,10 +150,10 @@
             <button id="startGameBtn_game" class="button filled">Start New Game</button>
           </div>
         </div>
-        
+
         <div id="player-info-list" class="hidden">
         </div>
-        
+
         <div id="game-board">
         </div>
 

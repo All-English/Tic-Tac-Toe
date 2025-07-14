@@ -1,4 +1,6 @@
-import { smartPhonicsWordBank, playerSymbols } from "./config.js"
+import { smartPhonicsWordBank, playerSymbols, englishVoices } from "./config.js"
+
+let lastVoiceId = null
 
 document.addEventListener("DOMContentLoaded", () => {
   // --- STATE ---
@@ -30,6 +32,24 @@ document.addEventListener("DOMContentLoaded", () => {
     "var(--radius-drawn-6)",
   ]
 
+  // --- API KEY MANAGEMENT ---
+
+  const apiKeyInput = document.getElementById("elevenlabs-api-key")
+  let userApiKey = ""
+
+  // 1. On page load, try to get the key from localStorage
+  const savedKey = localStorage.getItem("elevenlabs_api_key")
+  if (savedKey) {
+    userApiKey = savedKey
+    apiKeyInput.value = userApiKey
+  }
+
+  // 2. When the user types in the input, update the variable and save to localStorage
+  apiKeyInput.addEventListener("input", () => {
+    userApiKey = apiKeyInput.value
+    localStorage.setItem("elevenlabs_api_key", userApiKey)
+  })
+
   // --- DOM ELEMENTS ---
   const setupView = document.getElementById("game-setup")
   const gameView = document.getElementById("game-view")
@@ -56,6 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const backToSettingsBtn = document.getElementById("settings-btn")
   const playAgainBtn = document.getElementById("play-again-btn")
   const closeDialogBtn = document.getElementById("close-dialog-btn")
+  const pronounceWordsToggle = document.getElementById("pronounceWordsToggle")
 
   // --- EVENT HANDLER FUNCTIONS ---
   const handleCloseDialog = () => {
@@ -301,6 +322,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!cell) return
     const index = parseInt(cell.dataset.index)
     if (gameState.board[index] !== null) return
+
+    // Speak the word in the cell
+    if (gameState.pronounceWords) {
+      speak(cell.textContent, isMuted)
+    }
 
     const wasBlock = checkForBlock(index)
     const move = {
@@ -583,6 +609,76 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- UTILITY FUNCTIONS ---
 
+  async function speak(text, isMuted) {
+    // Check for the user-provided API key
+    if (!userApiKey) {
+      console.warn("API key is missing.")
+      const apiKeyField = document.getElementById("api-key-field")
+      // Briefly highlight the field to show the user where to enter the key
+      apiKeyField.classList.add("error")
+      setTimeout(() => apiKeyField.classList.remove("error"), 2500)
+      return
+    }
+
+    // 1. Basic validation
+    if (text.trim().length <= 1) {
+      playSound("click")
+      return
+    }
+
+    if (isMuted) return
+
+    // 2. Filter out the last used voice
+    const availableVoices = englishVoices.filter(
+      (voice) => voice.voice_id !== lastVoiceId
+    )
+
+    // 3. Select the full, random voice object
+    const randomVoice =
+      availableVoices[Math.floor(Math.random() * availableVoices.length)]
+
+    // 4. Update lastVoiceId for the next call
+    lastVoiceId = randomVoice.voice_id
+
+    // Log the full voice object to show all its data is available
+    console.log("Selected Voice Details:", randomVoice)
+
+    // 5. Make the API call using the voice_id from the selected object
+    const url = `https://api.elevenlabs.io/v1/text-to-speech/${randomVoice.voice_id}`
+    const headers = {
+      Accept: "audio/mpeg",
+      "Content-Type": "application/json",
+      "xi-api-key": userApiKey, // Use the user-provided API key
+    }
+    const body = JSON.stringify({
+      text: text,
+      model_id: "eleven_turbo_v2_5", // https://elevenlabs.io/docs/models
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: 0.75,
+        speed: 0.85,
+      }, // https://elevenlabs.io/docs/api-reference/voices/settings/update
+    })
+
+    try {
+      const response = await fetch(url, { method: "POST", headers, body })
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error(
+          "ElevenLabs API Error:",
+          errorData.detail?.message || `HTTP error! status: ${response.status}`
+        )
+        return
+      }
+      const audioBlob = await response.blob()
+      const audioUrl = URL.createObjectURL(audioBlob)
+      const audio = new Audio(audioUrl)
+      audio.play()
+    } catch (error) {
+      console.error("Failed to generate or play speech:", error)
+    }
+  }
+
   function getNextPlayerIndex(currentPlayerIndex) {
     const { numPlayers, eliminatedPlayers } = gameState
     let nextPlayer = (currentPlayerIndex + 1) % numPlayers
@@ -799,6 +895,7 @@ document.addEventListener("DOMContentLoaded", () => {
       settings.playerRadii = shuffledRadii.slice(0, settings.numPlayers)
 
       settings.showLines = showLinesToggle.checked
+      settings.pronounceWords = pronounceWordsToggle.checked
 
       // The initial gameState is built entirely from the setup screen settings.
       gameState = { ...gameState, ...settings }
@@ -1250,6 +1347,7 @@ document.addEventListener("DOMContentLoaded", () => {
     matchLengthInput.value = 3
     showLinesToggle.checked = true
     muteSoundsToggle.checked = false
+    pronounceWordsToggle.checked = true
 
     // Reset theme color dropdown and trigger the change
     themeHueSelect.value = "var(--oklch-blue)"
@@ -1325,6 +1423,15 @@ document.addEventListener("DOMContentLoaded", () => {
     initGame(true) // Call with 'true' to indicate it's from the setup screen
   }
 
+  function updateApiFieldVisibility() {
+    const apiSettingsSection = document.getElementById("api-settings-section")
+    if (apiSettingsSection) {
+      const isPronunciationOn = pronounceWordsToggle.checked
+      // Toggle the entire section's display property
+      apiSettingsSection.style.display = isPronunciationOn ? "block" : "none"
+    }
+  }
+
   // --- INITIALIZE and ATTACH LISTENERS ---
 
   const resetSettingsBtn = document.getElementById("resetSettingsBtn")
@@ -1334,6 +1441,7 @@ document.addEventListener("DOMContentLoaded", () => {
   addUnitBtn.addEventListener("click", createUnitSelector)
   startGameBtn.addEventListener("click", () => initGame(true))
   randomizeOrderBtn.addEventListener("click", randomizePlayerOrder)
+  pronounceWordsToggle.addEventListener("change", updateApiFieldVisibility)
 
   muteSoundsToggle.addEventListener("change", () => {
     isMuted = muteSoundsToggle.checked
@@ -1431,7 +1539,7 @@ document.addEventListener("DOMContentLoaded", () => {
       updateUnitSelectorsState()
     }
   })
-  
+
   // --- EVENT LISTENERS for between rounds player order setup ---
 
   const randomizeOrderBtn_game = document.getElementById(
@@ -1507,5 +1615,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateSliderValues()
   createUnitSelector()
+  updateApiFieldVisibility()
   selectRandomUnit()
 })

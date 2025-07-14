@@ -801,7 +801,7 @@ document.addEventListener("DOMContentLoaded", () => {
       settings.showLines = showLinesToggle.checked
 
       // The initial gameState is built entirely from the setup screen settings.
-      gameState = { ...settings }
+      gameState = { ...gameState, ...settings }
     }
 
     // This part runs for BOTH a new game from setup AND a reset/reordered game.

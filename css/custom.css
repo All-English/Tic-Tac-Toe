@@ -156,6 +156,10 @@ main {
   /* Prevents text selection while dragging */
 }
 
+.player-name-field input {
+    color: var(--text-color-2);
+  }
+
 /* This class is added to the field being dragged */
 .player-name-field.dragging {
   opacity: 0.5;
@@ -437,7 +441,7 @@ dialog#game-over-dialog::backdrop {
   transition: width .5s var(--ease-out-3), opacity .5s var(--ease-out-3);
 }
 
-label:has(#showLinesToggle) .label {
+.setting-group .label {
   color: var(--text-color-2);
   white-space: nowrap;
 }

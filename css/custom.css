@@ -280,8 +280,8 @@ main {
 
 .phonics-unit-container {
   display: grid;
-  gap: var(--size-2);
-  grid-template-columns: auto 1fr auto;
+  gap: var(--size-1);
+  grid-template-columns: auto auto;
   align-items: center;
 }
 

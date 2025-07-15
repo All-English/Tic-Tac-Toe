@@ -51,6 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
   })
 
   // --- DOM ELEMENTS ---
+
   const setupView = document.getElementById("game-setup")
   const gameView = document.getElementById("game-view")
   const playerInfoList = document.getElementById("player-info-list")
@@ -77,8 +78,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const playAgainBtn = document.getElementById("play-again-btn")
   const closeDialogBtn = document.getElementById("close-dialog-btn")
   const pronounceWordsToggle = document.getElementById("pronounceWordsToggle")
+  const gameModeSelector = document.getElementById("gameModeSelector")
+  const gameModeHint = document.getElementById("gameModeHint")
+  const resetSettingsBtn = document.getElementById("resetSettingsBtn")
 
   // --- EVENT HANDLER FUNCTIONS ---
+
   const handleCloseDialog = () => {
     gameDialog.close()
   }
@@ -821,7 +826,78 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function saveSettings() {
+    const settingsToSave = {
+      numPlayers: numPlayersInput.value,
+      playerNames: gameState.setup.players,
+      gridSize: gridSizeInput.value,
+      matchLength: matchLengthInput.value,
+      showLines: showLinesToggle.checked,
+      muteSounds: muteSoundsToggle.checked,
+      pronounceWords: pronounceWordsToggle.checked,
+      gameMode: document.querySelector("#gameModeSelector button.selected")
+        ?.dataset.mode,
+      selectedUnits: Array.from(
+        document.querySelectorAll(".phonics-unit-select")
+      ).map((select) => select.value),
+      darkMode: darkModeToggle.checked,
+      themeHue: themeHueSelect.value,
+    }
+
+    localStorage.setItem(
+      "phonics_game_settings",
+      JSON.stringify(settingsToSave)
+    )
+  }
+
+  function loadSettings() {
+    const savedSettings = localStorage.getItem("phonics_game_settings")
+    if (!savedSettings) return // No saved settings found
+
+    const settings = JSON.parse(savedSettings)
+
+    // Apply saved settings to the inputs
+    numPlayersInput.value = settings.numPlayers || 2
+    gameState.setup.players = settings.playerNames || []
+    gridSizeInput.value = settings.gridSize || 3
+    matchLengthInput.value = settings.matchLength || 3
+    showLinesToggle.checked = settings.showLines !== false
+    muteSoundsToggle.checked = settings.muteSounds === true
+    pronounceWordsToggle.checked = settings.pronounceWords === true
+    darkModeToggle.checked = settings.darkMode === true
+    themeHueSelect.value = settings.themeHue || "var(--oklch-blue)"
+
+    // Set the correct game mode button
+    if (settings.gameMode) {
+      gameModeSelector.querySelectorAll("button").forEach((button) => {
+        button.classList.toggle(
+          "selected",
+          button.dataset.mode === settings.gameMode
+        )
+      })
+    }
+
+    // Re-create the saved word unit selectors
+    unitSelectorsContainer.innerHTML = "" // Clear defaults
+    if (settings.selectedUnits && settings.selectedUnits.length > 0) {
+      settings.selectedUnits.forEach((unitValue) => {
+        createUnitSelector(unitValue) // We'll modify createUnitSelector to accept a value
+      })
+    } else {
+      createUnitSelector() // Create one default selector if none were saved
+      selectRandomUnit()
+    }
+
+    // Refresh the entire UI to reflect the loaded settings
+    updateTheme()
+    renderNameInputs()
+    syncSliders()
+    updateUnitSelectorsState()
+    updateApiFieldVisibility()
+  }
+
   // --- UNIFIED THEME LOGIC ---
+
   const darkModeToggle = document.getElementById("darkModeToggle")
   const themeHueSelect = document.getElementById("themeHueSelect")
   const htmlElement = document.documentElement
@@ -856,8 +932,15 @@ document.addEventListener("DOMContentLoaded", () => {
   updateTheme()
 
   // Add listeners that call the single update function
-  darkModeToggle.addEventListener("change", updateTheme)
-  themeHueSelect.addEventListener("change", updateTheme)
+  darkModeToggle.addEventListener("change", () => {
+    updateTheme()
+    // saveSettings()
+  })
+
+  themeHueSelect.addEventListener("change", () => {
+    updateTheme()
+    // saveSettings()
+  })
 
   // --- SETUP PHASE FUNCTIONS (Imperative, run before game starts) ---
 
@@ -1015,6 +1098,7 @@ document.addEventListener("DOMContentLoaded", () => {
             ),
           },
         }
+        saveSettings()
       })
       field.appendChild(label)
       field.appendChild(input)
@@ -1022,7 +1106,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   }
 
-  function createUnitSelector() {
+  function createUnitSelector(selectedValue = "") {
     const container = document.createElement("div")
     container.className = "phonics-unit-container"
 
@@ -1052,42 +1136,37 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     select.append(...allOptions)
 
-    const allSelectors = unitSelectorsContainer.querySelectorAll(
-      ".phonics-unit-select"
-    )
-
-    if (allSelectors.length > 0) {
-      // 1. Get all values that are already in use
-      const usedValues = new Set()
-      allSelectors.forEach((s) => {
-        if (s.value) usedValues.add(s.value)
-      })
-
-      const lastSelector = allSelectors[allSelectors.length - 1]
-      const lastIndex = lastSelector.selectedIndex
-
-      // 2. Search for the next available option, starting from the last-selected index
-      let foundNext = false
-      for (let i = 1; i < allOptions.length; i++) {
-        // Use modulo to wrap around the list if we reach the end
-        const potentialIndex = (lastIndex + i) % allOptions.length
-        const potentialOption = allOptions[potentialIndex]
-
-        // 3. If the option is valid and NOT already used, select it and stop.
-        if (potentialOption.value && !usedValues.has(potentialOption.value)) {
-          select.selectedIndex = potentialIndex
-          foundNext = true
-          break
+    // If a value was passed in (from localStorage), set it.
+    if (selectedValue) {
+      select.value = selectedValue
+    } else {
+      // If no value is passed, use the original logic to find the next available unit.
+      const allSelectors = unitSelectorsContainer.querySelectorAll(
+        ".phonics-unit-select"
+      )
+      if (allSelectors.length > 0) {
+        const usedValues = new Set()
+        allSelectors.forEach((s) => {
+          if (s.value) usedValues.add(s.value)
+        })
+        const lastSelector = allSelectors[allSelectors.length - 1]
+        const lastIndex = lastSelector.selectedIndex
+        let foundNext = false
+        for (let i = 1; i < allOptions.length; i++) {
+          const potentialIndex = (lastIndex + i) % allOptions.length
+          const potentialOption = allOptions[potentialIndex]
+          if (potentialOption.value && !usedValues.has(potentialOption.value)) {
+            select.selectedIndex = potentialIndex
+            foundNext = true
+            break
+          }
         }
-      }
-
-      // 4. If all options are taken, default to placeholder
-      if (!foundNext) {
+        if (!foundNext) {
+          select.selectedIndex = 0
+        }
+      } else {
         select.selectedIndex = 0
       }
-    } else {
-      // Default behavior for the very first selector
-      select.selectedIndex = 0
     }
 
     label.appendChild(select)
@@ -1100,6 +1179,7 @@ document.addEventListener("DOMContentLoaded", () => {
       container.remove()
       updateRemoveButtonsVisibility()
       updateUnitSelectorsState()
+      saveSettings()
     }
 
     container.appendChild(label)
@@ -1434,24 +1514,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- INITIALIZE and ATTACH LISTENERS ---
 
-  const resetSettingsBtn = document.getElementById("resetSettingsBtn")
   resetSettingsBtn.addEventListener("click", resetSettings)
-  numPlayersInput.addEventListener("input", updateSliderValues)
-  gridSizeInput.addEventListener("input", syncSliders)
-  addUnitBtn.addEventListener("click", createUnitSelector)
+  addUnitBtn.addEventListener("click", () => {
+    createUnitSelector()
+    saveSettings() // Add this
+  })
   startGameBtn.addEventListener("click", () => initGame(true))
   randomizeOrderBtn.addEventListener("click", randomizePlayerOrder)
-  pronounceWordsToggle.addEventListener("change", updateApiFieldVisibility)
-
+  showLinesToggle.addEventListener("change", saveSettings)
+  pronounceWordsToggle.addEventListener("change", () => {
+    updateApiFieldVisibility()
+    saveSettings()
+  })
   muteSoundsToggle.addEventListener("change", () => {
     isMuted = muteSoundsToggle.checked
+    saveSettings()
+  })
+  numPlayersInput.addEventListener("input", () => {
+    updateSliderValues()
+    saveSettings()
+  })
+  gridSizeInput.addEventListener("input", () => {
+    syncSliders()
+    saveSettings()
   })
   matchLengthInput.addEventListener("input", () => {
     matchLengthValue.textContent = matchLengthInput.value
+    saveSettings()
   })
-
-  const gameModeSelector = document.getElementById("gameModeSelector")
-  const gameModeHint = document.getElementById("gameModeHint")
 
   gameModeSelector.addEventListener("click", (e) => {
     const clickedButton = e.target.closest("button")
@@ -1480,6 +1570,15 @@ document.addEventListener("DOMContentLoaded", () => {
       button.classList.remove("selected")
     })
     clickedButton.classList.add("selected")
+
+    saveSettings()
+  })
+
+  unitSelectorsContainer.addEventListener("change", (e) => {
+    if (e.target.classList.contains("phonics-unit-select")) {
+      updateUnitSelectorsState()
+      saveSettings()
+    }
   })
 
   playerNamesContainer.addEventListener("dragover", (e) => {
@@ -1532,12 +1631,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     // Re-render the inputs with the new order
     renderNameInputs()
-  })
-
-  unitSelectorsContainer.addEventListener("change", (e) => {
-    if (e.target.classList.contains("phonics-unit-select")) {
-      updateUnitSelectorsState()
-    }
   })
 
   // --- EVENT LISTENERS for between rounds player order setup ---
@@ -1613,8 +1706,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderPlayerInfo()
   })
 
+  loadSettings()
   updateSliderValues()
-  createUnitSelector()
   updateApiFieldVisibility()
-  selectRandomUnit()
 })

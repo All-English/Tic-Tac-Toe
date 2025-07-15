@@ -615,73 +615,86 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- UTILITY FUNCTIONS ---
 
   async function speak(text, isMuted) {
-    // Check for the user-provided API key
-    if (!userApiKey) {
-      console.warn("API key is missing.")
-      const apiKeyField = document.getElementById("api-key-field")
-      // Briefly highlight the field to show the user where to enter the key
-      apiKeyField.classList.add("error")
-      setTimeout(() => apiKeyField.classList.remove("error"), 2500)
-      return
-    }
-
-    // 1. Basic validation
+    // Basic validation for muted audio or very short text
+    if (isMuted) return
     if (text.trim().length <= 1) {
       playSound("click")
       return
     }
 
-    if (isMuted) return
+    // --- Primary Method: Try ElevenLabs API ---
+    // We'll only attempt the API call if a key has been provided by the user.
+    if (userApiKey) {
+      const availableVoices = englishVoices.filter(
+        (voice) => voice.voice_id !== lastVoiceId
+      )
+      const randomVoice =
+        availableVoices[Math.floor(Math.random() * availableVoices.length)]
+      lastVoiceId = randomVoice.voice_id
+      console.log("Selected Voice Details:", randomVoice)
 
-    // 2. Filter out the last used voice
-    const availableVoices = englishVoices.filter(
-      (voice) => voice.voice_id !== lastVoiceId
-    )
+      const url = `https://api.elevenlabs.io/v1/text-to-speech/${randomVoice.voice_id}`
+      const headers = {
+        Accept: "audio/mpeg",
+        "Content-Type": "application/json",
+        "xi-api-key": userApiKey,
+      }
+      const body = JSON.stringify({
+        text: text,
+        model_id: "eleven_turbo_v2_5",
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+          speed: 0.85,
+        },
+      })
 
-    // 3. Select the full, random voice object
-    const randomVoice =
-      availableVoices[Math.floor(Math.random() * availableVoices.length)]
+      try {
+        const response = await fetch(url, { method: "POST", headers, body })
 
-    // 4. Update lastVoiceId for the next call
-    lastVoiceId = randomVoice.voice_id
+        if (response.ok) {
+          // SUCCESS: Play the audio and exit the function.
+          const audioBlob = await response.blob()
+          const audioUrl = URL.createObjectURL(audioBlob)
+          const audio = new Audio(audioUrl)
+          audio.play()
+          return // Important: Exit after successful playback.
+        }
 
-    // Log the full voice object to show all its data is available
-    console.log("Selected Voice Details:", randomVoice)
-
-    // 5. Make the API call using the voice_id from the selected object
-    const url = `https://api.elevenlabs.io/v1/text-to-speech/${randomVoice.voice_id}`
-    const headers = {
-      Accept: "audio/mpeg",
-      "Content-Type": "application/json",
-      "xi-api-key": userApiKey, // Use the user-provided API key
-    }
-    const body = JSON.stringify({
-      text: text,
-      model_id: "eleven_turbo_v2_5", // https://elevenlabs.io/docs/models
-      voice_settings: {
-        stability: 0.5,
-        similarity_boost: 0.75,
-        speed: 0.85,
-      }, // https://elevenlabs.io/docs/api-reference/voices/settings/update
-    })
-
-    try {
-      const response = await fetch(url, { method: "POST", headers, body })
-      if (!response.ok) {
+        // If response was not ok, log the error and proceed to the fallback.
         const errorData = await response.json()
         console.error(
-          "ElevenLabs API Error:",
-          errorData.detail?.message || `HTTP error! status: ${response.status}`
+          "ElevenLabs API Error, attempting fallback:",
+          errorData.detail?.message
         )
-        return
+      } catch (error) {
+        console.error(
+          "Failed to fetch from ElevenLabs, attempting fallback:",
+          error
+        )
       }
-      const audioBlob = await response.blob()
-      const audioUrl = URL.createObjectURL(audioBlob)
-      const audio = new Audio(audioUrl)
-      audio.play()
-    } catch (error) {
-      console.error("Failed to generate or play speech:", error)
     }
+
+    // --- Fallback Method: Browser Speech Synthesis ---
+    // This code will only run if the API key is missing or if the API call failed.
+    speakWithBrowser(text)
+  }
+
+  function speakWithBrowser(text) {
+    if (!("speechSynthesis" in window)) {
+      console.warn("Browser speech synthesis not supported.")
+      return
+    }
+
+    // Cancel any previously queued speech
+    window.speechSynthesis.cancel()
+
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = "en-US"
+    utterance.rate = 0.7
+    utterance.pitch = 1.0
+
+    window.speechSynthesis.speak(utterance)
   }
 
   function getNextPlayerIndex(currentPlayerIndex) {

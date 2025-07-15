@@ -413,14 +413,14 @@ export const englishVoices = [
       "Young and popular, this playful American female voice is perfect for trendy content.",
     use_case: "CONVERSATIONAL",
   },
-  {
-    name: "Eric",
-    voice_id: "cjVigY5qzO86Huf0OWal",
-    gender: "MALE",
-    description:
-      "A smooth tenor pitch from a man in his 40s - perfect for agentic use cases.",
-    use_case: "CONVERSATIONAL",
-  },
+  // {
+  //   name: "Eric",
+  //   voice_id: "cjVigY5qzO86Huf0OWal",
+  //   gender: "MALE",
+  //   description:
+  //     "A smooth tenor pitch from a man in his 40s - perfect for agentic use cases.",
+  //   use_case: "CONVERSATIONAL",
+  // },
   {
     name: "Chris",
     voice_id: "iP95p4xoKVk53GoZ742B",

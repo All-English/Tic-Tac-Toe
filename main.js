@@ -197,6 +197,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderBoard() {
     gameBoard.style.gridTemplateColumns = `repeat(${gameState.gridSize}, 1fr)`
+    const newTotalCells = gameState.gridSize * gameState.gridSize
+
     if (gameState.gridSize > 8) {
       gameBoard.classList.add("large-grid")
     } else {
@@ -205,17 +207,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Clean up cells from a previously larger grid
     const allCurrentCells = gameBoard.querySelectorAll(".cell")
-    const newTotalCells = gameState.gridSize * gameState.gridSize
-
     allCurrentCells.forEach((cell) => {
       if (parseInt(cell.dataset.index, 10) >= newTotalCells) {
         cell.remove()
       }
     })
 
-    for (let i = 0; i < gameState.gridSize * gameState.gridSize; i++) {
+    // Main render loop
+    for (let i = 0; i < newTotalCells; i++) {
       let cell = gameBoard.querySelector(`[data-index='${i}']`)
-      // If cell doesn't exist, create it once
+
       if (!cell) {
         cell = document.createElement("button")
         cell.classList.add("button", "cell")
@@ -224,34 +225,43 @@ document.addEventListener("DOMContentLoaded", () => {
         gameBoard.appendChild(cell)
       }
 
-      // ALWAYS update the word content on every render
       const wordObject = wordCache[i] || { word: "?", target: "" }
-      cell.innerHTML = highlightTargetSounds(wordObject.word, wordObject.target)
-
-      // Update dynamic properties based on state
-      const cellState = gameState.board[i]
-      cell.disabled = cellState !== null
-
-      if (cellState !== null) {
-        cell.dataset.playerSymbol = playerSymbols[cellState]
-        cell.style.setProperty(
-          "--player-color",
-          gameState.playerColors[cellState]
-        )
-      } else {
-        cell.removeAttribute("data-player-symbol")
-        cell.style.removeProperty("--player-color")
+      const newHTML = highlightTargetSounds(wordObject.word, wordObject.target)
+      // Only update innerHTML if it has actually changed
+      if (cell.innerHTML !== newHTML) {
+        cell.innerHTML = newHTML
       }
 
-      // Declaratively add/remove the highlight class based on state
-      if (gameState.highlightedCells.has(i)) {
-        cell.classList.add("highlight")
-      } else {
-        cell.classList.remove("highlight")
+      const cellState = gameState.board[i]
+      const shouldBeDisabled = cellState !== null
+      // Only update the disabled property if it has changed
+      if (cell.disabled !== shouldBeDisabled) {
+        cell.disabled = shouldBeDisabled
+      }
+
+      const newSymbol = shouldBeDisabled ? playerSymbols[cellState] : null
+      // Only update the data-player-symbol if it has changed
+      if (cell.dataset.playerSymbol !== newSymbol) {
+        if (newSymbol) {
+          cell.dataset.playerSymbol = newSymbol
+          cell.style.setProperty(
+            "--player-color",
+            gameState.playerColors[cellState]
+          )
+        } else {
+          cell.removeAttribute("data-player-symbol")
+          cell.style.removeProperty("--player-color")
+        }
+      }
+
+      const shouldBeHighlighted = gameState.highlightedCells.has(i)
+      // Only update the highlight class if it has changed
+      if (cell.classList.contains("highlight") !== shouldBeHighlighted) {
+        cell.classList.toggle("highlight", shouldBeHighlighted)
       }
     }
   }
-
+  
   function renderPlayerInfo() {
     playerInfoList.innerHTML = "" // Clear the list to re-render in new order
 

@@ -203,6 +203,16 @@ document.addEventListener("DOMContentLoaded", () => {
       gameBoard.classList.remove("large-grid")
     }
 
+    // Clean up cells from a previously larger grid
+    const allCurrentCells = gameBoard.querySelectorAll(".cell")
+    const newTotalCells = gameState.gridSize * gameState.gridSize
+
+    allCurrentCells.forEach((cell) => {
+      if (parseInt(cell.dataset.index, 10) >= newTotalCells) {
+        cell.remove()
+      }
+    })
+
     for (let i = 0; i < gameState.gridSize * gameState.gridSize; i++) {
       let cell = gameBoard.querySelector(`[data-index='${i}']`)
       // If cell doesn't exist, create it once
@@ -978,7 +988,7 @@ document.addEventListener("DOMContentLoaded", () => {
     gameBoard.querySelectorAll(".cell.pulse").forEach((cell) => {
       cell.classList.remove("pulse")
     })
-    
+
     let settings = {}
 
     if (isFromSetup) {

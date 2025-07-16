@@ -400,6 +400,7 @@ document.addEventListener("DOMContentLoaded", () => {
       gameMode: gameState.gameMode,
       selectedUnits: gameState.selectedUnits,
       showLines: gameState.showLines,
+      pronounceWords: gameState.pronounceWords,
     }
 
     gameBoard

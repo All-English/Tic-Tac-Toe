@@ -99,7 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
       undoLastMove()
     }
   }
-  
+
   const handleBackToSettings = () => {
     removeGameEventListeners()
     isOrderLocked = false
@@ -1456,7 +1456,8 @@ document.addEventListener("DOMContentLoaded", () => {
     matchLengthInput.value = 3
     showLinesToggle.checked = true
     muteSoundsToggle.checked = false
-    pronounceWordsToggle.checked = true
+    pronounceWordsToggle.checked = false
+    updateApiFieldVisibility()
 
     // Reset theme color dropdown and trigger the change
     themeHueSelect.value = "var(--oklch-blue)"

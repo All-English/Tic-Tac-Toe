@@ -974,6 +974,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- SETUP PHASE FUNCTIONS (Imperative, run before game starts) ---
 
   function initGame(isFromSetup) {
+    // Clear any lingering pulse animations from the previous game
+    gameBoard.querySelectorAll(".cell.pulse").forEach((cell) => {
+      cell.classList.remove("pulse")
+    })
+    
     let settings = {}
 
     if (isFromSetup) {

@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- STATE ---
   let gameState = {
     currentView: "setup",
+    isMuted: false,
     setup: {
       players: [],
       // We can add other setup-specific state here later
@@ -13,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   let areGameEventListenersAttached = false
   let wordCache = []
-  let isMuted = false
   let isOrderLocked = false
 
   const sounds = {
@@ -99,12 +99,26 @@ document.addEventListener("DOMContentLoaded", () => {
       undoLastMove()
     }
   }
+  
   const handleBackToSettings = () => {
     removeGameEventListeners()
     isOrderLocked = false
-    playerInfoList.innerHTML = "" // Clear old player cards
-    gameBoard.innerHTML = "" // Clear old cells
-    gameState = { ...gameState, currentView: "setup" }
+
+    // Rebuild the .setup.players object from the previous game's playerNames
+    const playersFromLastGame = gameState.playerNames.map((name, index) => ({
+      id: Date.now() + index, // IDs are regenerated for the setup screen
+      name: name,
+    }))
+
+    // Reset the gameState to the initial structure, preserving players
+    gameState = {
+      ...gameState, // Carry over settings like gridSize, etc.
+      currentView: "setup",
+      setup: {
+        players: playersFromLastGame,
+      },
+    }
+
     render()
   }
 
@@ -401,6 +415,7 @@ document.addEventListener("DOMContentLoaded", () => {
       selectedUnits: gameState.selectedUnits,
       showLines: gameState.showLines,
       pronounceWords: gameState.pronounceWords,
+      isMuted: gameState.isMuted,
     }
 
     gameBoard
@@ -617,7 +632,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function speak(text, isMuted) {
     // Basic validation for muted audio or very short text
-    if (isMuted) return
+    if (gameState.isMuted) return
     if (text.trim().length <= 1) {
       playSound("click")
       return
@@ -712,7 +727,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function playSound(soundName) {
-    if (isMuted) return
+    if (gameState.isMuted) return
     const audio = sounds[soundName]
     if (audio) {
       audio.currentTime = 0
@@ -721,7 +736,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function playSoundSequentially(soundName, times) {
-    if (isMuted) return
+    if (gameState.isMuted) return
     const audio = sounds[soundName]
     if (!audio) return
     for (let i = 0; i < times; i++) {
@@ -1541,7 +1556,7 @@ document.addEventListener("DOMContentLoaded", () => {
     saveSettings()
   })
   muteSoundsToggle.addEventListener("change", () => {
-    isMuted = muteSoundsToggle.checked
+    gameState = { ...gameState, isMuted: muteSoundsToggle.checked }
     saveSettings()
   })
   numPlayersInput.addEventListener("input", () => {

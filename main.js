@@ -1450,7 +1450,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function resetSettings() {
-    // Reset sliders and toggles to their default values
+    gameState.setup.players = []
     numPlayersInput.value = 2
     gridSizeInput.value = 3
     matchLengthInput.value = 3

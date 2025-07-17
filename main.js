@@ -933,7 +933,7 @@ document.addEventListener("DOMContentLoaded", () => {
     muteSoundsToggle.checked = settings.muteSounds === true
     pronounceWordsToggle.checked = settings.pronounceWords === true
     darkModeToggle.checked = settings.darkMode === true
-    themeHueSelect.value = settings.themeHue || "var(--oklch-blue)"
+    themeHueSelect.value = settings.themeHue || "var(--oklch-indigo)"
 
     // Set the correct game mode button
     if (settings.gameMode) {
@@ -1505,7 +1505,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateApiFieldVisibility()
 
     // Reset theme color dropdown and trigger the change
-    themeHueSelect.value = "var(--oklch-blue)"
+    themeHueSelect.value = "var(--oklch-indigo)"
     themeHueSelect.dispatchEvent(new Event("change"))
 
     // Reset the game mode to Conquest

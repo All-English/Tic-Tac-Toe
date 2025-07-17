@@ -27,7 +27,9 @@
             <h4 class="h5">Player Setup</h4>
             <div class="range-container">
               <label class="range">
-                <span class="label">Number of Players: </span><span id="numPlayersValue">2</span>
+                <div class="range-label-container">
+                  <span class="label">Number of Players: </span><span id="numPlayersValue">2</span>
+                </div>
                 <input type="range" id="numPlayers" min="2" max="5" value="2">
               </label>
             </div>
@@ -42,13 +44,17 @@
             <h4 class="h5">Game Rules</h4>
             <div class="range-container">
               <label class="range">
-                <span class="label">Board Size: </span><span id="gridSizeValue">3x3</span>
+                <div class="range-label-container">
+                  <span class="label">Board Size: </span><span id="gridSizeValue">3x3</span>
+                </div>
                 <input type="range" id="gridSize" min="3" max="10" value="3">
               </label>
             </div>
             <div class="range-container">
               <label class="range">
-                <span class="label">Words in a Row: </span><span id="matchLengthValue">3</span>
+                <div class="range-label-container">
+                  <span class="label">Words in a Row: </span><span id="matchLengthValue">3</span>
+                </div>
                 <input type="range" id="matchLength" min="2" max="5" value="3">
               </label>
             </div>
@@ -110,7 +116,8 @@
               <span class="label">ElevenLabs API Key</span>
               <input type="password" id="elevenlabs-api-key" placeholder="Paste your key here...">
             </label>
-            <p class="field-hint">(Optional) An ElevenLabs API key is needed for a high quality voice. <br> Your key is stored
+            <p class="field-hint">(Optional) An ElevenLabs API key is needed for a high quality voice. <br> Your key is
+              stored
               securely in your browser and never leaves your computer.</p>
           </div>
 
@@ -132,8 +139,8 @@
           <option value="var(--oklch-pink)">Pink</option>
           <option value="var(--oklch-purple)">Purple</option>
           <option value="var(--oklch-violet)">Violet</option>
-          <option value="var(--oklch-indigo)">Indigo</option>
-          <option value="var(--oklch-blue)" selected>Blue</option>
+          <option value="var(--oklch-indigo)" selected>Indigo</option>
+          <option value="var(--oklch-blue)">Blue</option>
           <option value="var(--oklch-cyan)">Cyan</option>
           <option value="var(--oklch-teal)">Teal</option>
           <option value="var(--oklch-green)">Green</option>

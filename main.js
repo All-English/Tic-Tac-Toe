@@ -920,40 +920,46 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function loadSettings() {
     const savedSettings = localStorage.getItem("phonics_game_settings")
-    if (!savedSettings) return // No saved settings found
 
-    const settings = JSON.parse(savedSettings)
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings)
 
-    // Apply saved settings to the inputs
-    numPlayersInput.value = settings.numPlayers || 2
-    gameState.setup.players = settings.playerNames || []
-    gridSizeInput.value = settings.gridSize || 3
-    matchLengthInput.value = settings.matchLength || 3
-    showLinesToggle.checked = settings.showLines !== false
-    muteSoundsToggle.checked = settings.muteSounds === true
-    pronounceWordsToggle.checked = settings.pronounceWords === true
-    darkModeToggle.checked = settings.darkMode === true
-    themeHueSelect.value = settings.themeHue || "var(--oklch-indigo)"
+      // Apply saved settings to the inputs
+      numPlayersInput.value = settings.numPlayers || 2
+      gameState.setup.players = settings.playerNames || []
+      gridSizeInput.value = settings.gridSize || 3
+      matchLengthInput.value = settings.matchLength || 3
+      showLinesToggle.checked = settings.showLines !== false
+      muteSoundsToggle.checked = settings.muteSounds === true
+      pronounceWordsToggle.checked = settings.pronounceWords === true
+      darkModeToggle.checked = settings.darkMode === true
+      themeHueSelect.value = settings.themeHue || "var(--oklch-indigo)"
 
-    // Set the correct game mode button
-    if (settings.gameMode) {
-      gameModeSelector.querySelectorAll("button").forEach((button) => {
-        button.classList.toggle(
-          "selected",
-          button.dataset.mode === settings.gameMode
-        )
-      })
-      updateGameModeHint(settings.gameMode)
-    }
+      // Set the correct game mode button
+      if (settings.gameMode) {
+        gameModeSelector.querySelectorAll("button").forEach((button) => {
+          button.classList.toggle(
+            "selected",
+            button.dataset.mode === settings.gameMode
+          )
+        })
+        updateGameModeHint(settings.gameMode)
+      }
 
-    // Re-create the saved word unit selectors
-    unitSelectorsContainer.innerHTML = "" // Clear defaults
-    if (settings.selectedUnits && settings.selectedUnits.length > 0) {
-      settings.selectedUnits.forEach((unitValue) => {
-        createUnitSelector(unitValue) // We'll modify createUnitSelector to accept a value
-      })
+      // Re-create the saved word unit selectors
+      unitSelectorsContainer.innerHTML = "" // Clear defaults
+      if (settings.selectedUnits && settings.selectedUnits.length > 0) {
+        settings.selectedUnits.forEach((unitValue) => {
+          createUnitSelector(unitValue) // We'll modify createUnitSelector to accept a value
+        })
+      } else {
+        createUnitSelector() // Create one default selector if none were saved
+        selectRandomUnit()
+      }
+
     } else {
-      createUnitSelector() // Create one default selector if none were saved
+      // --- IF NO SETTINGS ARE FOUND (NEW USER), CREATE DEFAULTS ---
+      createUnitSelector()
       selectRandomUnit()
     }
 

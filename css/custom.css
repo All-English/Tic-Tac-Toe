@@ -1,7 +1,7 @@
 /* THEME */
 
 :root {
-  --palette-hue: var(--oklch-blue);
+  --palette-hue: var(--oklch-indigo);
   --palette-chroma: 0.89;
   --palette-hue-rotate-by: 0;
 
@@ -46,6 +46,16 @@ body {
   gap: var(--size-fluid-4);
   padding: var(--size-fluid-4);
   font-family: 'Parkinsans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+body::before {
+  background-image: url(/speckles-black.svg);
+  background-position: top;
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  /* z-index: 10; */
 }
 
 .theme-switcher-container {
@@ -147,6 +157,12 @@ main {
 
 .content>.setup-section:first-of-type>.h5 {
   margin-block-start: 0;
+}
+
+.range-label-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 /* This makes the player name fields look grabbable */

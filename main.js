@@ -956,7 +956,6 @@ document.addEventListener("DOMContentLoaded", () => {
         createUnitSelector() // Create one default selector if none were saved
         selectRandomUnit()
       }
-
     } else {
       // --- IF NO SETTINGS ARE FOUND (NEW USER), CREATE DEFAULTS ---
       createUnitSelector()
@@ -1196,31 +1195,41 @@ document.addEventListener("DOMContentLoaded", () => {
     const select = document.createElement("select")
     select.className = "phonics-unit-select"
 
-    // Build the list of all possible options first
     const allOptions = []
     const initialOption = document.createElement("option")
     initialOption.value = ""
     initialOption.textContent = "Select a word unit..."
     allOptions.push(initialOption)
+    const separator = document.createElement("hr")
+    allOptions.push(separator)
 
-    for (const level in smartPhonicsWordBank) {
-      for (const unit in smartPhonicsWordBank[level]) {
+    // Get the keys to know when we are at the last level
+    const levelKeys = Object.keys(smartPhonicsWordBank)
+
+    levelKeys.forEach((level, index) => {
+      const units = smartPhonicsWordBank[level]
+      for (const unit in units) {
         const option = document.createElement("option")
-        const unitData = smartPhonicsWordBank[level][unit]
+        const unitData = units[unit]
         option.value = `${level}|${unit}`
-        option.textContent = `Level ${level.slice(-1)} - ${
-          unit.slice(0, 1).toUpperCase() + unit.slice(1)
-        }: ${unitData.targetSound}`
+        option.textContent = `${level.slice(-1)}-${unit.slice(-1)} (${
+          unitData.unitTitle
+        })`
         allOptions.push(option)
       }
-    }
+
+      // Add a separator after each level group, but not after the last one
+      if (index < levelKeys.length - 1) {
+        const separator = document.createElement("hr")
+        allOptions.push(separator)
+      }
+    })
+
     select.append(...allOptions)
 
-    // If a value was passed in (from localStorage), set it.
     if (selectedValue) {
       select.value = selectedValue
     } else {
-      // If no value is passed, use the original logic to find the next available unit.
       const allSelectors = unitSelectorsContainer.querySelectorAll(
         ".phonics-unit-select"
       )

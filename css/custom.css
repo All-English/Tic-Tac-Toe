@@ -1,6 +1,70 @@
 /* THEME */
 
 :root {
+  /* @link https://utopia.fyi/type/calculator?c=320,16,1.2,1240,18,1.25,6,2,&s=0.75|0.5|0.25,1.5|2|3|4|6|8,s-l&g=s,l,xl,12 */
+
+  /* Fluid Font Sizes
+    Step -2: 11.1111px → 11.52px
+    Step -1: 13.3333px → 14.4px
+    Step 0: 16px → 18px
+    Step 1: 19.2px → 22.5px
+    Step 2: 23.04px → 28.125px
+    Step 3: 27.648px → 35.1563px
+    Step 4: 33.1776px → 43.9453px
+    Step 5: 39.8131px → 54.9316px
+    Step 6: 47.7757px → 68.6646px */
+  --fs-step--2: clamp(0.6944rem, 0.6856rem + 0.0444vw, 0.72rem);
+  --fs-step--1: clamp(0.8333rem, 0.8101rem + 0.1159vw, 0.9rem);
+  --fs-step-0: clamp(1rem, 0.9565rem + 0.2174vw, 1.125rem);
+  --fs-step-1: clamp(1.2rem, 1.1283rem + 0.3587vw, 1.4063rem);
+  --fs-step-2: clamp(1.44rem, 1.3295rem + 0.5527vw, 1.7578rem);
+  --fs-step-3: clamp(1.728rem, 1.5648rem + 0.8161vw, 2.1973rem);
+  --fs-step-4: clamp(2.0736rem, 1.8395rem + 1.1704vw, 2.7466rem);
+  --fs-step-5: clamp(2.4883rem, 2.1597rem + 1.6433vw, 3.4332rem);
+  --fs-step-6: clamp(2.986rem, 2.5319rem + 2.2705vw, 4.2915rem);
+
+  /* Fluid Space Sizes
+    Space 3xs: 4px → 5px
+    Space 2xs: 8px → 9px
+    Space xs: 12px → 14px
+    Space s: 16px → 18px
+    Space m: 24px → 27px
+    Space l: 32px → 36px
+    Space xl: 48px → 54px
+    Space 2xl: 64px → 72px
+    Space 3xl: 96px → 108px
+    Space 4xl: 128px → 144px */
+  --space-3xs: clamp(0.25rem, 0.2283rem + 0.1087vw, 0.3125rem);
+  --space-2xs: clamp(0.5rem, 0.4783rem + 0.1087vw, 0.5625rem);
+  --space-xs: clamp(0.75rem, 0.7065rem + 0.2174vw, 0.875rem);
+  --space-s: clamp(1rem, 0.9565rem + 0.2174vw, 1.125rem);
+  --space-m: clamp(1.5rem, 1.4348rem + 0.3261vw, 1.6875rem);
+  --space-l: clamp(2rem, 1.913rem + 0.4348vw, 2.25rem);
+  --space-xl: clamp(3rem, 2.8696rem + 0.6522vw, 3.375rem);
+  --space-2xl: clamp(4rem, 3.8261rem + 0.8696vw, 4.5rem);
+  --space-3xl: clamp(6rem, 5.7391rem + 1.3043vw, 6.75rem);
+  --space-4xl: clamp(8rem, 7.6522rem + 1.7391vw, 9rem);
+
+  /* Fluid Space One-up Pair Sizes
+    Space 3xs-2xs: 4px → 9px
+    Space 2xs-xs: 8px → 14px
+    Space xs-s: 12px → 18px
+    Space s-m: 16px → 27px
+    Space m-l: 24px → 36px
+    Space l-xl: 32px → 54px
+    Space xl-2xl: 48px → 72px
+    Space 2xl-3xl: 64px → 108px
+    Space 3xl-4xl: 96px → 144px */
+  --space-3xs-2xs: clamp(0.25rem, 0.1413rem + 0.5435vw, 0.5625rem);
+  --space-2xs-xs: clamp(0.5rem, 0.3696rem + 0.6522vw, 0.875rem);
+  --space-xs-s: clamp(0.75rem, 0.6196rem + 0.6522vw, 1.125rem);
+  --space-s-m: clamp(1rem, 0.7609rem + 1.1957vw, 1.6875rem);
+  --space-m-l: clamp(1.5rem, 1.2391rem + 1.3043vw, 2.25rem);
+  --space-l-xl: clamp(2rem, 1.5217rem + 2.3913vw, 3.375rem);
+  --space-xl-2xl: clamp(3rem, 2.4783rem + 2.6087vw, 4.5rem);
+  --space-2xl-3xl: clamp(4rem, 3.0435rem + 4.7826vw, 6.75rem);
+  --space-3xl-4xl: clamp(6rem, 4.9565rem + 5.2174vw, 9rem);
+
   --palette-hue: var(--oklch-indigo);
   --palette-chroma: 0.89;
   --palette-hue-rotate-by: 0;
@@ -129,6 +193,19 @@ main {
   justify-items: center;
 }
 
+.phonics-unit-select .separator {
+  pointer-events: none;
+  /* This makes the option unclickable */
+  text-align: center;
+  color: var(--text-color-2);
+  font-style: italic;
+}
+
+/* This prevents the separator from getting a background color on hover */
+.phonics-unit-select .separator:hover {
+  background-color: transparent;
+}
+
 /* We also need to center the text inside the hint paragraph */
 #api-settings-section {
   text-align: center;
@@ -173,8 +250,8 @@ main {
 }
 
 .player-name-field input {
-    color: var(--text-color-2);
-  }
+  color: var(--text-color-2);
+}
 
 /* This class is added to the field being dragged */
 .player-name-field.dragging {

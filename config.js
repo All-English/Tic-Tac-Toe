@@ -1,87 +1,129 @@
 export const smartPhonicsWordBank = {
   level1: {
-    unit1: { targetSound: "a,b,c", words: ["A", "a", "B", "b", "C", "c"] },
-    unit2: { targetSound: "d,e,f", words: ["D", "d", "E", "e", "F", "f"] },
-    unit3: { targetSound: "g,h,i", words: ["G", "g", "H", "h", "I", "i"] },
-    unit4: { targetSound: "j,k,l", words: ["J", "j", "K", "k", "L", "l"] },
-    unit5: { targetSound: "m,n,o", words: ["M", "m", "N", "n", "O", "o"] },
-    unit6: { targetSound: "p,q,r", words: ["P", "p", "Q", "q", "R", "r"] },
+    unit1: {
+      targetSound: "a,b,c",
+      unitTitle: "ABC",
+      words: ["A", "a", "B", "b", "C", "c"],
+    },
+    unit2: {
+      targetSound: "d,e,f",
+      unitTitle: "DEF",
+      words: ["D", "d", "E", "e", "F", "f"],
+    },
+    unit3: {
+      targetSound: "g,h,i",
+      unitTitle: "GHI",
+      words: ["G", "g", "H", "h", "I", "i"],
+    },
+    unit4: {
+      targetSound: "j,k,l",
+      unitTitle: "JKL",
+      words: ["J", "j", "K", "k", "L", "l"],
+    },
+    unit5: {
+      targetSound: "m,n,o",
+      unitTitle: "MNO",
+      words: ["M", "m", "N", "n", "O", "o"],
+    },
+    unit6: {
+      targetSound: "p,q,r",
+      unitTitle: "PQR",
+      words: ["P", "p", "Q", "q", "R", "r"],
+    },
     unit7: {
       targetSound: "s,t,u,v",
+      unitTitle: "STUV",
       words: ["S", "s", "T", "t", "U", "u", "V", "v"],
     },
     unit8: {
       targetSound: "w,x,y,z",
+      unitTitle: "WXYZ",
       words: ["W", "w", "X", "x", "Y", "y", "Z", "z"],
     },
   },
   level2: {
     unit1: {
       targetSound: "a",
+      unitTitle: "Short Vowel a",
       words: ["dam", "ham", "jam", "ram", "cap", "lap", "map", "nap"],
     },
     unit2: {
       targetSound: "a",
+      unitTitle: "Short Vowel a",
       words: ["can", "fan", "man", "pan", "bat", "cat", "hat", "mat"],
     },
     unit3: {
       targetSound: "e",
+      unitTitle: "Short Vowel e",
       words: ["jet", "net", "vet", "wet", "bed", "red", "hen", "pen"],
     },
     unit4: {
       targetSound: "i",
+      unitTitle: "Short Vowel i",
       words: ["bib", "rib", "kid", "lid", "pig", "wig", "fin", "pin"],
     },
     unit5: {
       targetSound: "i",
+      unitTitle: "Short Vowel i",
       words: ["dip", "hip", "lip", "rip", "hit", "sit", "mix", "six"],
     },
     unit6: {
       targetSound: "o",
+      unitTitle: "Short Vowel o",
       words: ["hot", "pot", "box", "fox", "cop", "hop", "dog", "log"],
     },
     unit7: {
       targetSound: "u",
+      unitTitle: "Short Vowel u",
       words: ["bug", "hug", "mug", "rug", "rub", "tub", "cup", "pup"],
     },
     unit8: {
       targetSound: "u",
+      unitTitle: "Short Vowel u",
       words: ["bun", "fun", "run", "sun", "bud", "mud", "cut", "nut"],
     },
   },
   level3: {
     unit1: {
       targetSound: "a_e",
+      unitTitle: "Long Vowel a",
       words: ["bake", "cake", "lake", "rake", "cape", "tape", "cave", "wave"],
     },
     unit2: {
       targetSound: "a_e",
+      unitTitle: "Long Vowel a",
       words: ["game", "name", "date", "gate", "cane", "mane", "case", "vase"],
     },
     unit3: {
       targetSound: "i_e",
+      unitTitle: "Long Vowel i",
       words: ["line", "nine", "pine", "vine", "bike", "hike", "lime", "time"],
     },
     unit4: {
       targetSound: "i_e",
+      unitTitle: "Long Vowel i",
       words: ["hide", "ride", "pipe", "wipe", "bite", "kite", "dive", "five"],
     },
     unit5: {
       targetSound: "o_e",
+      unitTitle: "Long Vowel o",
       words: ["hose", "nose", "pose", "rose", "hope", "rope", "note", "vote"],
     },
     unit6: {
       targetSound: "o_e",
+      unitTitle: "Long Vowel o",
       words: ["hole", "mole", "pole", "sole", "dome", "home", "bone", "cone"],
     },
     unit7: {
       targetSound: "u_e",
+      unitTitle: "Long Vowel u",
       words: ["cube", "tube", "cute", "mute", "mule", "dune", "June", "tune"],
     },
   },
   level4: {
     unit1: {
       targetSound: "bl, cl, fl",
+      unitTitle: "bl, cl, fl",
       words: [
         "black",
         "blade",
@@ -99,6 +141,7 @@ export const smartPhonicsWordBank = {
     },
     unit2: {
       targetSound: "br, cr, fr",
+      unitTitle: "br, cr, fr",
       words: [
         "brake",
         "brave",
@@ -116,6 +159,7 @@ export const smartPhonicsWordBank = {
     },
     unit3: {
       targetSound: "gl, pl, sl",
+      unitTitle: "gl, pl, sl",
       words: [
         "glass",
         "globe",
@@ -133,6 +177,7 @@ export const smartPhonicsWordBank = {
     },
     unit4: {
       targetSound: "dr, pr, tr",
+      unitTitle: "dr, pr, tr",
       words: [
         "dragon",
         "dress",
@@ -150,6 +195,7 @@ export const smartPhonicsWordBank = {
     },
     unit5: {
       targetSound: "sm, sn, st, sw",
+      unitTitle: "sm, sn, st, sw",
       words: [
         "smell",
         "smile",
@@ -167,6 +213,7 @@ export const smartPhonicsWordBank = {
     },
     unit6: {
       targetSound: "ng, nk",
+      unitTitle: "ng, nk",
       words: [
         "bang",
         "fang",
@@ -184,6 +231,7 @@ export const smartPhonicsWordBank = {
     },
     unit7: {
       targetSound: "sh, ch",
+      unitTitle: "sh, ch",
       words: [
         "shape",
         "ship",
@@ -201,6 +249,7 @@ export const smartPhonicsWordBank = {
     },
     unit8: {
       targetSound: "th, wh",
+      unitTitle: "th, wh",
       words: [
         "thick",
         "thin",
@@ -220,6 +269,7 @@ export const smartPhonicsWordBank = {
   level5: {
     unit1: {
       targetSound: "ee, ea",
+      unitTitle: "ee, ea",
       words: [
         "bee",
         "feet",
@@ -237,6 +287,7 @@ export const smartPhonicsWordBank = {
     },
     unit2: {
       targetSound: "oa, ow",
+      unitTitle: "oa, ow",
       words: [
         "boat",
         "coat",
@@ -254,6 +305,7 @@ export const smartPhonicsWordBank = {
     },
     unit3: {
       targetSound: "ai, ay",
+      unitTitle: "ai, ay",
       words: [
         "mail",
         "nail",
@@ -271,6 +323,7 @@ export const smartPhonicsWordBank = {
     },
     unit4: {
       targetSound: "oi, oy",
+      unitTitle: "oi, oy",
       words: [
         "boil",
         "coil",
@@ -288,6 +341,7 @@ export const smartPhonicsWordBank = {
     },
     unit5: {
       targetSound: "ow, ou",
+      unitTitle: "ow, ou",
       words: [
         "brown",
         "clown",
@@ -305,6 +359,7 @@ export const smartPhonicsWordBank = {
     },
     unit6: {
       targetSound: "ir, er, ur",
+      unitTitle: "ir, er, ur",
       words: [
         "bird",
         "girl",
@@ -322,6 +377,7 @@ export const smartPhonicsWordBank = {
     },
     unit7: {
       targetSound: "ar, or",
+      unitTitle: "ar, or",
       words: [
         "arm",
         "car",
@@ -339,6 +395,7 @@ export const smartPhonicsWordBank = {
     },
     unit8: {
       targetSound: "oo",
+      unitTitle: "oo",
       words: [
         "book",
         "cook",

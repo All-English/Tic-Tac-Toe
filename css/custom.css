@@ -537,7 +537,7 @@ footer {
   width: auto;
   mix-blend-mode: multiply;
   user-select: none;
-  animation: snailing 180s linear infinite;
+  animation: snailing 220s linear infinite;
   animation-delay: -10s;
   /* Start with the snail already on screen */
 }

@@ -282,6 +282,10 @@ document.addEventListener("DOMContentLoaded", () => {
       playerBlock.className = "card outlined player-info-block"
       playerBlock.dataset.index = i // Set index for drag-drop
 
+      // Add badge classes and set the symbol in the aria-label
+      playerBlock.classList.add("badge")
+      playerBlock.setAttribute("aria-label", playerSymbols[i])
+
       // Add drag-and-drop functionality only in reorder mode
       if (isReordering) {
         playerBlock.draggable = true
@@ -290,7 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       playerBlock.innerHTML = `
-      <hgroup><h3 data-role="name">${name} (${playerSymbols[i]})</h3></hgroup>
+      <hgroup><h3 data-role="name">${name}</h3></hgroup>
       <div class="content" data-role="score">${scores[i]}</div>
     `
 

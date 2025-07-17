@@ -461,6 +461,18 @@ dialog#game-over-dialog::backdrop {
   transition: opacity 0.4s ease, filter 0.4s ease;
 }
 
+.player-info-block.badge {
+  --_inset-offset: 26px;
+  --_color: var(--player-color);
+  --_border-color: transparent;
+}
+
+.player-info-block.badge::after {
+  font-size: var(--font-size-fluid-0);
+  min-inline-size: var(--size-5);
+  block-size: var(--size-5);
+}
+
 .player-info-block h3 {
   color: var(--player-color);
 }

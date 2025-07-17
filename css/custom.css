@@ -621,7 +621,7 @@ footer {
 .footer-illustration img {
   position: absolute;
   left: 100%;
-  bottom: -4px;
+  bottom: -3px;
   height: 100%;
   width: auto;
   mix-blend-mode: multiply;

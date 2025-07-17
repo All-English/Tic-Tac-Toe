@@ -261,7 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
-  
+
   function renderPlayerInfo() {
     playerInfoList.innerHTML = "" // Clear the list to re-render in new order
 
@@ -650,6 +650,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- UTILITY FUNCTIONS ---
 
+  function updateGameModeHint(mode) {
+    switch (mode) {
+      case "Conquest":
+        gameModeHint.textContent = "Get the most points."
+        break
+      case "Stealth":
+        gameModeHint.textContent = "Get the fewest points."
+        break
+      case "Classic":
+        gameModeHint.textContent = "The first score wins."
+        break
+      case "Survivor":
+        gameModeHint.textContent = "Get a point and you're out."
+        break
+      default:
+        gameModeHint.textContent = "Get the most points."
+    }
+  }
+
   async function speak(text, isMuted) {
     // Basic validation for muted audio or very short text
     if (gameState.isMuted) return
@@ -924,6 +943,7 @@ document.addEventListener("DOMContentLoaded", () => {
           button.dataset.mode === settings.gameMode
         )
       })
+      updateGameModeHint(settings.gameMode)
     }
 
     // Re-create the saved word unit selectors
@@ -1602,22 +1622,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const clickedButton = e.target.closest("button")
     if (!clickedButton) return
 
-    // Update hint text based on the button's data-mode
     const gameMode = clickedButton.dataset.mode
-    switch (gameMode) {
-      case "Conquest":
-        gameModeHint.textContent = "Get the most points."
-        break
-      case "Stealth":
-        gameModeHint.textContent = "Get the fewest points."
-        break
-      case "Classic":
-        gameModeHint.textContent = "The first score wins."
-        break
-      case "Survivor":
-        gameModeHint.textContent = "Get a point and you're out."
-        break
-    }
+    updateGameModeHint(gameMode) // Use the new function
 
     // Update the selected state visually
     const buttons = gameModeSelector.querySelectorAll("button")

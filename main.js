@@ -368,7 +368,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Speak the word in the cell
     if (gameState.pronounceWords) {
-      speak(cell.textContent, isMuted)
+      speak(cell.textContent)
     }
 
     const wasBlock = checkForBlock(index)
@@ -673,7 +673,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  async function speak(text, isMuted) {
+  async function speak(text) {
     // Basic validation for muted audio or very short text
     if (gameState.isMuted) return
     if (text.trim().length <= 1) {

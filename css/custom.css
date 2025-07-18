@@ -118,6 +118,10 @@ body::before {
   background-image: url(/images/speckles-black.svg);
 }
 
+html.dark body::before {
+  background-image: url(/images/speckles-white.svg);
+}
+
 /* body::after {
   background-image: url(/images/speckles-blue.svg);
 } */

@@ -871,29 +871,42 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function generatePlayerColors() {
-    const colors = []
     const selectedTheme = themeHueSelect.value
 
     if (selectedTheme === "bw") {
       // In B&W mode, use specific, vibrant colors for players.
       return [
-        "var(--red)",
-        "var(--blue)",
-        "var(--green)",
-        "var(--orange)",
-        "var(--purple)",
+        // "var(--red)",
+        // "var(--blue)",
+        // "var(--green)",
+        // "var(--orange)",
+        // "var(--purple)",
+        "oklch(.71 0.1691 139.84)",
+        "oklch(.71 0.1691 67.84)",
+        "oklch(.71 0.1691 211.84)",
+        "oklch(.71 0.1691 283.84)",
+        "oklch(.71 0.1691 355.84)",
       ]
     } else {
-      // For color themes, use the hue-shifting logic.
-      const initialShift = 45
-      const hueShiftAmount = 55
-      const maxPlayers = 5
+      const colors = []
+      const maxPlayers = parseInt(document.getElementById("numPlayers").max)
+
+      const rawValue = themeHueSelect.value // Get the raw value, e.g. "var(--oklch-indigo)"
+      const themeHuePropName = rawValue.slice(4, -1) // Extract the CSS variable name, e.g. "--oklch-indigo"
+      const themeHueStringValue = getComputedStyle(
+        document.documentElement
+      ).getPropertyValue(themeHuePropName) // Look up the value of the clean property name.
+      const selectedHue = parseFloat(themeHueStringValue) // Convert to a number
+
+      const contrastOffset = 180 // Start with the complementary color.
+      const hueStep = 360 / maxPlayers // Space colors evenly around the wheel.
 
       for (let i = 0; i < maxPlayers; i++) {
-        const totalShift = initialShift + i * hueShiftAmount
-        const shiftedColor = `oklch(from var(--color-9) l c calc(h + ${totalShift}))`
-        colors.push(shiftedColor)
+        const hue = (selectedHue + contrastOffset + i * hueStep) % 360
+        const color = `oklch(from var(--color-6) l c ${hue.toFixed(2)})`
+        colors.push(color)
       }
+
       return colors
     }
   }

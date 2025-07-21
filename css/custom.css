@@ -667,6 +667,7 @@ dialog.side-drawer {
   margin: 0;
   width: min(400px, 90vw);
   height: 100vh;
+  max-height: 100vh;
   border-radius: var(--radius-3) 0 0 var(--radius-3);
   display: flex;
   flex-direction: column;

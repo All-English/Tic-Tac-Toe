@@ -670,9 +670,10 @@ footer {
   /* Animation state (hidden) */
   transform: translateX(100%);
   transition:
-    display 0.5s allow-discrete,
-    overlay 0.5s allow-discrete,
-    transform 0.5s var(--ease-out-3);
+    display 0.3s allow-discrete,
+    overlay 0.2s allow-discrete,
+    opacity 0.3s var(--ease-out-3),
+    transform 0.3s var(--ease-out-3);
 }
 
 /* Animation state (visible) */

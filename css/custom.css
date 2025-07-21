@@ -395,14 +395,23 @@ dialog#game-over-dialog {
   border-radius: var(--radius-3);
   opacity: 0;
   transform: scale(0.95);
-  transition:
-    opacity 0.3s var(--ease-out-3),
-    transform 0.3s var(--ease-out-3);
 }
 
 dialog#game-over-dialog[open] {
   opacity: 1;
   transform: scale(1);
+  /* The transition that runs on open */
+  transition:
+    display 0.3s allow-discrete,
+    overlay 0.3s allow-discrete,
+    opacity 0.3s var(--ease-out-3),
+    transform 0.3s var(--ease-out-3);
+
+  /* The starting style for the animation */
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.95);
+  }
 }
 
 dialog#game-over-dialog::backdrop {
@@ -667,9 +676,19 @@ footer {
 /* Animation state (visible) */
 dialog.side-drawer[open] {
   transform: translateX(0);
+
+  transition:
+    display 0.4s allow-discrete,
+    overlay 0.4s allow-discrete,
+    transform 0.4s var(--ease-out-3);
+
+  /* The starting style for the animation */
+  @starting-style {
+    transform: translateX(100%);
+  }
 }
 
-/* Style the content area */
+/* --- Style the content area --- */
 .side-drawer .content {
   flex-grow: 1;
   overflow-y: auto;

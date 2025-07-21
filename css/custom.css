@@ -256,6 +256,13 @@ main {
   align-items: center;
 }
 
+.player-setup>.h5 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--size-2);
+}
+
 /* This makes the player name fields look grabbable */
 .player-name-field {
   cursor: grab;

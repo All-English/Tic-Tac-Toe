@@ -1264,52 +1264,64 @@ document.addEventListener("DOMContentLoaded", () => {
     if (selectedValue) {
       select.value = selectedValue
     } else {
-      const allSelectors = unitSelectorsContainer.querySelectorAll(
+      const allExistingSelectors = unitSelectorsContainer.querySelectorAll(
         ".phonics-unit-select"
       )
-      if (allSelectors.length > 0) {
-        const usedValues = new Set()
-        allSelectors.forEach((s) => {
-          if (s.value) usedValues.add(s.value)
-        })
-        const lastSelector = allSelectors[allSelectors.length - 1]
-        const lastIndex = lastSelector.selectedIndex
-        let foundNext = false
-        for (let i = 1; i < allOptions.length; i++) {
-          const potentialIndex = (lastIndex + i) % allOptions.length
-          const potentialOption = allOptions[potentialIndex]
-          if (potentialOption.value && !usedValues.has(potentialOption.value)) {
-            select.selectedIndex = potentialIndex
-            foundNext = true
-            break
+      const usedValues = new Set()
+      allExistingSelectors.forEach((s) => {
+        if (s.value) usedValues.add(s.value)
+      })
+
+      let startIndex = 0
+      if (allExistingSelectors.length > 0) {
+        const lastSelector =
+          allExistingSelectors[allExistingSelectors.length - 1]
+        if (lastSelector.value) {
+          const lastIndexInMasterList = allOptions.findIndex(
+            (opt) => opt.value === lastSelector.value
+          )
+          if (lastIndexInMasterList !== -1) {
+            startIndex = lastIndexInMasterList
           }
         }
-        if (!foundNext) {
-          select.selectedIndex = 0
+      }
+
+      let foundNext = false
+      // Loop through all options to find the next available one, starting after the last selection
+      for (let i = 1; i < allOptions.length; i++) {
+        const potentialIndex = (startIndex + i) % allOptions.length
+        const potentialOption = allOptions[potentialIndex]
+
+        if (potentialOption.value && !usedValues.has(potentialOption.value)) {
+          select.value = potentialOption.value
+          foundNext = true
+          break
         }
-      } else {
-        select.selectedIndex = 0
+      }
+
+      if (!foundNext) {
+        select.selectedIndex = 0 // Fallback if no options are available
       }
     }
 
-    label.appendChild(select)
-    const removeBtn = document.createElement("button")
-    removeBtn.className = "icon-button remove-unit-btn"
-    removeBtn.setAttribute("aria-label", "Remove unit selector")
-    removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
+    label.appendChild(select);
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "icon-button remove-unit-btn";
+    removeBtn.setAttribute("aria-label", "Remove unit selector");
+    removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
 
     removeBtn.onclick = () => {
-      container.remove()
-      updateRemoveButtonsVisibility()
-      updateUnitSelectorsState()
-      saveSettings()
-    }
+      container.remove();
+      updateRemoveButtonsVisibility();
+      updateUnitSelectorsState();
+      saveSettings();
+    };
 
-    container.appendChild(label)
-    container.appendChild(removeBtn)
-    unitSelectorsContainer.appendChild(container)
-    updateRemoveButtonsVisibility()
-    updateUnitSelectorsState()
+    container.appendChild(label);
+    container.appendChild(removeBtn);
+    unitSelectorsContainer.appendChild(container);
+    updateRemoveButtonsVisibility();
+    updateUnitSelectorsState();
   }
 
   function updateUnitSelectorsState() {
@@ -1844,7 +1856,7 @@ document.addEventListener("DOMContentLoaded", () => {
   })
 
   saveSetBtn.addEventListener("click", handleSaveSet)
-  
+
   // --- EVENT LISTENERS for between rounds player order setup ---
 
   const randomizeOrderBtn_game = document.getElementById(

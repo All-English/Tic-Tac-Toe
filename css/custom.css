@@ -660,54 +660,68 @@ footer {
   /* Start with the snail already on screen */
 }
 
-/* --- Side Drawer Dialog Styles --- */
-.side-drawer {
+/* --- Final Side Drawer Dialog Styles --- */
+dialog.side-drawer {
   position: fixed;
   inset: 0 0 0 auto;
-  /* Pins to the right edge */
   margin: 0;
-
   width: min(400px, 90vw);
-  max-width: 100vw;
   height: 100vh;
-  max-height: 100vh;
-  border: none;
   border-radius: var(--radius-3) 0 0 var(--radius-3);
+  display: flex;
+  flex-direction: column;
+  padding: var(--size-fluid-3);
+  /* Add some padding */
 
-  /* Animation state (hidden) */
+  /* Initial (closed) state */
+  opacity: 0;
   transform: translateX(100%);
+
+  /* Combined transition for open AND close */
   transition:
-    display 0.3s allow-discrete,
-    overlay 0.2s allow-discrete,
-    opacity 0.3s var(--ease-out-3),
-    transform 0.3s var(--ease-out-3);
+    display 0.4s allow-discrete,
+    overlay 0.3s allow-discrete,
+    opacity 0.4s var(--ease-out-3),
+    transform 0.4s var(--ease-out-3);
 }
 
-/* Animation state (visible) */
-.side-drawer[open] {
+dialog.side-drawer[open] {
+  /* Final (open) state */
+  opacity: 1;
   transform: translateX(0);
 
-  /* The starting style for the animation */
+  /* Define the starting state for the opening animation */
   @starting-style {
+    opacity: 0;
     transform: translateX(100%);
   }
 }
 
-/* --- Style the content area --- */
-.side-drawer .content {
-  flex-grow: 1;
-  overflow-y: auto;
+/* Position the close button */
+dialog.side-drawer #close-sets-dialog-btn {
+  position: absolute;
+  top: var(--size-2);
+  right: var(--size-2);
+  z-index: 2;
 }
 
-.side-drawer .save-set-action {
+/* Internal layout styles */
+dialog.side-drawer .content {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-inline: 0;
+  /* Remove extra padding if main dialog has it */
+}
+
+dialog.side-drawer .save-set-action {
   display: grid;
   gap: var(--size-3);
-  margin-block-start: var(--size-5);
-  padding-block-start: var(--size-5);
+  margin-top: auto;
+  padding-top: var(--size-3);
   border-top: 1px solid var(--border-color);
 }
 
-.saved-set-item {
+dialog.side-drawer .saved-set-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -715,11 +729,11 @@ footer {
   border-bottom: 1px solid var(--border-color);
 }
 
-.saved-set-item:last-child {
+dialog.side-drawer .saved-set-item:last-child {
   border-bottom: none;
 }
 
-.saved-set-item .button-group {
+dialog.side-drawer .saved-set-item .button-group {
   margin: 0;
 }
 

@@ -685,6 +685,21 @@ dialog.side-drawer[open] {
   border-top: 1px solid var(--border-color);
 }
 
+.saved-set-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-block: var(--size-2);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.saved-set-item:last-child {
+  border-bottom: none;
+}
+
+.saved-set-item .button-group {
+  margin: 0;
+}
 
 @keyframes snailing {
   0% {

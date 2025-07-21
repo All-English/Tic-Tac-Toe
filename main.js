@@ -81,6 +81,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const gameModeSelector = document.getElementById("gameModeSelector")
   const gameModeHint = document.getElementById("gameModeHint")
   const resetSettingsBtn = document.getElementById("resetSettingsBtn")
+  const manageSetsBtn = document.getElementById("manage-sets-btn")
+  const playerSetsDialog = document.getElementById("player-sets-dialog")
+  const savedSetsList = document.getElementById("saved-sets-list")
+  const saveSetNameInput = document.getElementById("save-set-name-input")
+  const saveSetBtn = document.getElementById("save-set-btn")
+  const closeSetsDialogBtn = document.getElementById("close-sets-dialog-btn")
 
   // --- EVENT HANDLER FUNCTIONS ---
 
@@ -653,6 +659,17 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --- UTILITY FUNCTIONS ---
+
+  const PLAYER_SETS_KEY = "phonics_player_sets"
+
+  function getPlayerSets() {
+    const setsJSON = localStorage.getItem(PLAYER_SETS_KEY)
+    return setsJSON ? JSON.parse(setsJSON) : {}
+  }
+
+  function setPlayerSets(sets) {
+    localStorage.setItem(PLAYER_SETS_KEY, JSON.stringify(sets))
+  }
 
   function updateGameModeHint(mode) {
     switch (mode) {
@@ -1619,6 +1636,97 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function populateSetsDialog() {
+    const sets = getPlayerSets()
+    savedSetsList.innerHTML = "" // Clear the current list
+
+    if (Object.keys(sets).length === 0) {
+      savedSetsList.innerHTML = '<p class="field-hint">No saved lists yet.</p>'
+      return
+    }
+
+    for (const setName in sets) {
+      const setItem = document.createElement("div")
+      setItem.className = "saved-set-item"
+
+      const nameEl = document.createElement("span")
+      nameEl.textContent = setName
+
+      const actionsEl = document.createElement("div")
+      actionsEl.className = "button-group"
+
+      const loadBtn = document.createElement("button")
+      loadBtn.textContent = "Load"
+      loadBtn.className = "button tonal small"
+      loadBtn.onclick = () => handleLoadSet(setName)
+
+      const deleteBtn = document.createElement("button")
+      deleteBtn.textContent = "Delete"
+      deleteBtn.className = "button outlined small"
+      deleteBtn.onclick = () => handleDeleteSet(setName)
+
+      actionsEl.appendChild(loadBtn)
+      actionsEl.appendChild(deleteBtn)
+      setItem.appendChild(nameEl)
+      setItem.appendChild(actionsEl)
+      savedSetsList.appendChild(setItem)
+    }
+  }
+
+  function handleSaveSet() {
+    const setName = saveSetNameInput.value.trim()
+    if (!setName) {
+      alert("Please enter a name for the list.")
+      return
+    }
+
+    const currentPlayerNames = gameState.setup.players.map((p) => p.name)
+    if (currentPlayerNames.length === 0) {
+      alert("Please add players before saving a list.")
+      return
+    }
+
+    const sets = getPlayerSets()
+    sets[setName] = currentPlayerNames
+    setPlayerSets(sets)
+
+    saveSetNameInput.value = "" // Clear the input
+    populateSetsDialog() // Refresh the list
+  }
+
+  function handleLoadSet(setName) {
+    const sets = getPlayerSets()
+    const playerNames = sets[setName]
+
+    if (!playerNames) return
+
+    // Create the player object structure for the game state
+    const newPlayers = playerNames.map((name, index) => ({
+      id: Date.now() + index,
+      name: name,
+    }))
+
+    gameState = {
+      ...gameState,
+      setup: { ...gameState.setup, players: newPlayers },
+    }
+
+    numPlayersInput.value = playerNames.length // Update slider
+
+    updateSliderValues() // This will re-render the name inputs
+    playerSetsDialog.close()
+  }
+
+  function handleDeleteSet(setName) {
+    if (!confirm(`Are you sure you want to delete the list "${setName}"?`)) {
+      return
+    }
+    const sets = getPlayerSets()
+    delete sets[setName]
+    setPlayerSets(sets)
+    populateSetsDialog() // Refresh the list
+  }
+
   // --- INITIALIZE and ATTACH LISTENERS ---
 
   resetSettingsBtn.addEventListener("click", resetSettings)
@@ -1726,6 +1834,17 @@ document.addEventListener("DOMContentLoaded", () => {
     renderNameInputs()
   })
 
+  manageSetsBtn.addEventListener("click", () => {
+    populateSetsDialog()
+    playerSetsDialog.showModal()
+  })
+
+  closeSetsDialogBtn.addEventListener("click", () => {
+    playerSetsDialog.close()
+  })
+
+  saveSetBtn.addEventListener("click", handleSaveSet)
+  
   // --- EVENT LISTENERS for between rounds player order setup ---
 
   const randomizeOrderBtn_game = document.getElementById(

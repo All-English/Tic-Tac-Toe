@@ -601,6 +601,7 @@ dialog#game-over-dialog::backdrop {
   opacity: 0;
   transform: scale(0.95);
   pointer-events: none;
+  visibility: hidden;
 }
 
 /* State for the ACTIVE view */
@@ -608,6 +609,7 @@ dialog#game-over-dialog::backdrop {
   opacity: 1;
   transform: scale(1);
   pointer-events: auto;
+  visibility: visible;
 }
 
 /* --- Reorder Mode Styles --- */
@@ -630,10 +632,6 @@ dialog#game-over-dialog::backdrop {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
   background-color: var(--surface-filled);
-}
-
-.hidden {
-  display: none;
 }
 
 footer {
@@ -736,6 +734,10 @@ dialog.side-drawer .saved-set-item:last-child {
 
 dialog.side-drawer .saved-set-item .button-group {
   margin: 0;
+}
+
+.hidden {
+  display: none;
 }
 
 @keyframes snailing {

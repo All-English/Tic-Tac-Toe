@@ -711,6 +711,52 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function validatePlayerNames() {
+    const nameInputs = Array.from(
+      playerNamesContainer.querySelectorAll(".player-name-input")
+    )
+    const names = nameInputs
+      .map((input) => input.value.trim())
+      .filter((name) => name !== "")
+
+    const nameCounts = names.reduce((acc, name) => {
+      acc[name] = (acc[name] || 0) + 1
+      return acc
+    }, {})
+
+    const duplicateNames = new Set(
+      Object.keys(nameCounts).filter((name) => nameCounts[name] > 1)
+    )
+    let hasErrors = false
+
+    nameInputs.forEach((input) => {
+      const field = input.closest(".field")
+      const currentName = input.value.trim()
+      const isDuplicate = duplicateNames.has(currentName) && currentName !== ""
+
+      // Always remove the old error message before re-validating
+      const existingError = field.querySelector(
+        ".supporting-text.error-message"
+      )
+      if (existingError) {
+        existingError.remove()
+      }
+
+      if (isDuplicate) {
+        field.classList.add("error")
+        const errorText = document.createElement("span")
+        errorText.className = "supporting-text error-message"
+        errorText.textContent = "This name is already in use."
+        field.appendChild(errorText)
+        hasErrors = true
+      } else {
+        field.classList.remove("error")
+      }
+    })
+
+    startGameBtn.disabled = hasErrors
+  }
+
   async function speak(text) {
     // Basic validation for muted audio or very short text
     if (gameState.isMuted) return
@@ -1235,6 +1281,7 @@ document.addEventListener("DOMContentLoaded", () => {
           },
         }
         saveSettings()
+        validatePlayerNames()
       })
       field.appendChild(label)
       field.appendChild(input)
@@ -1422,6 +1469,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     renderNameInputs()
     syncSliders()
+    validatePlayerNames()
   }
 
   function selectRandomUnit() {
@@ -1750,6 +1798,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateSliderValues() // This will re-render the name inputs
     playerSetsDialog.close()
+    validatePlayerNames()
   }
 
   function handleDeleteSet(setName) {

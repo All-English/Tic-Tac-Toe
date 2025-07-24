@@ -1,5 +1,7 @@
 import { smartPhonicsWordBank, playerSymbols, englishVoices } from "./config.js"
 
+const PLAYER_SETS_KEY = "phonics_player_sets"
+const STATS_KEY = "wordTacToe_stats"
 let lastVoiceId = null
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -660,8 +662,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- UTILITY FUNCTIONS ---
 
-  const PLAYER_SETS_KEY = "phonics_player_sets"
-
   function getPlayerSets() {
     const setsJSON = localStorage.getItem(PLAYER_SETS_KEY)
     return setsJSON ? JSON.parse(setsJSON) : {}
@@ -669,6 +669,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function setPlayerSets(sets) {
     localStorage.setItem(PLAYER_SETS_KEY, JSON.stringify(sets))
+  }
+
+  function getStats() {
+    try {
+      const statsJSON = localStorage.getItem(STATS_KEY)
+      // If stats exist, parse them; otherwise, return an empty object.
+      return statsJSON ? JSON.parse(statsJSON) : {}
+    } catch (error) {
+      console.error("Error reading stats from localStorage:", error)
+      // If there's a parsing error, return an empty object to prevent a crash.
+      return {}
+    }
+  }
+
+  function saveStats(statsObject) {
+    try {
+      const statsJSON = JSON.stringify(statsObject)
+      localStorage.setItem(STATS_KEY, statsJSON)
+    } catch (error) {
+      console.error("Error saving stats to localStorage:", error)
+    }
   }
 
   function getSavedPlayerNames() {

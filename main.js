@@ -733,8 +733,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const field = input.closest(".field")
       const currentName = input.value.trim()
       const isDuplicate = duplicateNames.has(currentName) && currentName !== ""
+      const isEmpty = currentName === ""
 
-      // Always remove the old error message before re-validating
+      // Clear previous error states and messages first
+      field.classList.remove("error")
       const existingError = field.querySelector(
         ".supporting-text.error-message"
       )
@@ -742,15 +744,21 @@ document.addEventListener("DOMContentLoaded", () => {
         existingError.remove()
       }
 
-      if (isDuplicate) {
+      let errorMessage = ""
+      if (isEmpty) {
+        errorMessage = "Name cannot be empty."
+        hasErrors = true
+      } else if (isDuplicate) {
+        errorMessage = "This name is already in use."
+        hasErrors = true
+      }
+
+      if (errorMessage) {
         field.classList.add("error")
         const errorText = document.createElement("span")
         errorText.className = "supporting-text error-message"
-        errorText.textContent = "This name is already in use."
+        errorText.textContent = errorMessage
         field.appendChild(errorText)
-        hasErrors = true
-      } else {
-        field.classList.remove("error")
       }
     })
 
@@ -1374,24 +1382,24 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    label.appendChild(select);
-    const removeBtn = document.createElement("button");
-    removeBtn.className = "icon-button remove-unit-btn";
-    removeBtn.setAttribute("aria-label", "Remove unit selector");
-    removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+    label.appendChild(select)
+    const removeBtn = document.createElement("button")
+    removeBtn.className = "icon-button remove-unit-btn"
+    removeBtn.setAttribute("aria-label", "Remove unit selector")
+    removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
 
     removeBtn.onclick = () => {
-      container.remove();
-      updateRemoveButtonsVisibility();
-      updateUnitSelectorsState();
-      saveSettings();
-    };
+      container.remove()
+      updateRemoveButtonsVisibility()
+      updateUnitSelectorsState()
+      saveSettings()
+    }
 
-    container.appendChild(label);
-    container.appendChild(removeBtn);
-    unitSelectorsContainer.appendChild(container);
-    updateRemoveButtonsVisibility();
-    updateUnitSelectorsState();
+    container.appendChild(label)
+    container.appendChild(removeBtn)
+    unitSelectorsContainer.appendChild(container)
+    updateRemoveButtonsVisibility()
+    updateUnitSelectorsState()
   }
 
   function updateUnitSelectorsState() {

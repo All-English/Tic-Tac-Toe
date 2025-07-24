@@ -671,6 +671,27 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem(PLAYER_SETS_KEY, JSON.stringify(sets))
   }
 
+  function getSavedPlayerNames() {
+    const stats = JSON.parse(localStorage.getItem("wordTacToe_stats") || "{}")
+    return Object.values(stats)
+      .map((player) => player.name)
+      .sort()
+  }
+
+  function populatePlayerDatalist() {
+    const playerNames = getSavedPlayerNames()
+    const datalist = document.getElementById("player-list-data")
+
+    // Clear any existing options before adding new ones
+    datalist.innerHTML = ""
+
+    playerNames.forEach((name) => {
+      const option = document.createElement("option")
+      option.value = name
+      datalist.appendChild(option)
+    })
+  }
+
   function updateGameModeHint(mode) {
     switch (mode) {
       case "Conquest":
@@ -1002,6 +1023,7 @@ document.addEventListener("DOMContentLoaded", () => {
     syncSliders()
     updateUnitSelectorsState()
     updateApiFieldVisibility()
+    populatePlayerDatalist()
   }
 
   // --- UNIFIED THEME LOGIC ---
@@ -1199,6 +1221,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const input = document.createElement("input")
       input.type = "text"
       input.className = "player-name-input"
+      input.setAttribute("list", "player-list-data")
       input.value = player.name
       input.addEventListener("input", (e) => {
         const playerId = parseInt(field.dataset.playerId)

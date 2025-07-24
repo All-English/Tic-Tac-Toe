@@ -302,13 +302,6 @@ main {
   margin-inline: auto;
 }
 
-#player-info-list:not(.hidden) {
-  display: flex;
-  gap: var(--size-3);
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
 #game-board:not(.hidden) {
   display: grid;
   position: relative;
@@ -478,6 +471,13 @@ dialog#game-over-dialog::backdrop {
   height: var(--size-5);
 }
 
+#player-info-list:not(.hidden) {
+  display: flex;
+  gap: var(--size-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .player-info-block {
   --_bg-color: light-dark(oklch(from var(--player-color) 95% 0.02 h), oklch(from var(--player-color) 25% 0.02 h));
   --_border-color: light-dark(oklch(from var(--player-color) 85% 0.05 h), oklch(from var(--player-color) 15% 0.05 h));
@@ -507,6 +507,7 @@ dialog#game-over-dialog::backdrop {
 }
 
 .player-info-block.current-player {
+  border: var(--border-size-1) solid var(--player-color);
   /* This combines the one-off bounce with the looping glow */
   animation:
     bounce-in 0.6s var(--ease-elastic-3) forwards,

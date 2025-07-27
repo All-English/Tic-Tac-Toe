@@ -706,6 +706,170 @@ document.addEventListener("DOMContentLoaded", () => {
     return identifiedPlayers
   }
 
+  function updatePlayerStats(finalGameState) {
+    const stats = getStats()
+    const { players, scores, gameMode, gridSize, matchLength, moveHistory } =
+      finalGameState
+
+    // Determine winner(s) - this logic is similar to the endGame dialog
+    let winners = []
+    if (gameMode === "Stealth") {
+      const minScore = Math.min(...scores)
+      players.forEach((p, i) => {
+        if (scores[i] === minScore) winners.push(p.id)
+      })
+    } else if (gameMode === "Survivor") {
+      const winnerId = players.find(
+        (p) => !finalGameState.eliminatedPlayers.includes(p.id)
+      )?.id
+      if (winnerId) winners.push(winnerId)
+    } else {
+      // Conquest and Classic
+      const maxScore = Math.max(...scores)
+      if (maxScore > 0) {
+        players.forEach((p, i) => {
+          if (scores[i] === maxScore) winners.push(p.id)
+        })
+      }
+    }
+
+    const loserIds = players
+      .map((p) => p.id)
+      .filter((id) => !winners.includes(id))
+
+    players.forEach((player, index) => {
+      const playerId = player.id
+      const isWinner = winners.includes(playerId)
+
+      // Initialize a new player if they don't exist in the stats object
+      if (!stats[playerId]) {
+        stats[playerId] = {
+          name: player.name,
+          gamesPlayed: 0,
+          wins: 0,
+          currentWinStreak: 0,
+          longestWinStreak: 0,
+          nemesis: {},
+          modes: {
+            conquest: {
+              gamesPlayed: 0,
+              wins: 0,
+              totalBlocks: 0,
+              totalDoubleLineScores: 0,
+              totalTripleLineScores: 0,
+              configs: {},
+            },
+            stealth: {
+              gamesPlayed: 0,
+              wins: 0,
+              perfectStealthGames: 0,
+              configs: {},
+            },
+            classic: {
+              gamesPlayed: 0,
+              wins: 0,
+              totalBlocks: 0,
+              quickestWin: null,
+              totalTurnsToWin: 0,
+              gamesWonForAvg: 0,
+            },
+            survivor: {
+              gamesPlayed: 0,
+              wins: 0,
+              totalBlocks: 0,
+              totalSurvivalRank: 0,
+              gamesFinished: 0,
+            },
+          },
+        }
+      }
+
+      // --- Update Overall Stats ---
+      stats[playerId].name = player.name // Keep name updated
+      stats[playerId].gamesPlayed++
+      if (isWinner) {
+        stats[playerId].wins++
+        stats[playerId].currentWinStreak++
+        if (
+          stats[playerId].currentWinStreak > stats[playerId].longestWinStreak
+        ) {
+          stats[playerId].longestWinStreak = stats[playerId].currentWinStreak
+        }
+        // Update nemesis count for all losers
+        loserIds.forEach((loserId) => {
+          const winnerName = stats[playerId].name
+          if (stats[loserId]) {
+            // Ensure loser exists
+            stats[loserId].nemesis[winnerName] =
+              (stats[loserId].nemesis[winnerName] || 0) + 1
+          }
+        })
+      } else {
+        stats[playerId].currentWinStreak = 0
+      }
+
+      // --- Update Mode-Specific Stats ---
+      const modeStats = stats[playerId].modes[gameMode.toLowerCase()]
+      modeStats.gamesPlayed++
+      if (isWinner) modeStats.wins++
+
+      // TODO: Logic for blocks and multi-line scores needs to be added to the game loop
+      // For now, we'll build the structure.
+
+      switch (gameMode) {
+        case "Conquest":
+        case "Stealth":
+          const configKey = `${gridSize}x${gridSize}-${matchLength}`
+          if (!modeStats.configs[configKey]) {
+            modeStats.configs[configKey] = {
+              gamesPlayed: 0,
+              totalPoints: 0,
+              highScore: 0,
+              bestScore: null,
+            }
+          }
+          const configStats = modeStats.configs[configKey]
+          configStats.gamesPlayed++
+          configStats.totalPoints += scores[index]
+          if (scores[index] > configStats.highScore)
+            configStats.highScore = scores[index]
+          if (
+            configStats.bestScore === null ||
+            scores[index] < configStats.bestScore
+          )
+            configStats.bestScore = scores[index]
+          if (gameMode === "Stealth" && scores[index] === 0 && isWinner)
+            modeStats.perfectStealthGames++
+          break
+        case "Classic":
+          if (isWinner) {
+            const turnsToWin = moveHistory.filter(
+              (m) => m.player === index
+            ).length
+            if (
+              modeStats.quickestWin === null ||
+              turnsToWin < modeStats.quickestWin
+            ) {
+              modeStats.quickestWin = turnsToWin
+            }
+            modeStats.totalTurnsToWin += turnsToWin
+            modeStats.gamesWonForAvg++
+          }
+          break
+        case "Survivor":
+          const rank =
+            finalGameState.eliminatedPlayers.indexOf(playerId) + 1 ||
+            players.length
+          modeStats.totalSurvivalRank += rank
+          modeStats.gamesFinished++
+          break
+      }
+    })
+
+    saveStats(stats)
+    populatePlayerDatalist() // Refresh datalist with any new players
+  }
+
   // --- UTILITY FUNCTIONS ---
 
   function getPlayerSets() {
@@ -1591,6 +1755,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function endGame() {
     playSound("gameOver")
+    updatePlayerStats(gameState)
     const dialogTitle = document.getElementById("dialog-title")
     const dialogContent = document.getElementById("dialog-content")
 

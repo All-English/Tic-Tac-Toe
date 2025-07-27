@@ -706,40 +706,18 @@ document.addEventListener("DOMContentLoaded", () => {
     return identifiedPlayers
   }
 
-  function updatePlayerStats(finalGameState) {
+  function updatePlayerStats(finalGameState, winnerIds) {
     const stats = getStats()
     const { players, scores, gameMode, gridSize, matchLength, moveHistory } =
       finalGameState
 
-    // Determine winner(s) - this logic is similar to the endGame dialog
-    let winners = []
-    if (gameMode === "Stealth") {
-      const minScore = Math.min(...scores)
-      players.forEach((p, i) => {
-        if (scores[i] === minScore) winners.push(p.id)
-      })
-    } else if (gameMode === "Survivor") {
-      const winnerId = players.find(
-        (p) => !finalGameState.eliminatedPlayers.includes(p.id)
-      )?.id
-      if (winnerId) winners.push(winnerId)
-    } else {
-      // Conquest and Classic
-      const maxScore = Math.max(...scores)
-      if (maxScore > 0) {
-        players.forEach((p, i) => {
-          if (scores[i] === maxScore) winners.push(p.id)
-        })
-      }
-    }
-
     const loserIds = players
       .map((p) => p.id)
-      .filter((id) => !winners.includes(id))
+      .filter((id) => !winnerIds.includes(id))
 
     players.forEach((player, index) => {
       const playerId = player.id
-      const isWinner = winners.includes(playerId)
+      const isWinner = winnerIds.includes(playerId)
 
       // Initialize a new player if they don't exist in the stats object
       if (!stats[playerId]) {
@@ -1753,65 +1731,56 @@ document.addEventListener("DOMContentLoaded", () => {
     return `<span class="word-wrapper">${resultHTML}</span>`
   }
 
+  function determineWinners(finalGameState) {
+    const { players, scores, gameMode, eliminatedPlayers } = finalGameState
+    let winnerIds = []
+
+    if (gameMode === "Stealth") {
+      const minScore = Math.min(...scores)
+      players.forEach((p, i) => {
+        if (scores[i] === minScore) winnerIds.push(p.id)
+      })
+    } else if (gameMode === "Survivor") {
+      const winner = players.find((p) => !eliminatedPlayers.includes(p.id))
+      if (winner) winnerIds.push(winner.id)
+    } else {
+      // Conquest and Classic
+      const maxScore = Math.max(...scores)
+      if (maxScore > 0) {
+        players.forEach((p, i) => {
+          if (scores[i] === maxScore) winnerIds.push(p.id)
+        })
+      }
+    }
+    return winnerIds
+  }
+
   function endGame() {
     playSound("gameOver")
-    updatePlayerStats(gameState)
+
+    const winnerIds = determineWinners(gameState)
+    updatePlayerStats(gameState, winnerIds)
+
     const dialogTitle = document.getElementById("dialog-title")
     const dialogContent = document.getElementById("dialog-content")
 
     let winnerText
-    let bestScore
-    let winners = []
 
-    if (gameState.gameMode === "Survivor") {
-      // In Survivor mode, players with ZERO points win.
-      winners = gameState.scores
-        .map((score, index) => (score === 0 ? index : -1))
-        .filter((index) => index !== -1)
-    } else if (gameState.gameMode === "Stealth") {
-      // In Stealth mode, the lowest score wins
-      bestScore = Infinity
-      for (let i = 0; i < gameState.numPlayers; i++) {
-        if (gameState.scores[i] < bestScore) {
-          bestScore = gameState.scores[i]
-          winners = [i]
-        } else if (gameState.scores[i] === bestScore) {
-          winners.push(i)
-        }
-      }
-    } else {
-      // In Conquest or Classic mode, the highest score wins
-      bestScore = -1
-      for (let i = 0; i < gameState.numPlayers; i++) {
-        if (gameState.scores[i] > bestScore) {
-          bestScore = gameState.scores[i]
-          winners = [i]
-        } else if (gameState.scores[i] === bestScore && bestScore > 0) {
-          winners.push(i)
-        }
-      }
-    }
-
-    if (
-      winners.length === 0 ||
-      ((gameState.gameMode === "Conquest" ||
-        gameState.gameMode === "Classic") &&
-        bestScore === 0)
-    ) {
-      winnerText = "No one scored any points. It's a draw!"
-      winners = []
-    } else if (winners.length === gameState.numPlayers) {
-      winnerText = "It's a perfect tie!"
-    } else if (winners.length > 1) {
-      const winnerNames = winners
-        .map((i) => gameState.playerNames[i])
-        .join(", ")
+    if (winnerIds.length === 0) {
+      winnerText = "It's a draw!"
+    } else if (winnerIds.length > 1) {
+      const winnerNames = winnerIds
+        .map((id) => gameState.players.find((p) => p.id === id).name)
+        .join(" & ")
       winnerText = `It's a tie between: ${winnerNames}!`
     } else {
-      winnerText = `${gameState.playerNames[winners[0]]} wins!`
+      const winnerName = gameState.players.find(
+        (p) => p.id === winnerIds[0]
+      ).name
+      winnerText = `${winnerName} wins!`
     }
 
-    if (winners.length > 0) {
+    if (winnerIds.length > 0) {
       dialogTitle.innerHTML = `Congratulations! 🎉`
     } else {
       dialogTitle.innerHTML = `Game Over`

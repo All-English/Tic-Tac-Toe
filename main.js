@@ -660,16 +660,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return wasBlock
   }
 
-  // --- UTILITY FUNCTIONS ---
-
-  function getPlayerSets() {
-    const setsJSON = localStorage.getItem(PLAYER_SETS_KEY)
-    return setsJSON ? JSON.parse(setsJSON) : {}
-  }
-
-  function setPlayerSets(sets) {
-    localStorage.setItem(PLAYER_SETS_KEY, JSON.stringify(sets))
-  }
+  // --- STATS MANAGEMENT FUNCTIONS ---
 
   function getStats() {
     try {
@@ -690,6 +681,40 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
       console.error("Error saving stats to localStorage:", error)
     }
+  }
+
+  function identifyAndPreparePlayers(playerSetupArray) {
+    const stats = getStats()
+    const existingPlayers = {}
+    // Create a quick lookup map of existing names to their IDs
+    for (const id in stats) {
+      existingPlayers[stats[id].name] = id
+    }
+
+    const identifiedPlayers = playerSetupArray.map((player) => {
+      const existingId = existingPlayers[player.name]
+      if (existingId) {
+        // This is a returning player, use their existing ID
+        return { ...player, id: existingId }
+      } else {
+        // This is a new player, generate a new unique ID
+        const newId = Date.now().toString() + Math.random().toString().slice(2)
+        return { ...player, id: newId }
+      }
+    })
+
+    return identifiedPlayers
+  }
+
+  // --- UTILITY FUNCTIONS ---
+
+  function getPlayerSets() {
+    const setsJSON = localStorage.getItem(PLAYER_SETS_KEY)
+    return setsJSON ? JSON.parse(setsJSON) : {}
+  }
+
+  function setPlayerSets(sets) {
+    localStorage.setItem(PLAYER_SETS_KEY, JSON.stringify(sets))
   }
 
   function getSavedPlayerNames() {
@@ -1160,7 +1185,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isFromSetup) {
       // This block runs ONLY when you click "Start Game" from the main setup screen.
       // It reads all the values directly from the DOM inputs.
-      settings.playerNames = gameState.setup.players.map((p) => p.name)
+
+      // Identify players, assigning existing IDs or creating new ones
+      const preparedPlayers = identifyAndPreparePlayers(gameState.setup.players)
+      settings.players = preparedPlayers // Store the full player objects (id, name)
+      settings.playerNames = preparedPlayers.map((p) => p.name)
+
       settings.numPlayers = parseInt(numPlayersInput.value)
       settings.gridSize = parseInt(gridSizeInput.value)
       settings.matchLength = parseInt(matchLengthInput.value)

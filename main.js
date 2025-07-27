@@ -380,6 +380,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const wasBlock = checkForBlock(index)
+    if (wasBlock) {
+      gameState.playerStatsThisGame[gameState.currentPlayer].blocks++
+    }
     const move = {
       index: index,
       player: gameState.currentPlayer,
@@ -389,6 +392,18 @@ document.addEventListener("DOMContentLoaded", () => {
     newBoard[index] = gameState.currentPlayer
 
     const { pointsScored, shouldEndGame } = checkForWins(move, newBoard)
+
+    const scoreKey = pointsScored.toString()
+    const playerGameStats =
+      gameState.playerStatsThisGame[gameState.currentPlayer]
+    if (pointsScored >= 2) {
+      if (pointsScored <= 5) {
+        playerGameStats.multiLineScores[scoreKey]++
+      } else {
+        // Handles scores of 6 or more
+        playerGameStats.multiLineScores["6"]++
+      }
+    }
 
     if (pointsScored > 0) {
       playSoundSequentially("score", pointsScored)
@@ -465,6 +480,12 @@ document.addEventListener("DOMContentLoaded", () => {
       highlightedCells: new Set(),
       winLinesToDraw: [],
       eliminatedPlayers: [],
+      playerStatsThisGame: Array(settings.numPlayers)
+        .fill(null)
+        .map(() => ({
+          blocks: 0,
+          multiLineScores: { 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 },
+        })),
       currentView: "reorder",
     }
 
@@ -733,8 +754,7 @@ document.addEventListener("DOMContentLoaded", () => {
               gamesPlayed: 0,
               wins: 0,
               totalBlocks: 0,
-              totalDoubleLineScores: 0,
-              totalTripleLineScores: 0,
+              multiLineScoreCounts: { 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 },
               configs: {},
             },
             stealth: {
@@ -791,9 +811,21 @@ document.addEventListener("DOMContentLoaded", () => {
       modeStats.gamesPlayed++
       if (isWinner) modeStats.wins++
 
-      // TODO: Logic for blocks and multi-line scores needs to be added to the game loop
-      // For now, we'll build the structure.
-
+      const playerGameStats = finalGameState.playerStatsThisGame[index]
+      if (playerGameStats) {
+        // Safety check
+        if (modeStats.totalBlocks !== undefined) {
+          modeStats.totalBlocks += playerGameStats.blocks
+        }
+        if (modeStats.multiLineScoreCounts) {
+          for (const key in playerGameStats.multiLineScores) {
+            if (playerGameStats.multiLineScores[key] > 0) {
+              modeStats.multiLineScoreCounts[key] +=
+                playerGameStats.multiLineScores[key]
+            }
+          }
+        }
+      }
       switch (gameMode) {
         case "Conquest":
         case "Stealth":
@@ -1385,6 +1417,12 @@ document.addEventListener("DOMContentLoaded", () => {
       highlightedCells: new Set(),
       winLinesToDraw: [],
       eliminatedPlayers: [],
+      playerStatsThisGame: Array(gameState.numPlayers)
+        .fill(null)
+        .map(() => ({
+          blocks: 0,
+          multiLineScores: { 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 },
+        })),
       currentView: "game", // The game is now officially active
     }
 

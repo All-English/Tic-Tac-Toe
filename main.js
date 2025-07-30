@@ -89,6 +89,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const saveSetNameInput = document.getElementById("save-set-name-input")
   const saveSetBtn = document.getElementById("save-set-btn")
   const closeSetsDialogBtn = document.getElementById("close-sets-dialog-btn")
+  const statsView = document.getElementById("stats-view") // Add this
+  const showStatsBtn = document.getElementById("show-stats-btn") // Add this
+  const backToSetupBtn = document.getElementById("back-to-setup-btn") // Add this
+  const statsPlayerSelect = document.getElementById("stats-player-select") // Add this
+  const statsDisplayArea = document.getElementById("stats-display-area") // Add this
 
   // --- EVENT HANDLER FUNCTIONS ---
 
@@ -161,6 +166,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function render() {
     renderViews()
 
+    if (gameState.currentView === "stats") {
+      renderStatsView()
+    }
+
     renderPlayerInfo()
     renderBoard()
 
@@ -173,6 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const { currentView } = gameState
 
     setupView.classList.toggle("is-active", currentView === "setup")
+    statsView.classList.toggle("is-active", currentView === "stats")
     gameView.classList.toggle(
       "is-active",
       currentView === "reorder" || currentView === "game"
@@ -353,6 +363,122 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     })
+  }
+
+  function renderStatsView() {
+    const stats = getStats()
+    const playerIds = Object.keys(stats)
+
+    // Clear and populate the player selection dropdown
+    statsPlayerSelect.innerHTML = ""
+    if (playerIds.length === 0) {
+      const option = document.createElement("option")
+      option.textContent = "-- No stats saved --"
+      statsPlayerSelect.appendChild(option)
+      statsDisplayArea.innerHTML =
+        "<p class='field-hint'>Play a game to see stats here!</p>"
+      return
+    }
+
+    playerIds.forEach((id) => {
+      const option = document.createElement("option")
+      option.value = id
+      option.textContent = stats[id].name
+      statsPlayerSelect.appendChild(option)
+    })
+
+    // Function to display stats for the selected player
+    const displayStatsForPlayer = (playerId) => {
+      const playerData = stats[playerId]
+      if (!playerData) {
+        statsDisplayArea.innerHTML = ""
+        return
+      }
+
+      // Determine Nemesis
+      let nemesisName = "N/A"
+      let maxLosses = 0
+      for (const name in playerData.nemesis) {
+        if (playerData.nemesis[name] > maxLosses) {
+          maxLosses = playerData.nemesis[name]
+          nemesisName = name
+        }
+      }
+
+      // --- Build the HTML using definition lists ---
+      statsDisplayArea.innerHTML = `
+      <div class="stats-section">
+        <h4 class="h5">Overall Stats</h4>
+        <ul class="definition-list">
+          <li><span class="term">Win Percentage</span><hr><span class="description">${
+            playerData.gamesPlayed > 0
+              ? ((playerData.wins / playerData.gamesPlayed) * 100).toFixed(0)
+              : 0
+          }%</span></li>
+          <li><span class="term">Games Won</span><hr><span class="description">${
+            playerData.wins
+          } of ${playerData.gamesPlayed}</span></li>
+          <li><span class="term">Longest Win Streak</span><hr><span class="description">${
+            playerData.longestWinStreak
+          }</span></li>
+          <li><span class="term">Nemesis</span><hr><span class="description">${nemesisName} (${maxLosses} losses)</span></li>
+        </ul>
+      </div>
+
+      <div class="stats-section">
+        <h4 class="h5">Conquest Mode</h4>
+        <ul class="definition-list">
+          <li><span class="term">Win %</span><hr><span class="description">${
+            playerData.modes.conquest.gamesPlayed > 0
+              ? (
+                  (playerData.modes.conquest.wins /
+                    playerData.modes.conquest.gamesPlayed) *
+                  100
+                ).toFixed(0)
+              : 0
+          }%</span></li>
+          <li><span class="term">Total Blocks</span><hr><span class="description">${
+            playerData.modes.conquest.totalBlocks
+          }</span></li>
+          <li><span class="term">Double-Line Scores</span><hr><span class="description">${
+            playerData.modes.conquest.multiLineScoreCounts["2"]
+          }</span></li>
+          <li><span class="term">Triple-Line Scores</span><hr><span class="description">${
+            playerData.modes.conquest.multiLineScoreCounts["3"]
+          }</span></li>
+        </ul>
+      </div>
+      
+      <div class="stats-section">
+        <h4 class="h5">Classic Mode</h4>
+        <ul class="definition-list">
+           <li><span class="term">Win %</span><hr><span class="description">${
+             playerData.modes.classic.gamesPlayed > 0
+               ? (
+                   (playerData.modes.classic.wins /
+                     playerData.modes.classic.gamesPlayed) *
+                   100
+                 ).toFixed(0)
+               : 0
+           }%</span></li>
+           <li><span class="term">Quickest Win</span><hr><span class="description">${
+             playerData.modes.classic.quickestWin || "N/A"
+           } turns</span></li>
+           <li><span class="term">Total Blocks</span><hr><span class="description">${
+             playerData.modes.classic.totalBlocks
+           }</span></li>
+        </ul>
+      </div>
+    `
+    }
+
+    // Add event listener for the dropdown
+    statsPlayerSelect.addEventListener("change", (e) => {
+      displayStatsForPlayer(e.target.value)
+    })
+
+    // Display stats for the first player by default
+    displayStatsForPlayer(playerIds[0])
   }
 
   // --- LOGIC / STATE MANAGEMENT FUNCTIONS ---
@@ -2043,6 +2169,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --- INITIALIZE and ATTACH LISTENERS ---
+
+  showStatsBtn.addEventListener("click", () => {
+    gameState.currentView = "stats"
+    render()
+  })
+
+  backToSetupBtn.addEventListener("click", () => {
+    gameState.currentView = "setup"
+    render()
+  })
 
   resetSettingsBtn.addEventListener("click", resetSettings)
   addUnitBtn.addEventListener("click", () => {

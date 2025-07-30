@@ -1931,7 +1931,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const dialogContent = document.getElementById("dialog-content")
 
     let winnerText
-
     if (winnerIds.length === 0) {
       winnerText = "It's a draw!"
     } else if (winnerIds.length > 1) {
@@ -1954,13 +1953,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let winnerHTML = `<h3 class="h4 winner-text">${winnerText}</h3>`
 
-    const sortedPlayers = gameState.playerNames.map((name, index) => ({
+    const sortedPlayers = gameState.players.map((player, index) => ({
       id: player.id,
       name: player.name,
       score: gameState.scores[index],
       symbol: playerSymbols[index],
     }))
-    
     sortedPlayers.sort((a, b) => b.score - a.score)
 
     let finalScoresHTML = `<div class="score-list">`
@@ -1970,11 +1968,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const isWinner = winnerIds.includes(player.id)
       const winnerClass = isWinner ? "winner" : ""
       finalScoresHTML += `
-        <div class="score-line ${winnerClass}">
-            ${isWinner ? trophyIcon : ""}
-            <span>${player.name}: ${player.score}</span>
-        </div>
-      `
+      <div class="score-line ${winnerClass}">
+        ${isWinner ? trophyIcon : ""}
+        <span>${player.name}: ${player.score}</span>
+      </div>
+    `
     })
 
     finalScoresHTML += `</div>`

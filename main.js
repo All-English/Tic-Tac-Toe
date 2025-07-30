@@ -1954,15 +1954,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let winnerHTML = `<h3 class="h4 winner-text">${winnerText}</h3>`
 
-    const sortedPlayers = gameState.playerNames
-      .map((name, index) => ({
-        id: player.id,
-        name: player.name,
-        score: gameState.scores[index],
-        symbol: playerSymbols[index],
-        originalIndex: index,
-      }))
-      .sort((a, b) => b.score - a.score)
+    const sortedPlayers = gameState.playerNames.map((name, index) => ({
+      id: player.id,
+      name: player.name,
+      score: gameState.scores[index],
+      symbol: playerSymbols[index],
+    }))
+    
+    sortedPlayers.sort((a, b) => b.score - a.score)
 
     let finalScoresHTML = `<div class="score-list">`
     const trophyIcon = "🏆"

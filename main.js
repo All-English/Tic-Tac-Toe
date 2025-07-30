@@ -168,13 +168,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (gameState.currentView === "stats") {
       renderStatsView()
-    }
-
-    renderPlayerInfo()
-    renderBoard()
-
-    if (gameState.currentView === "game") {
-      renderWinLines()
+    } else if (
+      gameState.currentView === "reorder" ||
+      gameState.currentView === "game"
+    ) {
+      renderPlayerInfo()
+      renderBoard()
+      if (gameState.currentView === "game") {
+        renderWinLines()
+      }
     }
   }
 
@@ -1954,7 +1956,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const sortedPlayers = gameState.playerNames
       .map((name, index) => ({
-        name: name,
+        id: player.id,
+        name: player.name,
         score: gameState.scores[index],
         symbol: playerSymbols[index],
         originalIndex: index,
@@ -1965,7 +1968,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const trophyIcon = "🏆"
 
     sortedPlayers.forEach((player) => {
-      const isWinner = winners.includes(player.originalIndex)
+      const isWinner = winnerIds.includes(player.id)
       const winnerClass = isWinner ? "winner" : ""
       finalScoresHTML += `
         <div class="score-line ${winnerClass}">

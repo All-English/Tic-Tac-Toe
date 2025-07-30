@@ -98,10 +98,22 @@ html.theme-bw {
 
   & button {
     --_bg-color: var(--surface-default);
-    --_border-color: var(--primary);
+    /* --_border-color: var(--primary); */
     --_text-color: var(--primary);
+
+    &.selected {
+      --_bg-color: light-dark(var(--gray-15), var(--gray-0));
+      color: light-dark(var(--gray-0), var(--gray-15));
+    }
+
+    &:not(.selected):hover {
+      --_bg-color: light-dark(var(--gray-3), var(--gray-13));
+    }
   }
 
+  /* #game-board:not(.hidden) {
+    --border-color: var(--primary);
+  } */
 }
 
 /* CUSTOM STYLES */

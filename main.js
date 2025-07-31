@@ -2034,8 +2034,24 @@ document.addEventListener("DOMContentLoaded", () => {
       score: gameState.scores[index],
       symbol: playerSymbols[index],
     }))
-    sortedPlayers.sort((a, b) => b.score - a.score)
 
+    if (gameState.gameMode === "Stealth") {
+      // Sort by lowest score first
+      sortedPlayers.sort((a, b) => a.score - b.score)
+    } else if (gameState.gameMode === "Survivor") {
+      // Sort winners (not eliminated) to the top
+      sortedPlayers.sort((a, b) => {
+        const aIsWinner = winnerIds.includes(a.id)
+        const bIsWinner = winnerIds.includes(b.id)
+        if (aIsWinner && !bIsWinner) return -1
+        if (!aIsWinner && bIsWinner) return 1
+        return 0
+      })
+    } else {
+      // Default: sort by highest score first for Conquest and Classic
+      sortedPlayers.sort((a, b) => b.score - a.score)
+    }
+    
     let finalScoresHTML = `<div class="score-list">`
     const trophyIcon = "🏆"
 

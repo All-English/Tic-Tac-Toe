@@ -371,7 +371,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const stats = getStats()
     const playerIds = Object.keys(stats)
 
-    // Clear and populate the player selection dropdown
     statsPlayerSelect.innerHTML = ""
     if (playerIds.length === 0) {
       const option = document.createElement("option")
@@ -382,14 +381,18 @@ document.addEventListener("DOMContentLoaded", () => {
       return
     }
 
-    playerIds.forEach((id) => {
+    // Populate the player selection dropdown, sorting names alphabetically
+    const sortedPlayerOptions = playerIds
+      .map((id) => ({ id, name: stats[id].name }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+
+    sortedPlayerOptions.forEach((player) => {
       const option = document.createElement("option")
-      option.value = id
-      option.textContent = stats[id].name
+      option.value = player.id
+      option.textContent = player.name
       statsPlayerSelect.appendChild(option)
     })
 
-    // Function to display stats for the selected player
     const displayStatsForPlayer = (playerId) => {
       const playerData = stats[playerId]
       if (!playerData) {
@@ -397,17 +400,44 @@ document.addEventListener("DOMContentLoaded", () => {
         return
       }
 
-      // Determine Nemesis
       let nemesisName = "N/A"
       let maxLosses = 0
-      for (const name in playerData.nemesis) {
-        if (playerData.nemesis[name] > maxLosses) {
-          maxLosses = playerData.nemesis[name]
-          nemesisName = name
+      if (playerData.nemesis) {
+        for (const name in playerData.nemesis) {
+          if (playerData.nemesis[name] > maxLosses) {
+            maxLosses = playerData.nemesis[name]
+            nemesisName = name
+          }
         }
       }
+      const nemesisDisplay =
+        maxLosses > 0 ? `${nemesisName} (${maxLosses} losses)` : "N/A"
 
-      // --- Build the HTML using definition lists ---
+      // --- Function to build config-specific stats tables ---
+      const buildConfigTable = (configs, mode) => {
+        if (Object.keys(configs).length === 0)
+          return "<p class='field-hint'>No games played in this configuration.</p>"
+
+        let tableHTML =
+          "<table><thead><tr><th>Board Config</th><th>" +
+          (mode === "Stealth" ? "Best Score (Low)" : "High Score") +
+          "</th><th>Avg. Points</th></tr></thead><tbody>"
+        for (const key in configs) {
+          const configData = configs[key]
+          const avgPoints =
+            configData.gamesPlayed > 0
+              ? (configData.totalPoints / configData.gamesPlayed).toFixed(1)
+              : 0
+          const scoreToDisplay =
+            mode === "Stealth" ? configData.bestScore : configData.highScore
+          tableHTML += `<tr><td>${key}</td><td>${
+            scoreToDisplay ?? "N/A"
+          }</td><td>${avgPoints}</td></tr>`
+        }
+        tableHTML += "</tbody></table>"
+        return tableHTML
+      }
+
       statsDisplayArea.innerHTML = `
       <div class="stats-section">
         <h4 class="h5">Overall Stats</h4>
@@ -423,7 +453,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <li><span class="term">Longest Win Streak</span><hr><span class="description">${
             playerData.longestWinStreak
           }</span></li>
-          <li><span class="term">Nemesis</span><hr><span class="description">${nemesisName} (${maxLosses} losses)</span></li>
+          <li><span class="term">Nemesis</span><hr><span class="description">${nemesisDisplay}</span></li>
         </ul>
       </div>
 
@@ -442,13 +472,30 @@ document.addEventListener("DOMContentLoaded", () => {
           <li><span class="term">Total Blocks</span><hr><span class="description">${
             playerData.modes.conquest.totalBlocks
           }</span></li>
-          <li><span class="term">Double-Line Scores</span><hr><span class="description">${
-            playerData.modes.conquest.multiLineScoreCounts["2"]
-          }</span></li>
-          <li><span class="term">Triple-Line Scores</span><hr><span class="description">${
-            playerData.modes.conquest.multiLineScoreCounts["3"]
+          <li><span class="term">Multi-Line Scores (2/3/4/5/6+)</span><hr><span class="description">${Object.values(
+            playerData.modes.conquest.multiLineScoreCounts
+          ).join(" / ")}</span></li>
+        </ul>
+        ${buildConfigTable(playerData.modes.conquest.configs, "Conquest")}
+      </div>
+      
+      <div class="stats-section">
+        <h4 class="h5">Stealth Mode</h4>
+        <ul class="definition-list">
+          <li><span class="term">Win %</span><hr><span class="description">${
+            playerData.modes.stealth.gamesPlayed > 0
+              ? (
+                  (playerData.modes.stealth.wins /
+                    playerData.modes.stealth.gamesPlayed) *
+                  100
+                ).toFixed(0)
+              : 0
+          }%</span></li>
+          <li><span class="term">"Perfect Stealth" Games</span><hr><span class="description">${
+            playerData.modes.stealth.perfectStealthGames
           }</span></li>
         </ul>
+        ${buildConfigTable(playerData.modes.stealth.configs, "Stealth")}
       </div>
       
       <div class="stats-section">
@@ -464,23 +511,51 @@ document.addEventListener("DOMContentLoaded", () => {
                : 0
            }%</span></li>
            <li><span class="term">Quickest Win</span><hr><span class="description">${
-             playerData.modes.classic.quickestWin || "N/A"
-           } turns</span></li>
+             playerData.modes.classic.quickestWin !== null
+               ? `${playerData.modes.classic.quickestWin} turns`
+               : "N/A"
+           }</span></li>
            <li><span class="term">Total Blocks</span><hr><span class="description">${
              playerData.modes.classic.totalBlocks
+           }</span></li>
+        </ul>
+      </div>
+      
+      <div class="stats-section">
+        <h4 class="h5">Survivor Mode</h4>
+        <ul class="definition-list">
+           <li><span class="term">Win %</span><hr><span class="description">${
+             playerData.modes.survivor.gamesPlayed > 0
+               ? (
+                   (playerData.modes.survivor.wins /
+                     playerData.modes.survivor.gamesPlayed) *
+                   100
+                 ).toFixed(0)
+               : 0
+           }%</span></li>
+           <li><span class="term">Avg. Survival Rank</span><hr><span class="description">${
+             playerData.modes.survivor.gamesFinished > 0
+               ? (
+                   playerData.modes.survivor.totalSurvivalRank /
+                   playerData.modes.survivor.gamesFinished
+                 ).toFixed(2)
+               : "N/A"
+           }</span></li>
+           <li><span class="term">Total Blocks</span><hr><span class="description">${
+             playerData.modes.survivor.totalBlocks
            }</span></li>
         </ul>
       </div>
     `
     }
 
-    // Add event listener for the dropdown
     statsPlayerSelect.addEventListener("change", (e) => {
       displayStatsForPlayer(e.target.value)
     })
 
-    // Display stats for the first player by default
-    displayStatsForPlayer(playerIds[0])
+    if (sortedPlayerOptions.length > 0) {
+      displayStatsForPlayer(sortedPlayerOptions[0].id)
+    }
   }
 
   // --- LOGIC / STATE MANAGEMENT FUNCTIONS ---

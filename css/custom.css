@@ -461,15 +461,15 @@ dialog#game-over-dialog::backdrop {
 
 #game-over-dialog .score-list {
   display: grid;
-  gap: var(--size-fluid-2);
+  /* gap: var(--size-fluid-2); */
   margin-top: var(--size-4);
 }
 
 #game-over-dialog .score-line {
-  display: flex;
+  /* display: flex;
   justify-content: center;
   align-items: center;
-  gap: var(--size-fluid-1);
+  gap: var(--size-fluid-1); */
   font-size: var(--font-size-2);
 }
 

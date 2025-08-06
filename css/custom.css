@@ -295,7 +295,7 @@ main {
   justify-self: center;
   margin-block-start: var(--size-fluid-3);
   max-width: 30ch;
-  transition: opacity 0.4s var(--ease-out-3), transform 0.4s var(--ease-out-3);
+  transition: opacity 0.4s var(--ease-out-3), transform 0.4s var(--ease-out-3), display 0.1s allow-discrete;
 }
 
 /* When the setup view is NOT active, hide the theme selector */
@@ -303,6 +303,7 @@ main {
   opacity: 0;
   transform: scale(0.95);
   pointer-events: none;
+  display: none;
 }
 
 #game-view:not(.hidden) {
@@ -348,9 +349,10 @@ main {
   text-align: center;
   min-width: 6ch;
   transition: background-color 0.2s var(--ease-out-3);
+  opacity: 1;
 }
 
-/* New rule for when the grid is 9x9 or 10x10 */
+/* New rule for when the grid is 8x8, 9x9 or 10x10 */
 .large-grid .cell {
   font-size: var(--font-size-fluid-1);
   padding: var(--size-fluid-1);
@@ -382,7 +384,8 @@ main {
 
 .cell.highlight {
   --_text-color: var(--gray-0);
-  --_bg-color: var(--player-color);
+  /* --_bg-color: var(--player-color); */
+  --_border-color: none;
 }
 
 .cell.pulse {
@@ -602,11 +605,10 @@ dialog#game-over-dialog::backdrop {
 }
 
 .view {
-  grid-area: 1 / 1;
   /* Place both views in the same grid cell */
-  transition: opacity 0.4s var(--ease-out-3), transform 0.4s var(--ease-out-3);
+  grid-area: 1 / 1;
+  transition: opacity 0.4s var(--ease-out-3), transform 0.4s var(--ease-out-3), display 0.1s allow-discrete;
   backface-visibility: hidden;
-  /* Prevents flickering during transform */
 }
 
 /* State for the INACTIVE view */
@@ -614,7 +616,7 @@ dialog#game-over-dialog::backdrop {
   opacity: 0;
   transform: scale(0.95);
   pointer-events: none;
-  visibility: hidden;
+  display: none;
 }
 
 /* State for the ACTIVE view */
@@ -622,7 +624,7 @@ dialog#game-over-dialog::backdrop {
   opacity: 1;
   transform: scale(1);
   pointer-events: auto;
-  visibility: visible;
+  display: grid;
 }
 
 /* --- Reorder Mode Styles --- */

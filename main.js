@@ -1599,15 +1599,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // The initial gameState is built entirely from the setup screen settings.
       gameState = { ...gameState, ...settings }
+
+      wordCache = getCombinedWords(
+        gameState.selectedUnits,
+        gameState.gridSize * gameState.gridSize
+      )
     }
 
     // This part runs for BOTH a new game from setup AND a reset/reordered game.
     // It takes the existing settings (which might have been reordered)
     // and resets the game-specific state properties for a fresh round.
-    wordCache = getCombinedWords(
-      gameState.selectedUnits,
-      gameState.gridSize * gameState.gridSize
-    )
 
     gameState = {
       ...gameState, // Carries over settings like player order, colors, etc.

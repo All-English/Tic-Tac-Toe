@@ -2051,7 +2051,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Default: sort by highest score first for Conquest and Classic
       sortedPlayers.sort((a, b) => b.score - a.score)
     }
-    
+
     let finalScoresHTML = `<div class="score-list">`
     const trophyIcon = "🏆"
 
@@ -2119,6 +2119,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Call existing functions to update the UI
     updateSliderValues()
     syncSliders()
+    updateUnitSelectorsState()
   }
 
   function randomizeTurnOrder() {

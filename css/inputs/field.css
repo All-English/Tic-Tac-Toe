@@ -428,7 +428,7 @@
       &::before {
         display: none;
       }
-      :where(input, textarea, select) {
+      :where(input, textarea) {
         cursor: not-allowed;
         opacity: 0.7;
 

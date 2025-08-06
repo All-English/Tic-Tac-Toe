@@ -184,6 +184,7 @@ main {
   display: grid;
   gap: var(--size-5);
   width: 100%;
+  position: relative;
 }
 
 #game-setup {
@@ -295,10 +296,9 @@ main {
   justify-self: center;
   margin-block-start: var(--size-fluid-3);
   max-width: 30ch;
-  transition: opacity 0.4s var(--ease-out-3), transform 0.4s var(--ease-out-3), display 0.1s allow-discrete;
+  transition: opacity 0.4s var(--ease-out-3), transform 0.4s var(--ease-out-3);
 }
 
-/* When the setup view is NOT active, hide the theme selector */
 #game-setup:not(.is-active)~#main-theme-selector {
   opacity: 0;
   transform: scale(0.95);
@@ -601,13 +601,13 @@ dialog#game-over-dialog::backdrop {
 #view-container {
   display: grid;
   perspective: 1000px;
-  /* Creates a 3D space for transformations */
+  place-items: center;
 }
 
 .view {
   /* Place both views in the same grid cell */
   grid-area: 1 / 1;
-  transition: opacity 0.4s var(--ease-out-3), transform 0.4s var(--ease-out-3), display 0.1s allow-discrete;
+  transition: opacity 0.4s var(--ease-out-3), transform 0.4s var(--ease-out-3);
   backface-visibility: hidden;
 }
 
@@ -616,7 +616,9 @@ dialog#game-over-dialog::backdrop {
   opacity: 0;
   transform: scale(0.95);
   pointer-events: none;
-  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
 }
 
 /* State for the ACTIVE view */
@@ -624,7 +626,8 @@ dialog#game-over-dialog::backdrop {
   opacity: 1;
   transform: scale(1);
   pointer-events: auto;
-  display: grid;
+  position: relative;
+  z-index: 1;
 }
 
 /* --- Reorder Mode Styles --- */

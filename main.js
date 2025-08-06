@@ -2085,8 +2085,8 @@ document.addEventListener("DOMContentLoaded", () => {
     updateApiFieldVisibility()
 
     // Reset theme color dropdown and trigger the change
-    themeHueSelect.value = "var(--oklch-indigo)"
-    themeHueSelect.dispatchEvent(new Event("change"))
+    // themeHueSelect.value = "var(--oklch-indigo)"
+    // themeHueSelect.dispatchEvent(new Event("change"))
 
     // Reset the game mode to Conquest
     const conquestRadio = document.querySelector(
@@ -2120,6 +2120,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateSliderValues()
     syncSliders()
     updateUnitSelectorsState()
+    updateRemoveButtonsVisibility()
   }
 
   function randomizeTurnOrder() {

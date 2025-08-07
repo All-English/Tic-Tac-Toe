@@ -339,7 +339,6 @@ main {
 
   position: relative;
   aspect-ratio: var(--ratio-golden);
-  padding: var(--size-fluid-2);
   font-size: var(--font-size-fluid-2);
   word-break: break-all;
   hyphens: auto;
@@ -354,9 +353,45 @@ main {
 }
 
 /* New rule for when the grid is 8x8, 9x9 or 10x10 */
-.large-grid .cell {
+/* .large-grid .cell {
   font-size: var(--font-size-fluid-1);
   padding: var(--size-fluid-1);
+} */
+
+#game-board {
+
+  /* For 3x3 grids (9 cells) */
+  &:has(.cell:nth-child(9)) .cell {
+    font-size: var(--fs-step-6);
+    padding: var(--space-s-m);
+  }
+
+  /* For 4x4 grids (16 cells) */
+  &:has(.cell:nth-child(16)) .cell {
+    font-size: var(--fs-step-5);
+  }
+
+  /* For 5x5 grids (25 cells) */
+  &:has(.cell:nth-child(25)) .cell {
+    font-size: var(--fs-step-4);
+  }
+
+  /* For 6x6 and 7x7 grids (36 to 49 cells) */
+  &:has(.cell:nth-child(36)) .cell {
+    font-size: var(--fs-step-3);
+    padding: var(--space-s);
+  }
+
+  /* For 8x8 and 9x9 grids (64 to 81 cells) */
+  &:has(.cell:nth-child(64)) .cell {
+    font-size: var(--fs-step-2);
+  }
+
+  /* For 10x10 grids (100 cells) */
+  &:has(.cell:nth-child(100)) .cell {
+    font-size: var(--fs-step-1);
+    padding: var(--space-xs);
+  }
 }
 
 .cell:not(:disabled):hover {

@@ -220,12 +220,6 @@ document.addEventListener("DOMContentLoaded", () => {
     gameBoard.style.gridTemplateColumns = `repeat(${gameState.gridSize}, 1fr)`
     const newTotalCells = gameState.gridSize * gameState.gridSize
 
-    if (gameState.gridSize > 8) {
-      gameBoard.classList.add("large-grid")
-    } else {
-      gameBoard.classList.remove("large-grid")
-    }
-
     // Clean up cells from a previously larger grid
     const allCurrentCells = gameBoard.querySelectorAll(".cell")
     allCurrentCells.forEach((cell) => {

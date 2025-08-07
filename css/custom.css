@@ -352,12 +352,6 @@ main {
   opacity: 1;
 }
 
-/* New rule for when the grid is 8x8, 9x9 or 10x10 */
-/* .large-grid .cell {
-  font-size: var(--font-size-fluid-1);
-  padding: var(--size-fluid-1);
-} */
-
 #game-board {
 
   /* For 3x3 grids (9 cells) */

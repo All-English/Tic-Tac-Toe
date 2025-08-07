@@ -70,6 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "unit-selectors-container"
   )
   const addUnitBtn = document.getElementById("addUnitBtn")
+  const removeAllUnitsBtn = document.getElementById("removeAllUnitsBtn")
   const startGameBtn = document.getElementById("startGameBtn")
   const showLinesToggle = document.getElementById("showLinesToggle")
   const randomizeOrderBtn = document.getElementById("randomizeOrderBtn")
@@ -1636,6 +1637,12 @@ document.addEventListener("DOMContentLoaded", () => {
     render() // Render the final game state
   }
 
+  function handleRemoveAllUnits() {
+    unitSelectorsContainer.innerHTML = "" // Clear all selectors
+    createUnitSelector() // Add a single, fresh one back
+    saveSettings()
+  }
+
   function getCombinedWords(selectedUnits, totalWordsNeeded) {
     const finalWords = []
     const uniqueUnits = [...new Set(selectedUnits)]
@@ -1870,6 +1877,8 @@ document.addEventListener("DOMContentLoaded", () => {
     allRemoveButtons.forEach((btn) => {
       btn.classList.toggle("hidden", !shouldBeVisible)
     })
+
+    removeAllUnitsBtn.classList.toggle("hidden", !shouldBeVisible)
   }
 
   function syncSliders() {
@@ -2279,6 +2288,7 @@ document.addEventListener("DOMContentLoaded", () => {
     createUnitSelector()
     saveSettings() // Add this
   })
+  removeAllUnitsBtn.addEventListener("click", handleRemoveAllUnits)
   startGameBtn.addEventListener("click", () => initGame(true))
   randomizeOrderBtn.addEventListener("click", randomizePlayerOrder)
   showLinesToggle.addEventListener("change", saveSettings)

@@ -445,75 +445,76 @@ dialog#game-over-dialog {
     overlay .5s allow-discrete,
     opacity .5s var(--ease-out-3),
     transform .5s var(--ease-out-3);
-}
 
-dialog#game-over-dialog[open] {
-  opacity: 1;
-  transform: scale(1);
+  /* State when the dialog is open */
+  &[open] {
+    opacity: 1;
+    transform: scale(1);
 
-  /* The starting style for the animation */
-  @starting-style {
-    opacity: 0;
-    transform: scale(0.95);
+    @starting-style {
+      opacity: 0;
+      transform: scale(0.95);
+    }
   }
-}
 
-dialog#game-over-dialog::backdrop {
-  background-color: oklch(from var(--surface-tonal) l c h / 0.5);
-  backdrop-filter: blur(4px);
-  transition: backdrop-filter .3s ease-out, background-color .3s ease-out;
-}
+  /* Backdrop pseudo-element */
+  &::backdrop {
+    background-color: oklch(from var(--surface-tonal) l c h / 0.5);
+    backdrop-filter: blur(4px);
+    transition: backdrop-filter .3s ease-out, background-color .3s ease-out;
+  }
 
-#game-over-dialog .actions {
-  justify-content: center;
-}
+  /* Descendant Elements */
+  hgroup {
+    align-self: center;
+  }
 
-#dialog-content {
-  text-align: center;
-}
+  #dialog-title {
+    font-size: var(--fs-step-3);
+    color: var(--primary);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--size-fluid-1);
 
-#game-over-dialog hgroup {
-  align-self: center;
-}
+    svg {
+      width: var(--size-6);
+      height: var(--size-6);
+    }
+  }
 
-#game-over-dialog #dialog-title {
-  color: var(--primary);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--size-fluid-1);
-}
+  #dialog-content {
+    text-align: center;
+  }
 
-#game-over-dialog #dialog-title svg {
-  width: var(--size-6);
-  height: var(--size-6);
-}
+  .winner-text {
+    font-size: var(--fs-step-3);
+    margin-block: var(--space-s);
+    color: var(--primary);
+  }
 
-#game-over-dialog .winner-text {
-  color: var(--primary);
-}
+  .score-list {
+    display: grid;
+    margin-top: var(--size-4);
+  }
 
-#game-over-dialog .score-list {
-  display: grid;
-  /* gap: var(--size-fluid-2); */
-  margin-top: var(--size-4);
-}
+  .score-line {
+    font-size: var(--fs-step-2);
+    padding-block: var(--space-3xs);
 
-#game-over-dialog .score-line {
-  /* display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--size-fluid-1); */
-  font-size: var(--font-size-2);
-}
+    &.winner {
+      color: var(--yellow-7);
+      font-weight: var(--font-weight-6);
+    }
 
-#game-over-dialog .score-line.winner {
-  color: var(--yellow-7);
-  font-weight: var(--font-weight-6);
-}
+    svg {
+      width: var(--size-5);
+      height: var(--size-5);
+    }
+  }
 
-#game-over-dialog .score-line svg {
-  width: var(--size-5);
-  height: var(--size-5);
+  .actions {
+    justify-content: center;
+  }
 }
 
 #player-info-list:not(.hidden) {

@@ -514,6 +514,10 @@ dialog#game-over-dialog {
 
   .actions {
     justify-content: center;
+
+    .button {
+      font-size: var(--fs-step-1);
+    }
   }
 }
 

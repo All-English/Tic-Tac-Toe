@@ -554,6 +554,7 @@ dialog#game-over-dialog {
 
 .player-info-block h3 {
   color: var(--player-color);
+  font-size: inherit;
 }
 
 .player-info-block.current-player {

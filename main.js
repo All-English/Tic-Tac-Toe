@@ -1639,7 +1639,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function handleRemoveAllUnits() {
     unitSelectorsContainer.innerHTML = "" // Clear all selectors
-    createUnitSelector() // Add a single, fresh one back
+    createUnitSelector("", true) // Add a single, blank one back
     saveSettings()
   }
 
@@ -1739,7 +1739,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   }
 
-  function createUnitSelector(selectedValue = "") {
+  function createUnitSelector(selectedValue = "", resetToBlank = false) {
     const container = document.createElement("div")
     container.className = "phonics-unit-container"
 
@@ -1757,7 +1757,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const separator = document.createElement("hr")
     allOptions.push(separator)
 
-    // Get the keys to know when we are at the last level
     const levelKeys = Object.keys(smartPhonicsWordBank)
 
     levelKeys.forEach((level, index) => {
@@ -1772,7 +1771,6 @@ document.addEventListener("DOMContentLoaded", () => {
         allOptions.push(option)
       }
 
-      // Add a separator after each level group, but not after the last one
       if (index < levelKeys.length - 1) {
         const separator = document.createElement("hr")
         allOptions.push(separator)
@@ -1783,6 +1781,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (selectedValue) {
       select.value = selectedValue
+    } else if (resetToBlank) {
+      select.selectedIndex = 0
     } else {
       const allExistingSelectors = unitSelectorsContainer.querySelectorAll(
         ".phonics-unit-select"
@@ -1807,7 +1807,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       let foundNext = false
-      // Loop through all options to find the next available one, starting after the last selection
       for (let i = 1; i < allOptions.length; i++) {
         const potentialIndex = (startIndex + i) % allOptions.length
         const potentialOption = allOptions[potentialIndex]
@@ -1843,7 +1842,6 @@ document.addEventListener("DOMContentLoaded", () => {
     updateRemoveButtonsVisibility()
     updateUnitSelectorsState()
   }
-
   function updateUnitSelectorsState() {
     const allSelectors = document.querySelectorAll(".phonics-unit-select")
 

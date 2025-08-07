@@ -218,6 +218,7 @@ main {
 .word-selection-container {
   display: grid;
   justify-items: center;
+  gap: var(--size-2);
 }
 
 .phonics-unit-select .separator {

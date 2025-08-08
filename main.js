@@ -82,6 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeDialogBtn = document.getElementById("close-dialog-btn")
   const pronounceWordsToggle = document.getElementById("pronounceWordsToggle")
   const gameModeSelector = document.getElementById("gameModeSelector")
+  const randomizeGameModeBtn = document.getElementById("randomizeGameModeBtn")
   const gameModeHint = document.getElementById("gameModeHint")
   const resetSettingsBtn = document.getElementById("resetSettingsBtn")
   const manageSetsBtn = document.getElementById("manage-sets-btn")
@@ -1631,6 +1632,23 @@ document.addEventListener("DOMContentLoaded", () => {
     render() // Render the final game state
   }
 
+  function handleRandomizeGameMode() {
+    const modeButtons = gameModeSelector.querySelectorAll("button")
+    const modes = Array.from(modeButtons).map((btn) => btn.dataset.mode)
+
+    // Select a random mode
+    const randomMode = modes[Math.floor(Math.random() * modes.length)]
+
+    // Update the UI to reflect the new choice
+    modeButtons.forEach((button) => {
+      button.classList.toggle("selected", button.dataset.mode === randomMode)
+    })
+
+    updateGameModeHint(randomMode)
+    saveSettings()
+    playSound("click")
+  }
+
   function handleRemoveAllUnits() {
     unitSelectorsContainer.innerHTML = "" // Clear all selectors
     createUnitSelector("", true) // Add a single, blank one back
@@ -2304,6 +2322,8 @@ document.addEventListener("DOMContentLoaded", () => {
     matchLengthValue.textContent = matchLengthInput.value
     saveSettings()
   })
+
+  randomizeGameModeBtn.addEventListener("click", handleRandomizeGameMode)
 
   gameModeSelector.addEventListener("click", (e) => {
     const clickedButton = e.target.closest("button")

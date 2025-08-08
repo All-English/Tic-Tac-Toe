@@ -1634,17 +1634,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function handleRandomizeGameMode() {
     const modeButtons = gameModeSelector.querySelectorAll("button")
-    const modes = Array.from(modeButtons).map((btn) => btn.dataset.mode)
+    const currentSelectedBtn = gameModeSelector.querySelector("button.selected")
+    const currentMode = currentSelectedBtn
+      ? currentSelectedBtn.dataset.mode
+      : null
 
-    // Select a random mode
-    const randomMode = modes[Math.floor(Math.random() * modes.length)]
+    // Create a list of all modes EXCEPT the current one
+    const availableModes = Array.from(modeButtons)
+      .map((btn) => btn.dataset.mode)
+      .filter((mode) => mode !== currentMode)
+
+    // If there are no other modes to choose from, do nothing.
+    if (availableModes.length === 0) return
+
+    // Select a new random mode from the filtered list
+    const newMode =
+      availableModes[Math.floor(Math.random() * availableModes.length)]
 
     // Update the UI to reflect the new choice
     modeButtons.forEach((button) => {
-      button.classList.toggle("selected", button.dataset.mode === randomMode)
+      button.classList.toggle("selected", button.dataset.mode === newMode)
     })
 
-    updateGameModeHint(randomMode)
+    updateGameModeHint(newMode)
     saveSettings()
     playSound("click")
   }

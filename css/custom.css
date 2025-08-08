@@ -612,11 +612,10 @@ dialog#game-over-dialog {
   background-color: currentColor;
   transform-origin: left center;
 
-  /* Initial state for animation */
-  width: 0;
-  opacity: 0;
+  clip-path: inset(0 100% 0 0);
+  opacity: 1;
 
-  transition: width .5s var(--ease-out-3), opacity .5s var(--ease-out-3);
+  transition: clip-path .5s var(--ease-out-3);
 }
 
 .setting-group .label {

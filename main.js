@@ -1395,16 +1395,14 @@ document.addEventListener("DOMContentLoaded", () => {
     line.style.top = `${startY}px`
     line.style.transform = `rotate(${angle}deg)`
 
-    // Use a slight delay to ensure the line appears after the state has been updated
+    gameBoard.appendChild(line)
+
     setTimeout(() => {
-      gameBoard.appendChild(line)
-      line.style.width = `${length}px` // Re-apply for transition
-      line.style.opacity = "1"
-    }, 50)
+      line.style.clipPath = "inset(0 0 0 0)"
+    }, 10)
 
     return line
   }
-
   function generatePlayerColors() {
     const selectedTheme = themeHueSelect.value
 

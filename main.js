@@ -651,6 +651,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function enterReorderMode() {
     const settings = {
+      players: gameState.players,
       playerNames: gameState.playerNames,
       playerColors: gameState.playerColors,
       playerRadii: gameState.playerRadii,

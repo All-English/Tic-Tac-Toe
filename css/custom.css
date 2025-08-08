@@ -377,13 +377,13 @@ main {
     padding: var(--space-s);
   }
 
-  /* For 8x8 and 9x9 grids (64 to 81 cells) */
+  /* For 8x8 grids (64 cells) */
   &:has(.cell:nth-child(64)) .cell {
     font-size: var(--fs-step-2);
   }
 
-  /* For 10x10 grids (100 cells) */
-  &:has(.cell:nth-child(100)) .cell {
+  /* For 9x9 and 10x10 grids (81 to 100 cells) */
+  &:has(.cell:nth-child(81)) .cell {
     font-size: var(--fs-step-1);
     padding: var(--space-xs);
   }

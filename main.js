@@ -2014,7 +2014,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (scores[i] === minScore) winnerIds.push(p.id)
       })
     } else if (gameMode === "Survivor") {
-      const winner = players.find((p) => !eliminatedPlayers.includes(p.id))
+      // Find the player whose INDEX is not in the eliminatedPlayers array
+      const winner = players.find(
+        (p, index) => !eliminatedPlayers.includes(index)
+      )
       if (winner) winnerIds.push(winner.id)
     } else {
       // Conquest and Classic

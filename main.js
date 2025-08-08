@@ -1067,7 +1067,7 @@ document.addEventListener("DOMContentLoaded", () => {
           break
         case "Survivor":
           const rank =
-            finalGameState.eliminatedPlayers.indexOf(playerId) + 1 ||
+            finalGameState.eliminatedPlayers.indexOf(index) + 1 ||
             players.length
           modeStats.totalSurvivalRank += rank
           modeStats.gamesFinished++

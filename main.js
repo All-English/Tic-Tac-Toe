@@ -529,14 +529,14 @@ document.addEventListener("DOMContentLoaded", () => {
                  ).toFixed(0)
                : 0
            }%</span></li>
-           <li><span class="term">Avg. Survival Rank</span><hr><span class="description">${
-             playerData.modes.survivor.gamesFinished > 0
-               ? (
-                   playerData.modes.survivor.totalSurvivalRank /
-                   playerData.modes.survivor.gamesFinished
-                 ).toFixed(2)
-               : "N/A"
-           }</span></li>
+          <li><span class="term">Avg. Finishing Place</span><hr><span class="description">${
+            playerData.modes.survivor.gamesFinished > 0
+              ? (
+                  playerData.modes.survivor.totalSurvivalRank /
+                  playerData.modes.survivor.gamesFinished
+                ).toFixed(2)
+              : "N/A"
+          }</span></li>
            <li><span class="term">Total Blocks</span><hr><span class="description">${
              playerData.modes.survivor.totalBlocks
            }</span></li>
@@ -1066,9 +1066,18 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           break
         case "Survivor":
-          const rank =
-            finalGameState.eliminatedPlayers.indexOf(index) + 1 ||
-            players.length
+          let rank
+          const eliminationIndex =
+            finalGameState.eliminatedPlayers.indexOf(index)
+
+          if (eliminationIndex === -1) {
+            // The player was not eliminated, so they are the winner (1st place)
+            rank = 1
+          } else {
+            // The player was eliminated. Their rank is calculated from the end of the list.
+            // e.g., in a 4-player game, 1st eliminated is 4th place (4 - 0).
+            rank = players.length - eliminationIndex
+          }
           modeStats.totalSurvivalRank += rank
           modeStats.gamesFinished++
           break

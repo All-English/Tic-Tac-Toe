@@ -1090,6 +1090,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- UTILITY FUNCTIONS ---
 
+  function getOrdinal(n) {
+    if (n > 3 && n < 21) return `${n}th`
+    switch (n % 10) {
+      case 1:
+        return `${n}st`
+      case 2:
+        return `${n}nd`
+      case 3:
+        return `${n}rd`
+      default:
+        return `${n}th`
+    }
+  }
+
   function getPlayerSets() {
     const setsJSON = localStorage.getItem(PLAYER_SETS_KEY)
     return setsJSON ? JSON.parse(setsJSON) : {}
@@ -2072,45 +2086,62 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let winnerHTML = `<h3 class="h4 winner-text">${winnerText}</h3>`
 
-    const sortedPlayers = gameState.players.map((player, index) => ({
-      id: player.id,
-      name: player.name,
-      score: gameState.scores[index],
-      symbol: playerSymbols[index],
-    }))
+    let finalScoresHTML = ""
 
-    if (gameState.gameMode === "Stealth") {
-      // Sort by lowest score first
-      sortedPlayers.sort((a, b) => a.score - b.score)
-    } else if (gameState.gameMode === "Survivor") {
-      // Sort winners (not eliminated) to the top
-      sortedPlayers.sort((a, b) => {
-        const aIsWinner = winnerIds.includes(a.id)
-        const bIsWinner = winnerIds.includes(b.id)
-        if (aIsWinner && !bIsWinner) return -1
-        if (!aIsWinner && bIsWinner) return 1
-        return 0
+    // Only build and display the score/rank list if the game mode is NOT Classic.
+    if (gameState.gameMode !== "Classic") {
+      const sortedPlayers = gameState.players.map((player, index) => {
+        let rank = null
+        if (gameState.gameMode === "Survivor") {
+          const eliminationIndex = gameState.eliminatedPlayers.indexOf(index)
+          if (eliminationIndex === -1) {
+            rank = 1 // Winner
+          } else {
+            rank = gameState.players.length - eliminationIndex
+          }
+        }
+        return {
+          id: player.id,
+          name: player.name,
+          score: gameState.scores[index],
+          symbol: playerSymbols[index],
+          rank: rank,
+        }
       })
-    } else {
-      // Default: sort by highest score first for Conquest and Classic
-      sortedPlayers.sort((a, b) => b.score - a.score)
+
+      // Sort players based on game mode
+      if (gameState.gameMode === "Survivor") {
+        sortedPlayers.sort((a, b) => a.rank - b.rank)
+      } else if (gameState.gameMode === "Stealth") {
+        sortedPlayers.sort((a, b) => a.score - b.score)
+      } else {
+        sortedPlayers.sort((a, b) => b.score - a.score)
+      }
+
+      let scoreListHTML = `<div class="score-list">`
+      const trophyIcon = "🏆"
+
+      sortedPlayers.forEach((player) => {
+        const isWinner = winnerIds.includes(player.id)
+        const winnerClass = isWinner ? "winner" : ""
+
+        const displayText =
+          gameState.gameMode === "Survivor"
+            ? getOrdinal(player.rank)
+            : player.score
+
+        scoreListHTML += `
+        <div class="score-line ${winnerClass}">
+          ${isWinner ? trophyIcon : ""}
+          <span>${player.name}: ${displayText}</span>
+        </div>
+      `
+      })
+
+      scoreListHTML += `</div>`
+      finalScoresHTML = scoreListHTML // Assign the generated HTML to the final variable
     }
 
-    let finalScoresHTML = `<div class="score-list">`
-    const trophyIcon = "🏆"
-
-    sortedPlayers.forEach((player) => {
-      const isWinner = winnerIds.includes(player.id)
-      const winnerClass = isWinner ? "winner" : ""
-      finalScoresHTML += `
-      <div class="score-line ${winnerClass}">
-        ${isWinner ? trophyIcon : ""}
-        <span>${player.name}: ${player.score}</span>
-      </div>
-    `
-    })
-
-    finalScoresHTML += `</div>`
     dialogContent.innerHTML = winnerHTML + finalScoresHTML
 
     setTimeout(() => {

@@ -340,7 +340,6 @@ main {
 
   position: relative;
   aspect-ratio: var(--ratio-golden);
-  font-size: var(--font-size-fluid-2);
   word-break: break-all;
   hyphens: auto;
 
@@ -420,7 +419,7 @@ main {
 }
 
 .cell.pulse {
-  animation: pulse 0.6s var(--ease-in-out-3);
+  animation: pulse 0.8s var(--ease-in-out-3);
 }
 
 .phonics-unit-container {
@@ -809,18 +808,17 @@ dialog.side-drawer .saved-set-item .button-group {
 @keyframes pulse {
   0% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 oklch(from var(--primary) l c h / 0);
+    box-shadow: inset 0 0 0 0 oklch(from var(--primary) l c h / 0);
   }
 
   50% {
-    transform: scale(1.05);
-    /* A bright, expanding shadow that quickly fades */
-    box-shadow: 0 0 0 20px oklch(from var(--primary) l c h / 0.7);
+    transform: scale(0.92);
+    box-shadow: inset 0 0 15px 25px oklch(from var(--primary) l c h / 1);
   }
 
   100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 oklch(from var(--primary) l c h / 0);
+    box-shadow: inset 0 0 0 0 oklch(from var(--primary) l c h / 0);
   }
 }
 

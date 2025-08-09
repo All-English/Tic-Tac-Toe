@@ -1857,7 +1857,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePlayerButtonsState()
   }
 
-  function createUnitSelector(selectedValue = "", resetToBlank = false) {
+  function createUnitSelector(selectedValue = null, resetToBlank = false) {
     const container = document.createElement("div")
     container.className = "phonics-unit-container"
 
@@ -1897,7 +1897,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     select.append(...allOptions)
 
-    if (selectedValue) {
+    if (selectedValue !== null) {
       select.value = selectedValue
     } else if (resetToBlank) {
       select.selectedIndex = 0
@@ -1960,6 +1960,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateRemoveButtonsVisibility()
     updateUnitSelectorsState()
   }
+
   function updateUnitSelectorsState() {
     const allSelectors = document.querySelectorAll(".phonics-unit-select")
 

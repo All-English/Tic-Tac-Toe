@@ -2,6 +2,7 @@ import { smartPhonicsWordBank, playerSymbols, englishVoices } from "./config.js"
 
 const PLAYER_SETS_KEY = "phonics_player_sets"
 const STATS_KEY = "wordTacToe_stats"
+const MAX_PLAYERS = 5
 let lastVoiceId = null
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -59,9 +60,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const playerInfoList = document.getElementById("player-info-list")
   const gameBoard = document.getElementById("game-board")
   const gameControls = document.getElementById("game-controls")
-  const numPlayersInput = document.getElementById("numPlayers")
-  const numPlayersValue = document.getElementById("numPlayersValue")
   const playerNamesContainer = document.getElementById("player-names-container")
+  const addPlayerBtn = document.getElementById("addPlayerBtn")
   const gridSizeInput = document.getElementById("gridSize")
   const gridSizeValue = document.getElementById("gridSizeValue")
   const matchLengthInput = document.getElementById("matchLength")
@@ -73,7 +73,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const removeAllUnitsBtn = document.getElementById("removeAllUnitsBtn")
   const startGameBtn = document.getElementById("startGameBtn")
   const showLinesToggle = document.getElementById("showLinesToggle")
-  const randomizeOrderBtn = document.getElementById("randomizeOrderBtn")
   const gameDialog = document.getElementById("game-over-dialog")
   const muteSoundsToggle = document.getElementById("muteSoundsToggle")
   const resetGameBtn = document.getElementById("resetGameBtn")
@@ -85,6 +84,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const randomizeGameModeBtn = document.getElementById("randomizeGameModeBtn")
   const gameModeHint = document.getElementById("gameModeHint")
   const resetSettingsBtn = document.getElementById("resetSettingsBtn")
+  const randomizeOrderBtn_setup = document.getElementById(
+    "randomizeOrderBtn_setup"
+  )
   const manageSetsBtn = document.getElementById("manage-sets-btn")
   const playerSetsDialog = document.getElementById("player-sets-dialog")
   const savedSetsList = document.getElementById("saved-sets-list")
@@ -1403,6 +1405,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return line
   }
+
   function generatePlayerColors() {
     const selectedTheme = themeHueSelect.value
 
@@ -1422,7 +1425,6 @@ document.addEventListener("DOMContentLoaded", () => {
       ]
     } else {
       const colors = []
-      const maxPlayers = parseInt(document.getElementById("numPlayers").max)
 
       const rawValue = themeHueSelect.value // Get the raw value, e.g. "var(--oklch-indigo)"
       const themeHuePropName = rawValue.slice(4, -1) // Extract the CSS variable name, e.g. "--oklch-indigo"
@@ -1432,9 +1434,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const selectedHue = parseFloat(themeHueStringValue) // Convert to a number
 
       const contrastOffset = 180 // Start with the complementary color.
-      const hueStep = 360 / maxPlayers // Space colors evenly around the wheel.
+      const hueStep = 360 / MAX_PLAYERS // Space colors evenly around the wheel.
 
-      for (let i = 0; i < maxPlayers; i++) {
+      for (let i = 0; i < MAX_PLAYERS; i++) {
         const hue = (selectedHue + contrastOffset + i * hueStep) % 360
         const color = `oklch(from var(--color-6) l c ${hue.toFixed(2)})`
         colors.push(color)
@@ -1446,7 +1448,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function saveSettings() {
     const settingsToSave = {
-      numPlayers: numPlayersInput.value,
+      numPlayers: gameState.setup.players.length,
       playerNames: gameState.setup.players,
       gridSize: gridSizeInput.value,
       matchLength: matchLengthInput.value,
@@ -1475,7 +1477,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const settings = JSON.parse(savedSettings)
 
       // Apply saved settings to the inputs
-      numPlayersInput.value = settings.numPlayers || 2
       gameState.setup.players = settings.playerNames || []
       gridSizeInput.value = settings.gridSize || 3
       matchLengthInput.value = settings.matchLength || 3
@@ -1586,7 +1587,7 @@ document.addEventListener("DOMContentLoaded", () => {
       settings.players = preparedPlayers // Store the full player objects (id, name)
       settings.playerNames = preparedPlayers.map((p) => p.name)
 
-      settings.numPlayers = parseInt(numPlayersInput.value)
+      settings.numPlayers = settings.players.length
       settings.gridSize = parseInt(gridSizeInput.value)
       settings.matchLength = parseInt(matchLengthInput.value)
       settings.gameMode = document.querySelector(
@@ -1652,6 +1653,65 @@ document.addEventListener("DOMContentLoaded", () => {
 
     addGameEventListeners()
     render() // Render the final game state
+  }
+
+  function handleAddPlayer() {
+    if (gameState.setup.players.length >= MAX_PLAYERS) return
+
+    const currentNames = new Set(gameState.setup.players.map((p) => p.name))
+    let newPlayerName = `Player ${gameState.setup.players.length + 1}` // Default fallback name
+
+    for (let i = 1; i <= MAX_PLAYERS; i++) {
+      const potentialName = `Player ${i}`
+      if (!currentNames.has(potentialName)) {
+        newPlayerName = potentialName
+        break // Found the first available name, so we can stop looking
+      }
+    }
+
+    const newPlayer = {
+      id: Date.now(),
+      name: newPlayerName,
+    }
+
+    gameState.setup.players.push(newPlayer)
+
+    renderNameInputs()
+    updatePlayerButtonsState()
+    saveSettings()
+  }
+
+  function handleRemovePlayer(e) {
+    if (!e.target.closest(".remove-player-btn")) return
+    if (gameState.setup.players.length <= 2) return // Enforce min players
+
+    const wrapper = e.target.closest(".player-field-wrapper")
+    if (!wrapper) return // Safety check
+
+    const playerIdToRemove = parseInt(wrapper.dataset.playerId, 10)
+
+    gameState.setup.players = gameState.setup.players.filter(
+      (p) => p.id !== playerIdToRemove
+    )
+
+    renderNameInputs()
+    updatePlayerButtonsState()
+    saveSettings()
+  }
+
+  function updatePlayerButtonsState() {
+    const playerCount = gameState.setup.players.length
+
+    // Disable "Add" button if at max
+    addPlayerBtn.disabled = playerCount >= 5
+
+    // Show/hide "Remove" buttons
+    const removeButtons =
+      playerNamesContainer.querySelectorAll(".remove-player-btn")
+    const showRemoveButtons = playerCount > 2
+    removeButtons.forEach((btn) =>
+      btn.classList.toggle("hidden", !showRemoveButtons)
+    )
   }
 
   function handleRandomizeGameMode() {
@@ -1749,40 +1809,52 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderNameInputs() {
     playerNamesContainer.innerHTML = ""
     gameState.setup.players.forEach((player, index) => {
+      const wrapper = document.createElement("div")
+      wrapper.className = "player-field-wrapper"
+      wrapper.draggable = true
+      wrapper.dataset.playerId = player.id // The ID for drag/drop and removal goes on the wrapper
+      wrapper.addEventListener("dragstart", () =>
+        wrapper.classList.add("dragging")
+      )
+      wrapper.addEventListener("dragend", () =>
+        wrapper.classList.remove("dragging")
+      )
+
       const field = document.createElement("label")
       field.className = "field player-name-field"
-      field.draggable = true
-      field.dataset.playerId = player.id
-      field.addEventListener("dragstart", () => field.classList.add("dragging"))
-      field.addEventListener("dragend", () =>
-        field.classList.remove("dragging")
-      )
+
       const label = document.createElement("span")
       label.className = "label"
       label.textContent = `Player ${index + 1} Name`
+
       const input = document.createElement("input")
       input.type = "text"
       input.className = "player-name-input"
       input.setAttribute("list", "player-list-data")
       input.value = player.name
       input.addEventListener("input", (e) => {
-        const playerId = parseInt(field.dataset.playerId)
-        gameState = {
-          ...gameState,
-          setup: {
-            ...gameState.setup,
-            players: gameState.setup.players.map((p) =>
-              p.id === playerId ? { ...p, name: e.target.value } : p
-            ),
-          },
-        }
+        const playerId = parseInt(wrapper.dataset.playerId) // Read ID from wrapper
+        gameState.setup.players = gameState.setup.players.map((p) =>
+          p.id === playerId ? { ...p, name: e.target.value } : p
+        )
         saveSettings()
         validatePlayerNames()
       })
+
       field.appendChild(label)
       field.appendChild(input)
-      playerNamesContainer.appendChild(field)
+
+      const removeBtn = document.createElement("button")
+      removeBtn.className = "icon-button remove-player-btn"
+      removeBtn.setAttribute("aria-label", `Remove Player ${index + 1}`)
+      removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
+
+      wrapper.appendChild(field)
+      wrapper.appendChild(removeBtn)
+
+      playerNamesContainer.appendChild(wrapper)
     })
+    updatePlayerButtonsState()
   }
 
   function createUnitSelector(selectedValue = "", resetToBlank = false) {
@@ -1934,38 +2006,6 @@ document.addEventListener("DOMContentLoaded", () => {
       matchLengthInput.value = newMaxMatchLength
     }
     matchLengthValue.textContent = matchLengthInput.value
-  }
-
-  function updateSliderValues() {
-    const newCount = parseInt(numPlayersInput.value, 10)
-    numPlayersValue.textContent = newCount
-    const currentCount = gameState.setup.players.length
-    if (newCount > currentCount) {
-      const newPlayers = []
-      for (let i = currentCount; i < newCount; i++) {
-        newPlayers.push({ id: Date.now() + i, name: `Player ${i + 1}` })
-      }
-      // Create new state object by spreading the new players into the list
-      gameState = {
-        ...gameState,
-        setup: {
-          ...gameState.setup,
-          players: [...gameState.setup.players, ...newPlayers],
-        },
-      }
-    } else if (newCount < currentCount) {
-      // Create new state object by slicing the players list
-      gameState = {
-        ...gameState,
-        setup: {
-          ...gameState.setup,
-          players: gameState.setup.players.slice(0, newCount),
-        },
-      }
-    }
-    renderNameInputs()
-    syncSliders()
-    validatePlayerNames()
   }
 
   function selectRandomUnit() {
@@ -2149,52 +2189,41 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function resetSettings() {
-    gameState.setup.players = []
-    numPlayersInput.value = 2
+    gameState.setup.players = [
+      { id: Date.now(), name: "Player 1" },
+      { id: Date.now() + 1, name: "Player 2" },
+    ]
+
     gridSizeInput.value = 3
     matchLengthInput.value = 3
     showLinesToggle.checked = true
     muteSoundsToggle.checked = false
     pronounceWordsToggle.checked = false
-    updateApiFieldVisibility()
 
     // Reset theme color dropdown and trigger the change
     // themeHueSelect.value = "var(--oklch-indigo)"
     // themeHueSelect.dispatchEvent(new Event("change"))
 
-    // Reset the game mode to Conquest
-    const conquestRadio = document.querySelector(
-      'input[name="game_mode"][value="Conquest"]'
+    // Reset game mode to Conquest
+    const conquestButton = gameModeSelector.querySelector(
+      '[data-mode="Conquest"]'
     )
-    if (conquestRadio) {
-      conquestRadio.checked = true
-      // Trigger the change event to update the hint text
-      conquestRadio.dispatchEvent(new Event("change", { bubbles: true }))
-    }
+    gameModeSelector
+      .querySelectorAll("button")
+      .forEach((btn) => btn.classList.remove("selected"))
+    if (conquestButton) conquestButton.classList.add("selected")
+    updateGameModeHint("Conquest")
 
-    // Remove all but the first word unit selector
-    const allUnitSelectors = unitSelectorsContainer.querySelectorAll(
-      ".phonics-unit-container"
-    )
-    allUnitSelectors.forEach((selector, index) => {
-      if (index > 0) {
-        selector.remove()
-      }
-    })
+    // Reset word selectors
+    unitSelectorsContainer.innerHTML = ""
+    createUnitSelector("", true) // Create one blank selector
 
-    // Reset the first (or only) word selector to its initial state
-    const firstSelector = unitSelectorsContainer.querySelector(
-      ".phonics-unit-select"
-    )
-    if (firstSelector) {
-      firstSelector.selectedIndex = 0
-    }
-
-    // Call existing functions to update the UI
-    updateSliderValues()
+    // Update the UI
+    renderNameInputs()
+    updatePlayerButtonsState()
     syncSliders()
-    updateUnitSelectorsState()
-    updateRemoveButtonsVisibility()
+    updateApiFieldVisibility()
+    saveSettings()
   }
 
   function randomizeTurnOrder() {
@@ -2307,7 +2336,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!playerNames) return
 
-    // Create the player object structure for the game state
     const newPlayers = playerNames.map((name, index) => ({
       id: Date.now() + index,
       name: name,
@@ -2318,9 +2346,9 @@ document.addEventListener("DOMContentLoaded", () => {
       setup: { ...gameState.setup, players: newPlayers },
     }
 
-    numPlayersInput.value = playerNames.length // Update slider
+    renderNameInputs()
+    updatePlayerButtonsState()
 
-    updateSliderValues() // This will re-render the name inputs
     playerSetsDialog.close()
     validatePlayerNames()
   }
@@ -2354,7 +2382,7 @@ document.addEventListener("DOMContentLoaded", () => {
   })
   removeAllUnitsBtn.addEventListener("click", handleRemoveAllUnits)
   startGameBtn.addEventListener("click", () => initGame(true))
-  randomizeOrderBtn.addEventListener("click", randomizePlayerOrder)
+  randomizeOrderBtn_setup.addEventListener("click", randomizePlayerOrder)
   showLinesToggle.addEventListener("change", saveSettings)
   pronounceWordsToggle.addEventListener("change", () => {
     updateApiFieldVisibility()
@@ -2364,10 +2392,8 @@ document.addEventListener("DOMContentLoaded", () => {
     gameState = { ...gameState, isMuted: muteSoundsToggle.checked }
     saveSettings()
   })
-  numPlayersInput.addEventListener("input", () => {
-    updateSliderValues()
-    saveSettings()
-  })
+  addPlayerBtn.addEventListener("click", handleAddPlayer)
+  playerNamesContainer.addEventListener("click", handleRemovePlayer)
   gridSizeInput.addEventListener("input", () => {
     syncSliders()
     saveSettings()
@@ -2540,6 +2566,5 @@ document.addEventListener("DOMContentLoaded", () => {
   })
 
   loadSettings()
-  updateSliderValues()
   updateApiFieldVisibility()
 })

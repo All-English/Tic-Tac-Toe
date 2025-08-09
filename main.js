@@ -93,11 +93,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const saveSetNameInput = document.getElementById("save-set-name-input")
   const saveSetBtn = document.getElementById("save-set-btn")
   const closeSetsDialogBtn = document.getElementById("close-sets-dialog-btn")
-  const statsView = document.getElementById("stats-view") // Add this
-  const showStatsBtn = document.getElementById("show-stats-btn") // Add this
-  const backToSetupBtn = document.getElementById("back-to-setup-btn") // Add this
-  const statsPlayerSelect = document.getElementById("stats-player-select") // Add this
-  const statsDisplayArea = document.getElementById("stats-display-area") // Add this
+  const statsView = document.getElementById("stats-view")
+  const showStatsBtn = document.getElementById("show-stats-btn")
+  const backToSetupBtn = document.getElementById("back-to-setup-btn")
+  const statsPlayerSelect = document.getElementById("stats-player-select")
+  const statsDisplayArea = document.getElementById("stats-display-area")
+  const feedbackSnackbar = document.getElementById("feedback-snackbar")
+  const snackbarMessage = document.getElementById("snackbar-message")
 
   // --- EVENT HANDLER FUNCTIONS ---
 
@@ -559,94 +561,35 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- LOGIC / STATE MANAGEMENT FUNCTIONS ---
 
   function handleCellClick(event) {
-    // Handle starting the game on first move
     if (gameState.currentView === "reorder") {
-      // Only the new Player 1 can start the game with a move
       if (gameState.currentPlayer === 0) {
-        initGame(false) // This locks the order and sets the view to 'game'
+        initGame(false)
       } else {
-        return // It's not Player 1's turn to start, so do nothing
+        return
       }
     }
 
     if (!isOrderLocked) return
     const cell = event.target.closest(".cell")
-    if (!cell) return
-    const index = parseInt(cell.dataset.index)
-    if (gameState.board[index] !== null) return
+    if (!cell || cell.disabled) return
 
-    // Speak the word in the cell
+    const index = parseInt(cell.dataset.index)
+
     if (gameState.pronounceWords) {
       speak(cell.textContent)
     }
 
-    const wasBlock = checkForBlock(index)
-    if (wasBlock) {
-      gameState.playerStatsThisGame[gameState.currentPlayer].blocks++
-    }
-    const move = {
-      index: index,
-      player: gameState.currentPlayer,
-      scoredLines: [],
-    }
-    const newBoard = [...gameState.board]
-    newBoard[index] = gameState.currentPlayer
+    // Call the new logic function
+    const { isGameOver } = processPlayerMove(index)
 
-    const { pointsScored, shouldEndGame } = checkForWins(move, newBoard)
-
-    const scoreKey = pointsScored.toString()
-    const playerGameStats =
-      gameState.playerStatsThisGame[gameState.currentPlayer]
-    if (pointsScored >= 2) {
-      if (pointsScored <= 5) {
-        playerGameStats.multiLineScores[scoreKey]++
-      } else {
-        // Handles scores of 6 or more
-        playerGameStats.multiLineScores["6"]++
-      }
-    }
-
-    if (pointsScored > 0) {
-      playSoundSequentially("score", pointsScored)
-    } else if (wasBlock) {
-      playSound("block")
-      cell.classList.add("blocked")
-      cell.addEventListener(
-        "animationend",
-        () => {
-          cell.classList.remove("blocked")
-        },
-        { once: true }
-      )
-    } else {
-      playSound("click")
-    }
-
-    const newMoveHistory = [...gameState.moveHistory, move]
-    const newMovesMade = gameState.movesMade + 1
-
-    gameState = {
-      ...gameState,
-      board: newBoard,
-      movesMade: newMovesMade,
-      moveHistory: newMoveHistory,
-    }
-
+    // Render the result of the move
     render()
 
-    if (shouldEndGame) {
-      endGame()
-    } else if (
-      gameState.movesMade ===
-      gameState.gridSize * gameState.gridSize
-    ) {
-      // End the game if the board is full
+    // Handle the end of the game after rendering
+    if (isGameOver) {
       endGame()
     } else {
-      // Otherwise, find the next active player and continue
-      const nextPlayer = getNextPlayerIndex(gameState.currentPlayer)
-      gameState = { ...gameState, currentPlayer: nextPlayer }
-      // Re-render to update the current player highlight
+      // If not game over, we just need to update the player highlight
       renderPlayerInfo()
     }
   }
@@ -807,6 +750,77 @@ document.addEventListener("DOMContentLoaded", () => {
       highlightedCells: newHighlightedCells,
       winLinesToDraw: newWinLinesToDraw,
     }
+  }
+
+  function processPlayerMove(index) {
+    // This function now contains the core game logic
+    const wasBlock = checkForBlock(index)
+    if (wasBlock) {
+      gameState.playerStatsThisGame[gameState.currentPlayer].blocks++
+    }
+
+    const move = {
+      index: index,
+      player: gameState.currentPlayer,
+      scoredLines: [],
+    }
+
+    const newBoard = [...gameState.board]
+    newBoard[index] = gameState.currentPlayer
+
+    const { pointsScored, shouldEndGame } = checkForWins(move, newBoard)
+
+    const scoreKey = pointsScored.toString()
+    const playerGameStats =
+      gameState.playerStatsThisGame[gameState.currentPlayer]
+    if (pointsScored >= 2) {
+      if (pointsScored <= 5) {
+        playerGameStats.multiLineScores[scoreKey]++
+      } else {
+        playerGameStats.multiLineScores["6"]++
+      }
+    }
+
+    if (pointsScored > 0) {
+      playSoundSequentially("score", pointsScored)
+    } else if (wasBlock) {
+      playSound("block")
+      const cell = gameBoard.querySelector(`[data-index='${index}']`)
+      if (cell) {
+        cell.classList.add("blocked")
+        cell.addEventListener(
+          "animationend",
+          () => {
+            cell.classList.remove("blocked")
+          },
+          { once: true }
+        )
+      }
+    } else {
+      playSound("click")
+    }
+
+    const newMoveHistory = [...gameState.moveHistory, move]
+    const newMovesMade = gameState.movesMade + 1
+
+    gameState = {
+      ...gameState,
+      board: newBoard,
+      movesMade: newMovesMade,
+      moveHistory: newMoveHistory,
+    }
+
+    // Determine if the game is over, but don't call endGame here.
+    const isGameOver =
+      shouldEndGame || newMovesMade === gameState.gridSize * gameState.gridSize
+
+    if (!isGameOver) {
+      // Find the next active player if the game continues
+      const nextPlayer = getNextPlayerIndex(gameState.currentPlayer)
+      gameState = { ...gameState, currentPlayer: nextPlayer }
+    }
+
+    return { isGameOver }
   }
 
   function checkForWins(move, currentBoard) {
@@ -1093,6 +1107,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- UTILITY FUNCTIONS ---
 
+  let snackbarTimer // This will hold our auto-hide timer
+
+  function showSnackbar(message) {
+    clearTimeout(snackbarTimer) // Clear any previous timer
+    snackbarMessage.textContent = message
+    feedbackSnackbar.showPopover() // Show the snackbar
+
+    // Automatically hide it after 4 seconds
+    snackbarTimer = setTimeout(() => {
+      feedbackSnackbar.hidePopover()
+    }, 4000)
+  }
+
   function getOrdinal(n) {
     if (n > 3 && n < 21) return `${n}th`
     switch (n % 10) {
@@ -1268,6 +1295,7 @@ document.addEventListener("DOMContentLoaded", () => {
           "Failed to fetch from ElevenLabs, attempting fallback:",
           error
         )
+        showSnackbar("ElevenLabs api failed, using Browser speech synthesis.")
       }
     }
 
@@ -1279,6 +1307,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function speakWithBrowser(text) {
     if (!("speechSynthesis" in window)) {
       console.warn("Browser speech synthesis not supported.")
+      showSnackbar("Browser speech synthesis not supported.")
       return
     }
 
@@ -1600,7 +1629,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .filter((value) => value)
 
       if (settings.selectedUnits.length === 0) {
-        alert("Please select at least one word unit to start the game.")
+        showSnackbar("Please select at least one word unit to start the game.")
         return
       }
 
@@ -2313,13 +2342,13 @@ document.addEventListener("DOMContentLoaded", () => {
   function handleSaveSet() {
     const setName = saveSetNameInput.value.trim()
     if (!setName) {
-      alert("Please enter a name for the list.")
+      showSnackbar("Please enter a name for the list.")
       return
     }
 
     const currentPlayerNames = gameState.setup.players.map((p) => p.name)
     if (currentPlayerNames.length === 0) {
-      alert("Please add players before saving a list.")
+      showSnackbar("Please add players before saving a list.")
       return
     }
 

@@ -271,7 +271,8 @@ main {
 }
 
 .player-setup>.h5,
-.game-mode-setup>.h5 {
+.game-mode-setup>.h5,
+.game-rules>.h5 {
   display: flex;
   justify-content: center;
   align-items: center;

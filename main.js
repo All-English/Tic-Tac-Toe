@@ -84,8 +84,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const randomizeGameModeBtn = document.getElementById("randomizeGameModeBtn")
   const gameModeHint = document.getElementById("gameModeHint")
   const resetSettingsBtn = document.getElementById("resetSettingsBtn")
-  const randomizeOrderBtn_setup = document.getElementById(
-    "randomizeOrderBtn_setup"
+  const randomizePlayerOrderBtn_setup = document.getElementById(
+    "randomizePlayerOrderBtn_setup"
   )
   const manageSetsBtn = document.getElementById("manage-sets-btn")
   const playerSetsDialog = document.getElementById("player-sets-dialog")
@@ -100,6 +100,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const statsDisplayArea = document.getElementById("stats-display-area")
   const feedbackSnackbar = document.getElementById("feedback-snackbar")
   const snackbarMessage = document.getElementById("snackbar-message")
+  const randomizeBoardSizeBtn = document.getElementById(
+    "randomizeBoardSizeBtn"
+  )
 
   // --- EVENT HANDLER FUNCTIONS ---
 
@@ -139,6 +142,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     render()
+  }
+
+  function handleRandomizeBoardSize() {
+    const min = parseInt(gridSizeInput.min, 10)
+    const max = parseInt(gridSizeInput.max, 10)
+
+    // Ensure the new random size is different from the current one, if possible
+    let newSize
+    const currentSize = parseInt(gridSizeInput.value, 10)
+    if (min === max) {
+      newSize = min
+    } else {
+      do {
+        newSize = Math.floor(Math.random() * (max - min + 1)) + min
+      } while (newSize === currentSize)
+    }
+
+    gridSizeInput.value = newSize
+    syncSliders()
+    saveSettings()
+    playSound("click")
   }
 
   // --- EVENT LISTENER MANAGEMENT ---
@@ -2275,7 +2299,7 @@ document.addEventListener("DOMContentLoaded", () => {
           gameState.playerColors[j],
           gameState.playerColors[i],
         ]
-        ;;[gameState.playerRadii[i], gameState.playerRadii[j]] = [
+        ;[gameState.playerRadii[i], gameState.playerRadii[j]] = [
           gameState.playerRadii[j],
           gameState.playerRadii[i],
         ]
@@ -2404,6 +2428,8 @@ document.addEventListener("DOMContentLoaded", () => {
     render()
   })
 
+  randomizeBoardSizeBtn.addEventListener("click", handleRandomizeBoardSize)
+
   backToSetupBtn.addEventListener("click", () => {
     gameState.currentView = "setup"
     render()
@@ -2416,7 +2442,7 @@ document.addEventListener("DOMContentLoaded", () => {
   })
   removeAllUnitsBtn.addEventListener("click", handleRemoveAllUnits)
   startGameBtn.addEventListener("click", () => initGame(true))
-  randomizeOrderBtn_setup.addEventListener("click", randomizePlayerOrder)
+  randomizePlayerOrderBtn_setup.addEventListener("click", randomizePlayerOrder)
   showLinesToggle.addEventListener("change", saveSettings)
   pronounceWordsToggle.addEventListener("change", () => {
     updateApiFieldVisibility()

@@ -1542,6 +1542,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function updatePronunciationToggleState() {
+    const isMuted = muteSoundsToggle.checked
+    pronounceWordsToggle.disabled = isMuted
+  }
+
   function saveSettings() {
     const settingsToSave = {
       numPlayers: gameState.setup.players.length,
@@ -1613,6 +1618,7 @@ document.addEventListener("DOMContentLoaded", () => {
     syncSliders()
     updateUnitSelectorsState()
     updateApiFieldVisibility()
+    updatePronunciationToggleState()
     populatePlayerDatalist()
   }
 
@@ -2316,6 +2322,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePlayerButtonsState()
     syncSliders()
     updateApiFieldVisibility()
+    updatePronunciationToggleState()
     saveSettings()
   }
 
@@ -2489,6 +2496,7 @@ document.addEventListener("DOMContentLoaded", () => {
   })
   muteSoundsToggle.addEventListener("change", () => {
     gameState = { ...gameState, isMuted: muteSoundsToggle.checked }
+    updatePronunciationToggleState()
     saveSettings()
   })
   addPlayerBtn.addEventListener("click", handleAddPlayer)

@@ -2275,9 +2275,13 @@ document.addEventListener("DOMContentLoaded", () => {
           gameState.playerColors[j],
           gameState.playerColors[i],
         ]
-        ;[gameState.playerRadii[i], gameState.playerRadii[j]] = [
+        ;;[gameState.playerRadii[i], gameState.playerRadii[j]] = [
           gameState.playerRadii[j],
           gameState.playerRadii[i],
+        ]
+        ;[gameState.players[i], gameState.players[j]] = [
+          gameState.players[j],
+          gameState.players[i],
         ]
       }
       attempts++
@@ -2586,10 +2590,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const [nameToMove] = gameState.playerNames.splice(fromIndex, 1)
     const [colorToMove] = gameState.playerColors.splice(fromIndex, 1)
     const [radiusToMove] = gameState.playerRadii.splice(fromIndex, 1)
+    const [playerToMove] = gameState.players.splice(fromIndex, 1)
 
     gameState.playerNames.splice(toIndex, 0, nameToMove)
     gameState.playerColors.splice(toIndex, 0, colorToMove)
     gameState.playerRadii.splice(toIndex, 0, radiusToMove)
+    gameState.players.splice(toIndex, 0, playerToMove)
 
     // Re-render the player info cards to show the final new order
     renderPlayerInfo()

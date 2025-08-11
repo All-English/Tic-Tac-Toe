@@ -72,7 +72,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const addUnitBtn = document.getElementById("addUnitBtn")
   const removeAllUnitsBtn = document.getElementById("removeAllUnitsBtn")
   const startGameBtn = document.getElementById("startGameBtn")
-  const showLinesToggle = document.getElementById("showLinesToggle")
   const gameDialog = document.getElementById("game-over-dialog")
   const muteSoundsToggle = document.getElementById("muteSoundsToggle")
   const resetGameBtn = document.getElementById("resetGameBtn")
@@ -100,9 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const statsDisplayArea = document.getElementById("stats-display-area")
   const feedbackSnackbar = document.getElementById("feedback-snackbar")
   const snackbarMessage = document.getElementById("snackbar-message")
-  const randomizeBoardSizeBtn = document.getElementById(
-    "randomizeBoardSizeBtn"
-  )
+  const randomizeBoardSizeBtn = document.getElementById("randomizeBoardSizeBtn")
 
   // --- EVENT HANDLER FUNCTIONS ---
 
@@ -629,7 +626,6 @@ document.addEventListener("DOMContentLoaded", () => {
       matchLength: gameState.matchLength,
       gameMode: gameState.gameMode,
       selectedUnits: gameState.selectedUnits,
-      showLines: gameState.showLines,
       pronounceWords: gameState.pronounceWords,
       isMuted: gameState.isMuted,
     }
@@ -755,15 +751,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       })
 
-      if (gameState.showLines) {
-        const sortedLine = [...line].sort((a, b) => a - b)
-        newWinLinesToDraw.push({
-          id: `line-${sortedLine[0]}-${sortedLine[sortedLine.length - 1]}`,
-          start: sortedLine[0],
-          end: sortedLine[sortedLine.length - 1],
-          color: playerColors[scoringPlayer],
-        })
-      }
+      const sortedLine = [...line].sort((a, b) => a - b)
+      newWinLinesToDraw.push({
+        id: `line-${sortedLine[0]}-${sortedLine[sortedLine.length - 1]}`,
+        start: sortedLine[0],
+        end: sortedLine[sortedLine.length - 1],
+        color: playerColors[scoringPlayer],
+      })
     })
 
     // Update the master state object
@@ -1505,7 +1499,6 @@ document.addEventListener("DOMContentLoaded", () => {
       playerNames: gameState.setup.players,
       gridSize: gridSizeInput.value,
       matchLength: matchLengthInput.value,
-      showLines: showLinesToggle.checked,
       muteSounds: muteSoundsToggle.checked,
       pronounceWords: pronounceWordsToggle.checked,
       gameMode: document.querySelector("#gameModeSelector button.selected")
@@ -1533,7 +1526,6 @@ document.addEventListener("DOMContentLoaded", () => {
       gameState.setup.players = settings.playerNames || []
       gridSizeInput.value = settings.gridSize || 3
       matchLengthInput.value = settings.matchLength || 3
-      showLinesToggle.checked = settings.showLines !== false
       muteSoundsToggle.checked = settings.muteSounds === true
       pronounceWordsToggle.checked = settings.pronounceWords === true
       darkModeToggle.checked = settings.darkMode === true
@@ -1666,7 +1658,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const shuffledRadii = [...playerRadii].sort(() => 0.5 - Math.random())
       settings.playerRadii = shuffledRadii.slice(0, settings.numPlayers)
 
-      settings.showLines = showLinesToggle.checked
       settings.pronounceWords = pronounceWordsToggle.checked
 
       // The initial gameState is built entirely from the setup screen settings.
@@ -2250,9 +2241,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     gridSizeInput.value = 3
     matchLengthInput.value = 3
-    showLinesToggle.checked = true
     muteSoundsToggle.checked = false
-    pronounceWordsToggle.checked = false
+    pronounceWordsToggle.checked = true
 
     // Reset theme color dropdown and trigger the change
     // themeHueSelect.value = "var(--oklch-indigo)"
@@ -2443,7 +2433,6 @@ document.addEventListener("DOMContentLoaded", () => {
   removeAllUnitsBtn.addEventListener("click", handleRemoveAllUnits)
   startGameBtn.addEventListener("click", () => initGame(true))
   randomizePlayerOrderBtn_setup.addEventListener("click", randomizePlayerOrder)
-  showLinesToggle.addEventListener("change", saveSettings)
   pronounceWordsToggle.addEventListener("change", () => {
     updateApiFieldVisibility()
     saveSettings()

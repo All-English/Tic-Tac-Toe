@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let areGameEventListenersAttached = false
   let wordCache = []
   let isOrderLocked = false
+  let hasSeenQuotaWarning = false
 
   const sounds = {
     click: new Audio("sounds/click.mp3"),
@@ -1126,16 +1127,42 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- UTILITY FUNCTIONS ---
 
   let snackbarTimer // This will hold our auto-hide timer
+  let currentSnackbarAction = null // This will hold our action listener for cleanup
 
-  function showSnackbar(message) {
-    clearTimeout(snackbarTimer) // Clear any previous timer
+  function showSnackbar(message, action = null) {
+    clearTimeout(snackbarTimer) // Clear any previous auto-hide timer
+
+    const actionBtn = document.getElementById("snackbar-action-btn")
+
+    // Clean up any previous action listener to prevent memory leaks
+    if (currentSnackbarAction) {
+      actionBtn.removeEventListener("click", currentSnackbarAction)
+    }
+
+    if (action && action.text && typeof action.callback === "function") {
+      actionBtn.textContent = action.text
+      actionBtn.style.display = "inline-flex"
+
+      // Define the new action
+      currentSnackbarAction = () => {
+        action.callback()
+        feedbackSnackbar.hidePopover()
+      }
+
+      actionBtn.addEventListener("click", currentSnackbarAction)
+    } else {
+      actionBtn.style.display = "none"
+    }
+
     snackbarMessage.textContent = message
-    feedbackSnackbar.showPopover() // Show the snackbar
+    feedbackSnackbar.showPopover()
 
-    // Automatically hide it after 4 seconds
-    snackbarTimer = setTimeout(() => {
-      feedbackSnackbar.hidePopover()
-    }, 4000)
+    // Automatically hide it after 4 seconds if there's no action button
+    if (!action) {
+      snackbarTimer = setTimeout(() => {
+        feedbackSnackbar.hidePopover()
+      }, 4000)
+    }
   }
 
   function getOrdinal(n) {
@@ -1256,7 +1283,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function speak(text) {
-    // Basic validation for muted audio or very short text
     if (gameState.isMuted) return
     if (text.trim().length <= 1) {
       playSound("click")
@@ -1264,7 +1290,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- Primary Method: Try ElevenLabs API ---
-    // We'll only attempt the API call if a key has been provided by the user.
     if (userApiKey) {
       const availableVoices = englishVoices.filter(
         (voice) => voice.voice_id !== lastVoiceId
@@ -1272,7 +1297,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const randomVoice =
         availableVoices[Math.floor(Math.random() * availableVoices.length)]
       lastVoiceId = randomVoice.voice_id
-      console.log("Selected Voice Details:", randomVoice)
 
       const url = `https://api.elevenlabs.io/v1/text-to-speech/${randomVoice.voice_id}`
       const headers = {
@@ -1294,31 +1318,59 @@ document.addEventListener("DOMContentLoaded", () => {
         const response = await fetch(url, { method: "POST", headers, body })
 
         if (response.ok) {
-          // SUCCESS: Play the audio and exit the function.
           const audioBlob = await response.blob()
           const audioUrl = URL.createObjectURL(audioBlob)
           const audio = new Audio(audioUrl)
           audio.play()
-          return // Important: Exit after successful playback.
+          return // Success, so we exit the function here
         }
 
-        // If response was not ok, log the error and proceed to the fallback.
         const errorData = await response.json()
+        const errorStatus = errorData.detail?.status
+        const errorMessage =
+          errorData.detail?.message || "An unknown API error occurred."
+
         console.error(
           "ElevenLabs API Error, attempting fallback:",
-          errorData.detail?.message
+          errorMessage
         )
+
+        switch (errorStatus) {
+          case "invalid_api_key":
+            localStorage.removeItem("elevenlabs_api_key")
+            userApiKey = ""
+            apiKeyInput.value = ""
+            showSnackbar("API key is invalid. Please enter a new one.")
+            updateApiFieldVisibility()
+            break
+
+          case "quota_exceeded":
+            // Only show the snackbar if the user hasn't dismissed it this session
+            if (!hasSeenQuotaWarning) {
+              showSnackbar("You've exceeded your ElevenLabs quota.", {
+                text: "Don't show again",
+                callback: () => {
+                  hasSeenQuotaWarning = true
+                },
+              })
+            }
+            break
+
+          default:
+            showSnackbar(`ElevenLabs Error: ${errorMessage}`)
+            break
+        }
       } catch (error) {
         console.error(
           "Failed to fetch from ElevenLabs, attempting fallback:",
           error
         )
-        showSnackbar("ElevenLabs api failed, using Browser speech synthesis.")
+        showSnackbar("ElevenLabs API failed. Using browser speech synthesis.")
       }
     }
 
     // --- Fallback Method: Browser Speech Synthesis ---
-    // This code will only run if the API key is missing or if the API call failed.
+    // This code now runs if userApiKey is missing OR if the API call fails.
     speakWithBrowser(text)
   }
 
@@ -1329,14 +1381,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return
     }
 
-    // Cancel any previously queued speech
     window.speechSynthesis.cancel()
-
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.lang = "en-US"
     utterance.rate = 0.7
     utterance.pitch = 1.0
-
     window.speechSynthesis.speak(utterance)
   }
 
@@ -2315,8 +2364,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const apiSettingsSection = document.getElementById("api-settings-section")
     if (apiSettingsSection) {
       const isPronunciationOn = pronounceWordsToggle.checked
-      // Toggle the entire section's display property
-      apiSettingsSection.style.display = isPronunciationOn ? "block" : "none"
+      // Only show the section if pronunciation is on AND we don't have a key
+      const shouldShow = isPronunciationOn && !userApiKey
+      apiSettingsSection.style.display = shouldShow ? "block" : "none"
     }
   }
 

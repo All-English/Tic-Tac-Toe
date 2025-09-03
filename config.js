@@ -411,6 +411,24 @@ export const smartPhonicsWordBank = {
         "zoo",
       ],
     },
+    unit9: {
+      targetSound: "ue, ui, aw, ew",
+      unitTitle: "ue, ui, aw, ew",
+      words: [
+        "new",
+        "suit",
+        "true",
+        "blue",
+        "draw",
+        "glue",
+        "fruit",
+        "juice",
+        "flew",
+        "saw",
+        "claw",
+        "chew",
+      ],
+    },
   },
 }
 

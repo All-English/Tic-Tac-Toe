@@ -721,7 +721,7 @@ footer {
   height: 48px;
   overflow: hidden;
   pointer-events: none;
-  z-index: -1;
+  z-index: -100;
 }
 
 .footer-illustration img {

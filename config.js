@@ -429,6 +429,24 @@ export const smartPhonicsWordBank = {
         "chew",
       ],
     },
+    unit10: {
+      targetSound: "ph, th, kn, wr",
+      unitTitle: "ph, th, kn, wr",
+      words: [
+        "phone",
+        "photo",
+        "dolphin",
+        "mother",
+        "father",
+        "brother",
+        "knife",
+        "knock",
+        "knee",
+        "write",
+        "wrist",
+        "wrong",
+      ],
+    },
   },
 }
 

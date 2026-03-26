@@ -185,6 +185,7 @@ main {
   gap: var(--size-5);
   width: 100%;
   position: relative;
+  padding-bottom: 4rem;
 }
 
 #game-setup {
@@ -733,6 +734,7 @@ footer {
   width: auto;
   mix-blend-mode: multiply;
   user-select: none;
+  pointer-events: none;
   animation: snailing 220s linear infinite;
   animation-delay: -10s;
   /* Start with the snail already on screen */

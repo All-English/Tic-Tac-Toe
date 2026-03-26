@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const matchLengthInput = document.getElementById("matchLength")
   const matchLengthValue = document.getElementById("matchLengthValue")
   const unitSelectorsContainer = document.getElementById(
-    "unit-selectors-container"
+    "unit-selectors-container",
   )
   const addUnitBtn = document.getElementById("addUnitBtn")
   const removeAllUnitsBtn = document.getElementById("removeAllUnitsBtn")
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const gameModeHint = document.getElementById("gameModeHint")
   const resetSettingsBtn = document.getElementById("resetSettingsBtn")
   const randomizePlayerOrderBtn_setup = document.getElementById(
-    "randomizePlayerOrderBtn_setup"
+    "randomizePlayerOrderBtn_setup",
   )
   const manageSetsBtn = document.getElementById("manage-sets-btn")
   const playerSetsDialog = document.getElementById("player-sets-dialog")
@@ -215,7 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
     statsView.classList.toggle("is-active", currentView === "stats")
     gameView.classList.toggle(
       "is-active",
-      currentView === "reorder" || currentView === "game"
+      currentView === "reorder" || currentView === "game",
     )
 
     // Add/remove a class to the game view itself to control reorder UI
@@ -229,15 +229,15 @@ document.addEventListener("DOMContentLoaded", () => {
     // The rest of the logic remains similar but simplified
     playerInfoList.classList.toggle(
       "hidden",
-      currentView !== "reorder" && currentView !== "game"
+      currentView !== "reorder" && currentView !== "game",
     )
     gameBoard.classList.toggle(
       "hidden",
-      currentView !== "reorder" && currentView !== "game"
+      currentView !== "reorder" && currentView !== "game",
     )
     gameControls.classList.toggle(
       "hidden",
-      currentView !== "reorder" && currentView !== "game"
+      currentView !== "reorder" && currentView !== "game",
     )
   }
 
@@ -288,7 +288,7 @@ document.addEventListener("DOMContentLoaded", () => {
           cell.dataset.playerSymbol = newSymbol
           cell.style.setProperty(
             "--player-color",
-            gameState.playerColors[cellState]
+            gameState.playerColors[cellState],
           )
         } else {
           cell.removeAttribute("data-player-symbol")
@@ -347,7 +347,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       playerBlock.classList.toggle(
         "current-player",
-        i === currentPlayer && !isReordering
+        i === currentPlayer && !isReordering,
       )
       playerBlock.classList.toggle("eliminated", eliminatedPlayers?.includes(i))
 
@@ -358,11 +358,11 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderWinLines() {
     const existingLines = new Set(
       Array.from(gameBoard.querySelectorAll(".strike-through-line")).map(
-        (el) => el.id
-      )
+        (el) => el.id,
+      ),
     )
     const requiredLines = new Set(
-      gameState.winLinesToDraw.map((line) => line.id)
+      gameState.winLinesToDraw.map((line) => line.id),
     )
 
     // Remove lines that are in the DOM but not in the state
@@ -376,10 +376,10 @@ document.addEventListener("DOMContentLoaded", () => {
     gameState.winLinesToDraw.forEach((lineData) => {
       if (!existingLines.has(lineData.id)) {
         const startCell = gameBoard.querySelector(
-          `[data-index='${lineData.start}']`
+          `[data-index='${lineData.start}']`,
         )
         const endCell = gameBoard.querySelector(
-          `[data-index='${lineData.end}']`
+          `[data-index='${lineData.end}']`,
         )
         if (startCell && endCell) {
           const lineElement = drawLine(startCell, endCell, lineData.color)
@@ -495,7 +495,7 @@ document.addEventListener("DOMContentLoaded", () => {
             playerData.modes.conquest.totalBlocks
           }</span></li>
           <li><span class="term">Multi-Line Scores (2/3/4/5/6+)</span><hr><span class="description">${Object.values(
-            playerData.modes.conquest.multiLineScoreCounts
+            playerData.modes.conquest.multiLineScoreCounts,
           ).join(" / ")}</span></li>
         </ul>
         ${buildConfigTable(playerData.modes.conquest.configs, "Conquest")}
@@ -679,7 +679,7 @@ document.addEventListener("DOMContentLoaded", () => {
       newScores[lastMove.player] -= lastMove.scoredLines.length
 
       const remainingLines = Array.from(newCompletedLines).filter(
-        (lineId) => !lastMove.scoredLines.includes(lineId)
+        (lineId) => !lastMove.scoredLines.includes(lineId),
       )
       newCompletedLines = new Set(remainingLines)
 
@@ -694,12 +694,12 @@ document.addEventListener("DOMContentLoaded", () => {
           (lineId) =>
             `line-${lineId.split(",")[0]}-${
               lineId.split(",")[lineId.split(",").length - 1]
-            }`
-        )
+            }`,
+        ),
       )
 
       newWinLinesToDraw = newWinLinesToDraw.filter(
-        (line) => !lastMoveLineIds.has(line.id)
+        (line) => !lastMoveLineIds.has(line.id),
       )
     }
 
@@ -743,7 +743,7 @@ document.addEventListener("DOMContentLoaded", () => {
         newHighlightedCells.add(cellIndex)
 
         const cellToPulse = gameBoard.querySelector(
-          `[data-index='${cellIndex}']`
+          `[data-index='${cellIndex}']`,
         )
         if (cellToPulse) {
           cellToPulse.classList.remove("pulse")
@@ -812,7 +812,7 @@ document.addEventListener("DOMContentLoaded", () => {
           () => {
             cell.classList.remove("blocked")
           },
-          { once: true }
+          { once: true },
         )
       }
     } else {
@@ -852,10 +852,10 @@ document.addEventListener("DOMContentLoaded", () => {
       currentBoard,
       currentPlayer,
       gridSize,
-      matchLength
+      matchLength,
     )
     const newWinningLines = potentialWins.filter(
-      (line) => !completedLines.has(lineToString(line))
+      (line) => !completedLines.has(lineToString(line)),
     )
 
     if (newWinningLines.length > 0) {
@@ -903,10 +903,10 @@ document.addEventListener("DOMContentLoaded", () => {
         tempBoard,
         opponentIndex,
         gameState.gridSize,
-        gameState.matchLength
+        gameState.matchLength,
       )
       const newWins = potentialWins.filter(
-        (line) => !gameState.completedLines.has(lineToString(line))
+        (line) => !gameState.completedLines.has(lineToString(line)),
       )
       if (newWins.length > 0) {
         wasBlock = true
@@ -1089,7 +1089,7 @@ document.addEventListener("DOMContentLoaded", () => {
         case "Classic":
           if (isWinner) {
             const turnsToWin = moveHistory.filter(
-              (m) => m.player === index
+              (m) => m.player === index,
             ).length
             if (
               modeStats.quickestWin === null ||
@@ -1230,7 +1230,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function validatePlayerNames() {
     const nameInputs = Array.from(
-      playerNamesContainer.querySelectorAll(".player-name-input")
+      playerNamesContainer.querySelectorAll(".player-name-input"),
     )
     const names = nameInputs
       .map((input) => input.value.trim())
@@ -1242,7 +1242,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, {})
 
     const duplicateNames = new Set(
-      Object.keys(nameCounts).filter((name) => nameCounts[name] > 1)
+      Object.keys(nameCounts).filter((name) => nameCounts[name] > 1),
     )
     let hasErrors = false
 
@@ -1255,7 +1255,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Clear previous error states and messages first
       field.classList.remove("error")
       const existingError = field.querySelector(
-        ".supporting-text.error-message"
+        ".supporting-text.error-message",
       )
       if (existingError) {
         existingError.remove()
@@ -1292,7 +1292,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Primary Method: Try ElevenLabs API ---
     if (userApiKey) {
       const availableVoices = englishVoices.filter(
-        (voice) => voice.voice_id !== lastVoiceId
+        (voice) => voice.voice_id !== lastVoiceId,
       )
       const randomVoice =
         availableVoices[Math.floor(Math.random() * availableVoices.length)]
@@ -1306,7 +1306,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       const body = JSON.stringify({
         text: text,
-        model_id: "eleven_turbo_v2_5",
+        model_id: "eleven_flash_v2",
         voice_settings: {
           stability: 0.5,
           similarity_boost: 0.75,
@@ -1322,6 +1322,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const audioUrl = URL.createObjectURL(audioBlob)
           const audio = new Audio(audioUrl)
           audio.play()
+          console.log(`Spoke with ElevenLabs voice: ${randomVoice.name}`)
           return // Success, so we exit the function here
         }
 
@@ -1330,9 +1331,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const errorMessage =
           errorData.detail?.message || "An unknown API error occurred."
 
+        const voiceIdentifier = randomVoice.name || randomVoice.voice_id
+
         console.error(
-          "ElevenLabs API Error, attempting fallback:",
-          errorMessage
+          `ElevenLabs API Error for voice "${voiceIdentifier}", attempting fallback:`,
+          errorMessage,
         )
 
         switch (errorStatus) {
@@ -1356,14 +1359,27 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             break
 
+          case "needs_tier_upgrade":
+          case "unauthorized":
+            showSnackbar(
+              `ElevenLabs Error: Voice "${voiceIdentifier}" is premium only.`,
+            )
+            break
+
           default:
-            showSnackbar(`ElevenLabs Error: ${errorMessage}`)
+            if (errorMessage.includes("Free users cannot use library voices")) {
+              showSnackbar(
+                `ElevenLabs Error: Voice "${voiceIdentifier}" is premium only.`,
+              )
+            } else {
+              showSnackbar(`ElevenLabs Error: ${errorMessage}`)
+            }
             break
         }
       } catch (error) {
         console.error(
-          "Failed to fetch from ElevenLabs, attempting fallback:",
-          error
+          `Failed to fetch from ElevenLabs for voice "${voiceIdentifier}", attempting fallback:`,
+          error,
         )
         showSnackbar("ElevenLabs API failed. Using browser speech synthesis.")
       }
@@ -1438,28 +1454,28 @@ document.addEventListener("DOMContentLoaded", () => {
         if (c <= gridSize - matchLength) {
           const line = Array.from(
             { length: matchLength },
-            (_, i) => r * gridSize + c + i
+            (_, i) => r * gridSize + c + i,
           )
           if (line.every((index) => board[index] === player)) newWins.push(line)
         }
         if (r <= gridSize - matchLength) {
           const line = Array.from(
             { length: matchLength },
-            (_, i) => (r + i) * gridSize + c
+            (_, i) => (r + i) * gridSize + c,
           )
           if (line.every((index) => board[index] === player)) newWins.push(line)
         }
         if (r <= gridSize - matchLength && c <= gridSize - matchLength) {
           const line = Array.from(
             { length: matchLength },
-            (_, i) => (r + i) * gridSize + (c + i)
+            (_, i) => (r + i) * gridSize + (c + i),
           )
           if (line.every((index) => board[index] === player)) newWins.push(line)
         }
         if (r <= gridSize - matchLength && c >= matchLength - 1) {
           const line = Array.from(
             { length: matchLength },
-            (_, i) => (r + i) * gridSize + (c - i)
+            (_, i) => (r + i) * gridSize + (c - i),
           )
           if (line.every((index) => board[index] === player)) newWins.push(line)
         }
@@ -1484,7 +1500,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const endY = endRect.top + endRect.height / 2 - boardRect.top
 
     const length = Math.sqrt(
-      Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)
+      Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2),
     )
     const angle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI)
 
@@ -1525,7 +1541,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const rawValue = themeHueSelect.value // Get the raw value, e.g. "var(--oklch-indigo)"
       const themeHuePropName = rawValue.slice(4, -1) // Extract the CSS variable name, e.g. "--oklch-indigo"
       const themeHueStringValue = getComputedStyle(
-        document.documentElement
+        document.documentElement,
       ).getPropertyValue(themeHuePropName) // Look up the value of the clean property name.
       const selectedHue = parseFloat(themeHueStringValue) // Convert to a number
 
@@ -1558,7 +1574,7 @@ document.addEventListener("DOMContentLoaded", () => {
       gameMode: document.querySelector("#gameModeSelector button.selected")
         ?.dataset.mode,
       selectedUnits: Array.from(
-        document.querySelectorAll(".phonics-unit-select")
+        document.querySelectorAll(".phonics-unit-select"),
       ).map((select) => select.value),
       darkMode: darkModeToggle.checked,
       themeHue: themeHueSelect.value,
@@ -1566,7 +1582,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     localStorage.setItem(
       "phonics_game_settings",
-      JSON.stringify(settingsToSave)
+      JSON.stringify(settingsToSave),
     )
   }
 
@@ -1590,7 +1606,7 @@ document.addEventListener("DOMContentLoaded", () => {
         gameModeSelector.querySelectorAll("button").forEach((button) => {
           button.classList.toggle(
             "selected",
-            button.dataset.mode === settings.gameMode
+            button.dataset.mode === settings.gameMode,
           )
         })
         updateGameModeHint(settings.gameMode)
@@ -1653,7 +1669,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Set the initial theme based on system preference and default dropdown value
   darkModeToggle.checked = window.matchMedia(
-    "(prefers-color-scheme: dark)"
+    "(prefers-color-scheme: dark)",
   ).matches
   updateTheme()
 
@@ -1691,7 +1707,7 @@ document.addEventListener("DOMContentLoaded", () => {
       settings.gridSize = parseInt(gridSizeInput.value)
       settings.matchLength = parseInt(matchLengthInput.value)
       settings.gameMode = document.querySelector(
-        "#gameModeSelector button.selected"
+        "#gameModeSelector button.selected",
       ).dataset.mode
       settings.selectedUnits = [
         ...document.querySelectorAll(".phonics-unit-select"),
@@ -1706,7 +1722,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const dynamicColorPalette = generatePlayerColors()
       const shuffledColors = [...dynamicColorPalette].sort(
-        () => 0.5 - Math.random()
+        () => 0.5 - Math.random(),
       )
       settings.playerColors = shuffledColors.slice(0, settings.numPlayers)
 
@@ -1720,7 +1736,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       wordCache = getCombinedWords(
         gameState.selectedUnits,
-        gameState.gridSize * gameState.gridSize
+        gameState.gridSize * gameState.gridSize,
       )
     }
 
@@ -1790,7 +1806,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const playerIdToRemove = parseInt(wrapper.dataset.playerId, 10)
 
     gameState.setup.players = gameState.setup.players.filter(
-      (p) => p.id !== playerIdToRemove
+      (p) => p.id !== playerIdToRemove,
     )
 
     renderNameInputs()
@@ -1809,7 +1825,7 @@ document.addEventListener("DOMContentLoaded", () => {
       playerNamesContainer.querySelectorAll(".remove-player-btn")
     const showRemoveButtons = playerCount > 2
     removeButtons.forEach((btn) =>
-      btn.classList.toggle("hidden", !showRemoveButtons)
+      btn.classList.toggle("hidden", !showRemoveButtons),
     )
   }
 
@@ -1913,10 +1929,10 @@ document.addEventListener("DOMContentLoaded", () => {
       wrapper.draggable = true
       wrapper.dataset.playerId = player.id // The ID for drag/drop and removal goes on the wrapper
       wrapper.addEventListener("dragstart", () =>
-        wrapper.classList.add("dragging")
+        wrapper.classList.add("dragging"),
       )
       wrapper.addEventListener("dragend", () =>
-        wrapper.classList.remove("dragging")
+        wrapper.classList.remove("dragging"),
       )
 
       const field = document.createElement("label")
@@ -1934,7 +1950,7 @@ document.addEventListener("DOMContentLoaded", () => {
       input.addEventListener("input", (e) => {
         const playerId = parseInt(wrapper.dataset.playerId) // Read ID from wrapper
         gameState.setup.players = gameState.setup.players.map((p) =>
-          p.id === playerId ? { ...p, name: e.target.value } : p
+          p.id === playerId ? { ...p, name: e.target.value } : p,
         )
         saveSettings()
         validatePlayerNames()
@@ -2002,7 +2018,7 @@ document.addEventListener("DOMContentLoaded", () => {
       select.selectedIndex = 0
     } else {
       const allExistingSelectors = unitSelectorsContainer.querySelectorAll(
-        ".phonics-unit-select"
+        ".phonics-unit-select",
       )
       const usedValues = new Set()
       allExistingSelectors.forEach((s) => {
@@ -2015,7 +2031,7 @@ document.addEventListener("DOMContentLoaded", () => {
           allExistingSelectors[allExistingSelectors.length - 1]
         if (lastSelector.value) {
           const lastIndexInMasterList = allOptions.findIndex(
-            (opt) => opt.value === lastSelector.value
+            (opt) => opt.value === lastSelector.value,
           )
           if (lastIndexInMasterList !== -1) {
             startIndex = lastIndexInMasterList
@@ -2112,7 +2128,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const firstSelector = document.querySelector(".phonics-unit-select")
     if (!firstSelector) return
     const options = Array.from(firstSelector.options).filter(
-      (opt) => !opt.disabled
+      (opt) => !opt.disabled,
     )
     if (options.length > 0) {
       const randomIndex = Math.floor(Math.random() * options.length)
@@ -2151,7 +2167,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
           resultHTML += `<span class="target-sounds">${word.substring(
             i,
-            i + sound.length
+            i + sound.length,
           )}</span>`
           i += sound.length
           foundMatch = true
@@ -2178,7 +2194,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (gameMode === "Survivor") {
       // Find the player whose INDEX is not in the eliminatedPlayers array
       const winner = players.find(
-        (p, index) => !eliminatedPlayers.includes(index)
+        (p, index) => !eliminatedPlayers.includes(index),
       )
       if (winner) winnerIds.push(winner.id)
     } else {
@@ -2212,7 +2228,7 @@ document.addEventListener("DOMContentLoaded", () => {
       winnerText = `It's a tie between: ${winnerNames}!`
     } else {
       const winnerName = gameState.players.find(
-        (p) => p.id === winnerIds[0]
+        (p) => p.id === winnerIds[0],
       ).name
       winnerText = `${winnerName} wins!`
     }
@@ -2305,7 +2321,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Reset game mode to Conquest
     const conquestButton = gameModeSelector.querySelector(
-      '[data-mode="Conquest"]'
+      '[data-mode="Conquest"]',
     )
     gameModeSelector
       .querySelectorAll("button")
@@ -2602,7 +2618,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- EVENT LISTENERS for between rounds player order setup ---
 
   const randomizeOrderBtn_game = document.getElementById(
-    "randomizeOrderBtn_game"
+    "randomizeOrderBtn_game",
   )
   const startGameBtn_game = document.getElementById("startGameBtn_game")
 
@@ -2625,7 +2641,7 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault()
 
     const draggingEl = playerInfoList.querySelector(
-      ".player-info-block.dragging"
+      ".player-info-block.dragging",
     )
     const targetEl = e.target.closest(".player-info-block")
 
@@ -2646,7 +2662,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const fromIndex = parseInt(e.dataTransfer.getData("text/plain"))
     const dropTarget = playerInfoList.querySelector(
-      ".player-info-block.drop-target"
+      ".player-info-block.drop-target",
     )
 
     // If we aren't dropping on a valid target, cancel the drop

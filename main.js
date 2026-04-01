@@ -674,9 +674,16 @@ document.addEventListener("DOMContentLoaded", () => {
     let newCompletedLines = new Set(gameState.completedLines)
     let newHighlightedCells = new Set(gameState.highlightedCells)
     let newWinLinesToDraw = [...gameState.winLinesToDraw]
+    let newEliminatedPlayers = [...gameState.eliminatedPlayers]
 
     if (lastMove.scoredLines.length > 0) {
       newScores[lastMove.player] -= lastMove.scoredLines.length
+
+      if (gameState.gameMode === "Survivor") {
+        newEliminatedPlayers = newEliminatedPlayers.filter(
+          (playerId) => playerId !== lastMove.player
+        )
+      }
 
       const remainingLines = Array.from(newCompletedLines).filter(
         (lineId) => !lastMove.scoredLines.includes(lineId),
@@ -711,6 +718,7 @@ document.addEventListener("DOMContentLoaded", () => {
       completedLines: newCompletedLines,
       highlightedCells: newHighlightedCells,
       winLinesToDraw: newWinLinesToDraw,
+      eliminatedPlayers: newEliminatedPlayers,
       movesMade: gameState.movesMade - 1,
       currentPlayer: lastMove.player,
       moveHistory: gameState.moveHistory.slice(0, -1),

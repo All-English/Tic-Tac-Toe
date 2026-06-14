@@ -60,6 +60,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- UPSTASH REDIS SYNC MANAGEMENT ---
 
+  // Get Upstash Redis credentials from localStorage, cleaning the URL
+  function getUpstashCredentials() {
+    let url = localStorage.getItem(UPSTASH_URL_KEY)
+    const token = localStorage.getItem(UPSTASH_TOKEN_KEY)
+    if (url && url.endsWith("/")) {
+      url = url.slice(0, -1)
+    }
+    return { url, token }
+  }
+
   function handleUpstashError(errorMessage) {
     localStorage.removeItem(UPSTASH_URL_KEY)
     localStorage.removeItem(UPSTASH_TOKEN_KEY)
@@ -77,8 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Helper to push a key-value pair to Upstash Redis
   async function syncToUpstash(key, data) {
-    const url = localStorage.getItem(UPSTASH_URL_KEY)
-    const token = localStorage.getItem(UPSTASH_TOKEN_KEY)
+    const { url, token } = getUpstashCredentials()
     if (!url || !token) return;
 
     try {
@@ -102,8 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Fetch a single key from Upstash Redis
   async function fetchFromUpstash(key) {
-    const url = localStorage.getItem(UPSTASH_URL_KEY)
-    const token = localStorage.getItem(UPSTASH_TOKEN_KEY)
+    const { url, token } = getUpstashCredentials()
     if (!url || !token) return null;
 
     try {
@@ -131,8 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Perform full sync (pull database updates and merge/overwrite local storage)
   async function syncWithUpstashOnLoad() {
-    const url = localStorage.getItem(UPSTASH_URL_KEY)
-    const token = localStorage.getItem(UPSTASH_TOKEN_KEY)
+    const { url, token } = getUpstashCredentials()
     if (!url || !token) return;
 
     const statusEl = document.getElementById("sync-status")
@@ -142,20 +149,57 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      // 1. Sync sets
+      // 1. Sync sets (Two-way merge)
+      const localSets = getPlayerSets()
       const dbSets = await fetchFromUpstash(SHARED_SETS_KEY)
+      if (!localStorage.getItem(UPSTASH_URL_KEY)) return
+
+      let mergedSets = null
+      let needsSetsPush = false
+
       if (dbSets) {
-        localStorage.setItem(SHARED_SETS_KEY, JSON.stringify(dbSets))
-        if (typeof populateSetsDialog === "function") populateSetsDialog()
+        mergedSets = { ...localSets, ...dbSets }
+        const localKeys = Object.keys(localSets)
+        const hasNewLocal = localKeys.some((key) => !dbSets[key] || JSON.stringify(localSets[key]) !== JSON.stringify(dbSets[key]))
+        if (hasNewLocal) {
+          needsSetsPush = true
+        }
+      } else {
+        if (Object.keys(localSets).length > 0) {
+          mergedSets = localSets
+          needsSetsPush = true
+        }
       }
 
-      // 2. Sync active session
+      if (mergedSets) {
+        localStorage.setItem(SHARED_SETS_KEY, JSON.stringify(mergedSets))
+        if (typeof populateSetsDialog === "function") populateSetsDialog()
+        if (needsSetsPush) {
+          await syncToUpstash(SHARED_SETS_KEY, mergedSets)
+        }
+      }
+
+      // 2. Sync active session (Two-way sync)
       const dbActive = await fetchFromUpstash(SHARED_ACTIVE_PLAYERS_KEY)
+      if (!localStorage.getItem(UPSTASH_URL_KEY)) return
+
       if (dbActive && Array.isArray(dbActive)) {
         localStorage.setItem(SHARED_ACTIVE_PLAYERS_KEY, JSON.stringify(dbActive))
         loadSettings()
         renderNameInputs()
         validatePlayerNames()
+      } else {
+        const localActiveJSON = localStorage.getItem(SHARED_ACTIVE_PLAYERS_KEY)
+        if (localActiveJSON) {
+          try {
+            const localActive = JSON.parse(localActiveJSON)
+            if (Array.isArray(localActive) && localActive.length > 0) {
+              await syncToUpstash(SHARED_ACTIVE_PLAYERS_KEY, localActive)
+            }
+          } catch (e) {
+            console.error(e)
+          }
+        }
       }
 
       if (statusEl) {
@@ -2073,6 +2117,7 @@ document.addEventListener("DOMContentLoaded", () => {
       attempts < 10
     )
     renderNameInputs()
+    saveSettings()
   }
 
   function renderNameInputs() {
@@ -2531,6 +2576,7 @@ document.addEventListener("DOMContentLoaded", () => {
     )
 
     renderPlayerInfo()
+    saveActiveSessionPlayers(gameState.playerNames)
   }
 
   function lockOrderAndStartGame() {
@@ -2767,6 +2813,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     // Re-render the inputs with the new order
     renderNameInputs()
+    saveSettings()
   })
 
   manageSetsBtn.addEventListener("click", () => {
@@ -2853,6 +2900,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Re-render the player info cards to show the final new order
     renderPlayerInfo()
+    saveActiveSessionPlayers(gameState.playerNames)
   })
 
   loadSettings()
@@ -2871,7 +2919,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (savedToken) upstashTokenInput.value = savedToken
 
     saveSyncBtn.addEventListener("click", async () => {
-      const url = upstashUrlInput.value.trim()
+      let url = upstashUrlInput.value.trim()
+      if (url.endsWith("/")) {
+        url = url.slice(0, -1)
+      }
       const token = upstashTokenInput.value.trim()
 
       if (!url || !token) {

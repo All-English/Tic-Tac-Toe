@@ -2613,7 +2613,8 @@ document.addEventListener("DOMContentLoaded", () => {
       return
     }
 
-    for (const setName in sets) {
+    const sortedNames = Object.keys(sets).sort()
+    for (const setName of sortedNames) {
       const setItem = document.createElement("div")
       setItem.className = "saved-set-item"
 

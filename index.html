@@ -251,6 +251,22 @@
               securely in your browser and never leaves your computer.</p>
           </div>
 
+          <div class="setup-section api-settings" id="sync-settings-section">
+            <h4 class="h5">Upstash Sync</h4>
+            <label class="field">
+              <span class="label">Upstash REST URL</span>
+              <input type="text" id="upstash-url" name="upstash-url" placeholder="https://...upstash.io">
+            </label>
+            <label class="field">
+              <span class="label">Upstash REST Token</span>
+              <input type="password" id="upstash-token" name="upstash-token" placeholder="Paste token here...">
+            </label>
+            <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem;">
+              <button id="save-sync-btn" class="button" style="margin-top: 0; min-width: auto; height: 36px; display: inline-flex; align-items: center;">Save & Sync</button>
+              <span id="sync-status" class="field-hint" style="margin-top: 0;"></span>
+            </div>
+          </div>
+
         </div>
 
         <div class="actions">

@@ -1,6 +1,10 @@
 import { smartPhonicsWordBank, playerSymbols, englishVoices } from "./config.js"
 
 const PLAYER_SETS_KEY = "phonics_player_sets"
+const SHARED_SETS_KEY = "shared_player_sets"
+const SHARED_ACTIVE_PLAYERS_KEY = "shared_active_players"
+const UPSTASH_URL_KEY = "upstash_redis_url"
+const UPSTASH_TOKEN_KEY = "upstash_redis_token"
 const STATS_KEY = "wordTacToe_stats"
 const MAX_PLAYERS = 5
 let lastVoiceId = null
@@ -53,6 +57,119 @@ document.addEventListener("DOMContentLoaded", () => {
     userApiKey = apiKeyInput.value
     localStorage.setItem("elevenlabs_api_key", userApiKey)
   })
+
+  // --- UPSTASH REDIS SYNC MANAGEMENT ---
+
+  function handleUpstashError(errorMessage) {
+    localStorage.removeItem(UPSTASH_URL_KEY)
+    localStorage.removeItem(UPSTASH_TOKEN_KEY)
+    
+    const statusEl = document.getElementById("sync-status")
+    if (statusEl) {
+      statusEl.textContent = errorMessage || "Sync credentials invalid. Cleared."
+      statusEl.style.color = "#ef4444"
+    }
+    
+    if (typeof updateSyncFieldVisibility === "function") {
+      updateSyncFieldVisibility()
+    }
+  }
+
+  // Helper to push a key-value pair to Upstash Redis
+  async function syncToUpstash(key, data) {
+    const url = localStorage.getItem(UPSTASH_URL_KEY)
+    const token = localStorage.getItem(UPSTASH_TOKEN_KEY)
+    if (!url || !token) return;
+
+    try {
+      const response = await fetch(`${url}/set/${key}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      })
+      if (!response.ok) {
+        console.error(`Upstash Sync failed for ${key}:`, response.statusText)
+        if (response.status === 401 || response.status === 403) {
+          handleUpstashError("Upstash token is invalid or expired. Disconnected.")
+        }
+      }
+    } catch (error) {
+      console.error(`Upstash Sync error for ${key}:`, error)
+    }
+  }
+
+  // Fetch a single key from Upstash Redis
+  async function fetchFromUpstash(key) {
+    const url = localStorage.getItem(UPSTASH_URL_KEY)
+    const token = localStorage.getItem(UPSTASH_TOKEN_KEY)
+    if (!url || !token) return null;
+
+    try {
+      const response = await fetch(`${url}/get/${key}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      if (response.ok) {
+        const resData = await response.json()
+        if (resData && resData.result !== undefined && resData.result !== null) {
+          return JSON.parse(resData.result)
+        }
+      } else {
+        console.error(`Upstash fetch failed for ${key}:`, response.statusText)
+        if (response.status === 401 || response.status === 403) {
+          handleUpstashError("Upstash token is invalid or expired. Disconnected.")
+        }
+      }
+    } catch (error) {
+      console.error(`Upstash fetch error for ${key}:`, error)
+    }
+    return null;
+  }
+
+  // Perform full sync (pull database updates and merge/overwrite local storage)
+  async function syncWithUpstashOnLoad() {
+    const url = localStorage.getItem(UPSTASH_URL_KEY)
+    const token = localStorage.getItem(UPSTASH_TOKEN_KEY)
+    if (!url || !token) return;
+
+    const statusEl = document.getElementById("sync-status")
+    if (statusEl) {
+      statusEl.textContent = "Syncing..."
+      statusEl.style.color = ""
+    }
+
+    try {
+      // 1. Sync sets
+      const dbSets = await fetchFromUpstash(SHARED_SETS_KEY)
+      if (dbSets) {
+        localStorage.setItem(SHARED_SETS_KEY, JSON.stringify(dbSets))
+        if (typeof populateSetsDialog === "function") populateSetsDialog()
+      }
+
+      // 2. Sync active session
+      const dbActive = await fetchFromUpstash(SHARED_ACTIVE_PLAYERS_KEY)
+      if (dbActive && Array.isArray(dbActive)) {
+        localStorage.setItem(SHARED_ACTIVE_PLAYERS_KEY, JSON.stringify(dbActive))
+        loadSettings()
+        renderNameInputs()
+        validatePlayerNames()
+      }
+
+      if (statusEl) {
+        statusEl.textContent = "Synced successfully!"
+        statusEl.style.color = "#10b981"
+      }
+    } catch (err) {
+      console.error("Error running onload sync:", err)
+      if (statusEl) {
+        statusEl.textContent = "Sync failed."
+        statusEl.style.color = "#ef4444"
+      }
+    }
+  }
 
   // --- DOM ELEMENTS ---
 
@@ -1188,12 +1305,18 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function getPlayerSets() {
-    const setsJSON = localStorage.getItem(PLAYER_SETS_KEY)
+    const setsJSON = localStorage.getItem(SHARED_SETS_KEY) || localStorage.getItem(PLAYER_SETS_KEY)
     return setsJSON ? JSON.parse(setsJSON) : {}
   }
 
   function setPlayerSets(sets) {
-    localStorage.setItem(PLAYER_SETS_KEY, JSON.stringify(sets))
+    localStorage.setItem(SHARED_SETS_KEY, JSON.stringify(sets))
+    syncToUpstash(SHARED_SETS_KEY, sets)
+  }
+
+  function saveActiveSessionPlayers(namesArray) {
+    localStorage.setItem(SHARED_ACTIVE_PLAYERS_KEY, JSON.stringify(namesArray))
+    syncToUpstash(SHARED_ACTIVE_PLAYERS_KEY, namesArray)
   }
 
   function getSavedPlayerNames() {
@@ -1592,16 +1715,39 @@ document.addEventListener("DOMContentLoaded", () => {
       "phonics_game_settings",
       JSON.stringify(settingsToSave),
     )
+
+    // Save active session players to shared storage and sync
+    const activeNames = gameState.setup.players.map((p) => p.name).filter(Boolean)
+    saveActiveSessionPlayers(activeNames)
   }
 
   function loadSettings() {
     const savedSettings = localStorage.getItem("phonics_game_settings")
+    const sharedActiveJSON = localStorage.getItem(SHARED_ACTIVE_PLAYERS_KEY)
+
+    let playersList = []
+    if (sharedActiveJSON) {
+      try {
+        const names = JSON.parse(sharedActiveJSON)
+        if (Array.isArray(names) && names.length > 0) {
+          playersList = names.map((name, index) => ({
+            id: Date.now() + index,
+            name: name
+          }))
+        }
+      } catch (e) {
+        console.error("Error parsing shared active players:", e)
+      }
+    }
 
     if (savedSettings) {
       const settings = JSON.parse(savedSettings)
 
       // Apply saved settings to the inputs
-      gameState.setup.players = settings.playerNames || []
+      if (playersList.length === 0) {
+        playersList = settings.playerNames || []
+      }
+      gameState.setup.players = playersList
       gridSizeInput.value = settings.gridSize || 3
       matchLengthInput.value = settings.matchLength || 3
       muteSoundsToggle.checked = settings.muteSounds === true
@@ -2399,6 +2545,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const shouldShow = isPronunciationOn && !userApiKey
       apiSettingsSection.style.display = shouldShow ? "block" : "none"
     }
+    updateSyncFieldVisibility()
+  }
+
+  function updateSyncFieldVisibility() {
+    const syncSettingsSection = document.getElementById("sync-settings-section")
+    if (syncSettingsSection) {
+      const savedUrl = localStorage.getItem(UPSTASH_URL_KEY)
+      const savedToken = localStorage.getItem(UPSTASH_TOKEN_KEY)
+      const shouldShow = !savedUrl || !savedToken
+      syncSettingsSection.style.display = shouldShow ? "block" : "none"
+    }
   }
 
   function populateSetsDialog() {
@@ -2700,4 +2857,71 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadSettings()
   updateApiFieldVisibility()
+
+  // Upstash Config and Sync UI event listeners
+  const upstashUrlInput = document.getElementById("upstash-url")
+  const upstashTokenInput = document.getElementById("upstash-token")
+  const saveSyncBtn = document.getElementById("save-sync-btn")
+  const syncStatus = document.getElementById("sync-status")
+
+  if (upstashUrlInput && upstashTokenInput && saveSyncBtn) {
+    const savedUrl = localStorage.getItem(UPSTASH_URL_KEY)
+    const savedToken = localStorage.getItem(UPSTASH_TOKEN_KEY)
+    if (savedUrl) upstashUrlInput.value = savedUrl
+    if (savedToken) upstashTokenInput.value = savedToken
+
+    saveSyncBtn.addEventListener("click", async () => {
+      const url = upstashUrlInput.value.trim()
+      const token = upstashTokenInput.value.trim()
+
+      if (!url || !token) {
+        if (syncStatus) {
+          syncStatus.textContent = "Please enter both URL and Token"
+          syncStatus.style.color = "#ef4444"
+        }
+        return
+      }
+
+      if (syncStatus) {
+        syncStatus.textContent = "Connecting & Syncing..."
+        syncStatus.style.color = ""
+      }
+      saveSyncBtn.disabled = true
+
+      try {
+        const testRes = await fetch(`${url}/get/${SHARED_ACTIVE_PLAYERS_KEY}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (testRes.ok) {
+          localStorage.setItem(UPSTASH_URL_KEY, url)
+          localStorage.setItem(UPSTASH_TOKEN_KEY, token)
+
+          if (syncStatus) {
+            syncStatus.textContent = "Connected & synced!"
+            syncStatus.style.color = "#10b981"
+          }
+          saveSyncBtn.disabled = false
+
+          // Run a full sync to load whatever is in the DB
+          await syncWithUpstashOnLoad()
+
+          setTimeout(() => {
+            updateSyncFieldVisibility()
+          }, 1500)
+        } else {
+          throw new Error("Invalid credentials")
+        }
+      } catch (err) {
+        console.error("Upstash connection failed:", err)
+        if (syncStatus) {
+          syncStatus.textContent = "Failed. Check credentials."
+          syncStatus.style.color = "#ef4444"
+        }
+        saveSyncBtn.disabled = false
+      }
+    })
+  }
+
+  // Trigger sync on load if credentials exist
+  syncWithUpstashOnLoad()
 })

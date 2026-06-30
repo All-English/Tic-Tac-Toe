@@ -23,6 +23,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let wordCache = []
   let isOrderLocked = false
   let hasSeenQuotaWarning = false
+  let currentTurnCellClicked = false
+  let playingTurnAudio = null
+  let pendingTurnAnnouncementTimeout = null
 
   const sounds = {
     click: new Audio("sounds/click.mp3"),
@@ -56,6 +59,8 @@ document.addEventListener("DOMContentLoaded", () => {
   apiKeyInput.addEventListener("input", () => {
     userApiKey = apiKeyInput.value
     localStorage.setItem("elevenlabs_api_key", userApiKey)
+    resetCachedTurnVoices()
+    precachePlayerTurnAudios()
   })
 
   // --- UPSTASH REDIS SYNC MANAGEMENT ---
@@ -729,7 +734,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- LOGIC / STATE MANAGEMENT FUNCTIONS ---
 
-  function handleCellClick(event) {
+  async function handleCellClick(event) {
     if (gameState.currentView === "reorder") {
       if (gameState.currentPlayer === 0) {
         initGame(false)
@@ -744,12 +749,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const index = parseInt(cell.dataset.index)
 
+    // Silence active turn announcement and prevent any pending ones
+    currentTurnCellClicked = true
+    stopAllTurnVoices()
+    if (pendingTurnAnnouncementTimeout) {
+      clearTimeout(pendingTurnAnnouncementTimeout)
+      pendingTurnAnnouncementTimeout = null
+    }
+
+    // Capture the state of the cell text and pronounce if enabled
+    let speechPromise = Promise.resolve()
     if (gameState.pronounceWords) {
-      speak(cell.textContent)
+      speechPromise = speak(cell.textContent)
     }
 
     // Call the new logic function
-    const { isGameOver } = processPlayerMove(index)
+    const { isGameOver, soundPromise } = processPlayerMove(index)
 
     // Render the result of the move
     render()
@@ -760,6 +775,16 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       // If not game over, we just need to update the player highlight
       renderPlayerInfo()
+
+      // Reset turn click state for the next player
+      currentTurnCellClicked = false
+
+      // Wait for speech and chimes to finish before playing next turn's announcement
+      Promise.all([speechPromise, soundPromise]).then(() => {
+        // Double check they didn't click another cell in the meantime
+        if (currentTurnCellClicked) return
+        announceCurrentPlayerTurnWithDelay(500)
+      })
     }
   }
 
@@ -872,6 +897,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     render() // Re-render after state change
+
+    // Re-announce the current player turn since it was reverted
+    currentTurnCellClicked = false
+    stopAllTurnVoices()
+    if (pendingTurnAnnouncementTimeout) {
+      clearTimeout(pendingTurnAnnouncementTimeout)
+      pendingTurnAnnouncementTimeout = null
+    }
+    announceCurrentPlayerTurnWithDelay(500)
   }
 
   function applyWinningLines(lines, scoringPlayer) {
@@ -955,10 +989,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    let soundPromise = Promise.resolve()
     if (pointsScored > 0) {
-      playSoundSequentially("score", pointsScored)
+      soundPromise = playSoundSequentially("score", pointsScored)
     } else if (wasBlock) {
       playSound("block")
+      soundPromise = new Promise((resolve) => setTimeout(resolve, 600))
       const cell = gameBoard.querySelector(`[data-index='${index}']`)
       if (cell) {
         cell.classList.add("blocked")
@@ -972,6 +1008,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } else {
       playSound("click")
+      soundPromise = new Promise((resolve) => setTimeout(resolve, 300))
     }
 
     const newMoveHistory = [...gameState.moveHistory, move]
@@ -994,7 +1031,7 @@ document.addEventListener("DOMContentLoaded", () => {
       gameState = { ...gameState, currentPlayer: nextPlayer }
     }
 
-    return { isGameOver }
+    return { isGameOver, soundPromise, wasBlock }
   }
 
   function checkForWins(move, currentBoard) {
@@ -1102,15 +1139,16 @@ document.addEventListener("DOMContentLoaded", () => {
       existingPlayers[stats[id].name] = id
     }
 
-    const identifiedPlayers = playerSetupArray.map((player) => {
+    const identifiedPlayers = playerSetupArray.map((player, index) => {
       const existingId = existingPlayers[player.name]
+      const voiceId = englishVoices[index % englishVoices.length].voice_id
       if (existingId) {
         // This is a returning player, use their existing ID
-        return { ...player, id: existingId }
+        return { ...player, id: existingId, voiceId, turnAudio: null }
       } else {
         // This is a new player, generate a new unique ID
         const newId = Date.now().toString() + Math.random().toString().slice(2)
-        return { ...player, id: newId }
+        return { ...player, id: newId, voiceId, turnAudio: null }
       }
     })
 
@@ -1443,11 +1481,127 @@ document.addEventListener("DOMContentLoaded", () => {
     startGameBtn.disabled = hasErrors
   }
 
+  async function fetchElevenLabsAudio(text, voiceId) {
+    if (!userApiKey) return null
+
+    const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`
+    const payload = {
+      text: text,
+      model_id: "eleven_flash_v2",
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: 0.75,
+        speed: 0.85,
+      },
+    }
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "xi-api-key": userApiKey,
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (response.ok) {
+        const blob = await response.blob()
+        const blobUrl = URL.createObjectURL(blob)
+        return new Audio(blobUrl)
+      } else {
+        console.error(`ElevenLabs generation failed for "${text}":`, response.statusText)
+      }
+    } catch (e) {
+      console.error(`Error generating ElevenLabs audio for "${text}":`, e)
+    }
+    return null
+  }
+
+  function stopAllTurnVoices() {
+    if (playingTurnAudio) {
+      try {
+        playingTurnAudio.pause()
+        playingTurnAudio.currentTime = 0
+      } catch (e) {}
+      playingTurnAudio = null
+    }
+  }
+
+  function resetCachedTurnVoices() {
+    if (!gameState.players) return
+    gameState.players.forEach((player) => {
+      if (player.turnAudio) {
+        try {
+          URL.revokeObjectURL(player.turnAudio.src)
+        } catch (e) {}
+        player.turnAudio = null
+      }
+    })
+  }
+
+  async function precachePlayerTurnAudios() {
+    if (!userApiKey || !gameState.players || gameState.players.length === 0) return
+
+    for (const player of gameState.players) {
+      if (player.turnAudio) continue
+
+      const audio = await fetchElevenLabsAudio(`${player.name}'s turn`, player.voiceId)
+      if (audio) {
+        player.turnAudio = audio
+      }
+    }
+  }
+
+  async function announceCurrentPlayerTurn() {
+    if (gameState.isMuted || !userApiKey || !gameState.players || gameState.players.length === 0) return
+
+    const activePlayer = gameState.players[gameState.currentPlayer]
+    if (!activePlayer) return
+
+    const targetPlayerIndex = gameState.currentPlayer
+
+    // If player clicked a cell before the announcement is made, skip it
+    if (currentTurnCellClicked) return
+
+    if (activePlayer.turnAudio) {
+      activePlayer.turnAudio.currentTime = 0
+      playingTurnAudio = activePlayer.turnAudio
+      // Final check before playing
+      if (gameState.isMuted || currentTurnCellClicked || gameState.currentPlayer !== targetPlayerIndex) return
+      activePlayer.turnAudio.play().catch((e) => console.error("Error playing turn audio:", e))
+      return
+    }
+
+    const audio = await fetchElevenLabsAudio(`${activePlayer.name}'s turn`, activePlayer.voiceId)
+    if (audio) {
+      activePlayer.turnAudio = audio
+      // Final check before playing
+      if (gameState.isMuted || currentTurnCellClicked || gameState.currentPlayer !== targetPlayerIndex) return
+      playingTurnAudio = audio
+      audio.play().catch((e) => console.error("Error playing turn audio:", e))
+    }
+  }
+
+  function announceCurrentPlayerTurnWithDelay(delay) {
+    if (pendingTurnAnnouncementTimeout) {
+      clearTimeout(pendingTurnAnnouncementTimeout)
+      pendingTurnAnnouncementTimeout = null
+    }
+
+    const targetPlayerIndex = gameState.currentPlayer
+
+    pendingTurnAnnouncementTimeout = setTimeout(() => {
+      if (currentTurnCellClicked || gameState.currentPlayer !== targetPlayerIndex) return
+      announceCurrentPlayerTurn()
+    }, delay)
+  }
+
   async function speak(text) {
-    if (gameState.isMuted) return
+    if (gameState.isMuted) return Promise.resolve()
     if (text.trim().length <= 1) {
       playSound("click")
-      return
+      return new Promise((resolve) => setTimeout(resolve, 300))
     }
 
     // --- Primary Method: Try ElevenLabs API ---
@@ -1475,6 +1629,8 @@ document.addEventListener("DOMContentLoaded", () => {
         },
       })
 
+      const voiceIdentifier = randomVoice.name || randomVoice.voice_id
+
       try {
         const response = await fetch(url, { method: "POST", headers, body })
 
@@ -1482,7 +1638,14 @@ document.addEventListener("DOMContentLoaded", () => {
           const audioBlob = await response.blob()
           const audioUrl = URL.createObjectURL(audioBlob)
           const audio = new Audio(audioUrl)
-          audio.play()
+          await new Promise((resolve) => {
+            audio.onended = () => resolve()
+            audio.onerror = () => resolve()
+            audio.play().catch((e) => {
+              console.error(`Could not play audio: ${e}`)
+              resolve()
+            })
+          })
           console.log(`Spoke with ElevenLabs voice: ${randomVoice.name}`)
           return // Success, so we exit the function here
         }
@@ -1491,8 +1654,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const errorStatus = errorData.detail?.status
         const errorMessage =
           errorData.detail?.message || "An unknown API error occurred."
-
-        const voiceIdentifier = randomVoice.name || randomVoice.voice_id
 
         console.error(
           `ElevenLabs API Error for voice "${voiceIdentifier}", attempting fallback:`,
@@ -1548,22 +1709,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Fallback Method: Browser Speech Synthesis ---
     // This code now runs if userApiKey is missing OR if the API call fails.
-    speakWithBrowser(text)
+    await speakWithBrowser(text)
   }
 
   function speakWithBrowser(text) {
     if (!("speechSynthesis" in window)) {
       console.warn("Browser speech synthesis not supported.")
       showSnackbar("Browser speech synthesis not supported.")
-      return
+      return Promise.resolve()
     }
 
-    window.speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = "en-US"
-    utterance.rate = 0.7
-    utterance.pitch = 1.0
-    window.speechSynthesis.speak(utterance)
+    return new Promise((resolve) => {
+      window.speechSynthesis.cancel()
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang = "en-US"
+      utterance.rate = 0.7
+      utterance.pitch = 1.0
+      utterance.onend = () => resolve()
+      utterance.onerror = () => resolve()
+      window.speechSynthesis.speak(utterance)
+    })
   }
 
   function getNextPlayerIndex(currentPlayerIndex) {
@@ -1952,6 +2117,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     addGameEventListeners()
     render() // Render the final game state
+
+    // Precache player turn audios and trigger the first player's turn announcement
+    currentTurnCellClicked = false
+    stopAllTurnVoices()
+    if (pendingTurnAnnouncementTimeout) {
+      clearTimeout(pendingTurnAnnouncementTimeout)
+      pendingTurnAnnouncementTimeout = null
+    }
+    precachePlayerTurnAudios()
+    announceCurrentPlayerTurnWithDelay(500)
   }
 
   function handleAddPlayer() {
@@ -2710,6 +2885,9 @@ document.addEventListener("DOMContentLoaded", () => {
   })
   muteSoundsToggle.addEventListener("change", () => {
     gameState = { ...gameState, isMuted: muteSoundsToggle.checked }
+    if (gameState.isMuted) {
+      stopAllTurnVoices()
+    }
     updatePronunciationToggleState()
     saveSettings()
   })

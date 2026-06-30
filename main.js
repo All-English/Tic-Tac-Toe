@@ -1871,11 +1871,17 @@ document.addEventListener("DOMContentLoaded", () => {
       ).getPropertyValue(themeHuePropName) // Look up the value of the clean property name.
       const selectedHue = parseFloat(themeHueStringValue) // Convert to a number
 
-      const contrastOffset = 180 // Start with the complementary color.
-      const hueStep = 360 / MAX_PLAYERS // Space colors evenly around the wheel.
+      // To prevent player colors from being too close to the theme color,
+      // we exclude a 120-degree arc around the theme color (selectedHue ± 60).
+      // The remaining 240 degrees (opposite the theme) is used to distribute
+      // the player colors.
+      const exclusionArc = 120
+      const allowedArc = 360 - exclusionArc // 240 degrees
+      const startAngle = 60 // Start 60 degrees away from the theme hue
+      const hueStep = allowedArc / (MAX_PLAYERS - 1) // Space colors evenly in the 240-degree arc
 
       for (let i = 0; i < MAX_PLAYERS; i++) {
-        const hue = (selectedHue + contrastOffset + i * hueStep) % 360
+        const hue = (selectedHue + startAngle + i * hueStep) % 360
         const color = `oklch(from var(--color-6) l c ${hue.toFixed(2)})`
         colors.push(color)
       }

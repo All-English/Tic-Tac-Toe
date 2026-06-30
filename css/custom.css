@@ -886,7 +886,7 @@ dialog.side-drawer .saved-set-item .button-group {
       "players game-mode"
       "players rules"
       "words rules"
-      "api-settings api-settings";
+      "api-settings sync-settings";
     grid-template-columns: auto;
     gap: var(--size-5) var(--size-7);
     align-items: start;
@@ -910,6 +910,10 @@ dialog.side-drawer .saved-set-item .button-group {
 
   .api-settings {
     grid-area: api-settings;
+  }
+
+  .sync-settings {
+    grid-area: sync-settings;
   }
 
   .game-mode-setup>.h5 {

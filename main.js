@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
         userApiKey = ""
         if (apiKeyStatus) {
           apiKeyStatus.textContent = "API Key cleared."
-          apiKeyStatus.style.color = "#10b981"
+          apiKeyStatus.className = "api-status-msg success"
         }
         resetCachedTurnVoices()
         return
@@ -75,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (apiKeyStatus) {
         apiKeyStatus.textContent = "Verifying..."
-        apiKeyStatus.style.color = ""
+        apiKeyStatus.className = "api-status-msg"
       }
       saveApiKeyBtn.disabled = true
 
@@ -91,7 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
           userApiKey = key
           if (apiKeyStatus) {
             apiKeyStatus.textContent = "Key verified & saved!"
-            apiKeyStatus.style.color = "#10b981"
+            apiKeyStatus.className = "api-status-msg success"
           }
           resetCachedTurnVoices()
           precachePlayerTurnAudios()
@@ -102,7 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("ElevenLabs verification failed:", err)
         if (apiKeyStatus) {
           apiKeyStatus.textContent = "Failed. Invalid key or network error."
-          apiKeyStatus.style.color = "#ef4444"
+          apiKeyStatus.className = "api-status-msg error"
         }
       } finally {
         saveApiKeyBtn.disabled = false
@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const statusEl = document.getElementById("sync-status")
     if (statusEl) {
       statusEl.textContent = errorMessage || "Sync credentials invalid. Cleared."
-      statusEl.style.color = "#ef4444"
+      statusEl.className = "sync-status-msg error"
     }
     
     if (typeof updateSyncFieldVisibility === "function") {
@@ -197,7 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const statusEl = document.getElementById("sync-status")
     if (statusEl) {
       statusEl.textContent = "Syncing..."
-      statusEl.style.color = ""
+      statusEl.className = "sync-status-msg"
     }
 
     try {
@@ -242,13 +242,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (statusEl) {
         statusEl.textContent = "Synced successfully!"
-        statusEl.style.color = "#10b981"
+        statusEl.className = "sync-status-msg success"
       }
     } catch (err) {
       console.error("Error running onload sync:", err)
       if (statusEl) {
         statusEl.textContent = "Sync failed."
-        statusEl.style.color = "#ef4444"
+        statusEl.className = "sync-status-msg error"
       }
     }
   }
@@ -3227,14 +3227,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!url || !token) {
         if (syncStatus) {
           syncStatus.textContent = "Please enter both URL and Token"
-          syncStatus.style.color = "#ef4444"
+          syncStatus.className = "sync-status-msg error"
         }
         return
       }
 
       if (syncStatus) {
         syncStatus.textContent = "Connecting & Syncing..."
-        syncStatus.style.color = ""
+        syncStatus.className = "sync-status-msg"
       }
       saveSyncBtn.disabled = true
 
@@ -3248,7 +3248,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           if (syncStatus) {
             syncStatus.textContent = "Connected & synced!"
-            syncStatus.style.color = "#10b981"
+            syncStatus.className = "sync-status-msg success"
           }
           saveSyncBtn.disabled = false
 
@@ -3265,7 +3265,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Upstash connection failed:", err)
         if (syncStatus) {
           syncStatus.textContent = "Failed. Check credentials."
-          syncStatus.style.color = "#ef4444"
+          syncStatus.className = "sync-status-msg error"
         }
         saveSyncBtn.disabled = false
       }

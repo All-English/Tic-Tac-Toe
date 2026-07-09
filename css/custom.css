@@ -254,12 +254,25 @@ main {
   gap: var(--size-3);
   align-items: center;
   margin-top: var(--size-2);
+
+  & .button {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
 }
 
 .api-status-msg,
 .sync-status-msg {
   font-size: var(--font-size-fluid-0);
   color: var(--text-color-2);
+
+  &.success {
+    color: light-dark(var(--green-7), var(--green-4));
+  }
+
+  &.error {
+    color: light-dark(var(--red-7), var(--red-4));
+  }
 }
 
 .button-group {

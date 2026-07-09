@@ -276,6 +276,12 @@ document.addEventListener("DOMContentLoaded", () => {
     removeGameEventListeners()
     isOrderLocked = false
 
+    stopAllTurnVoices()
+    if (pendingTurnAnnouncementTimeout) {
+      clearTimeout(pendingTurnAnnouncementTimeout)
+      pendingTurnAnnouncementTimeout = null
+    }
+
     // Rebuild the .setup.players object from the previous game's playerNames
     const playersFromLastGame = gameState.playerNames.map((name, index) => ({
       id: Date.now() + index, // IDs are regenerated for the setup screen
@@ -789,6 +795,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function enterReorderMode() {
+    stopAllTurnVoices()
+    if (pendingTurnAnnouncementTimeout) {
+      clearTimeout(pendingTurnAnnouncementTimeout)
+      pendingTurnAnnouncementTimeout = null
+    }
+
     const settings = {
       players: gameState.players,
       playerNames: gameState.playerNames,

@@ -246,6 +246,10 @@
               <input type="password" id="elevenlabs-api-key" name="elevenlabs-api-key" autocomplete="off"
                 placeholder="Paste your key here...">
             </label>
+            <div class="api-actions">
+              <button id="save-api-key-btn" class="button outlined small">Save & Verify</button>
+              <span id="api-key-status" class="api-status-msg"></span>
+            </div>
             <p class="field-hint">(Optional) An ElevenLabs API key is needed for a high quality voice. <br> Your key is
               stored
               securely in your browser and never leaves your computer.</p>
@@ -261,10 +265,11 @@
               <span class="label">Upstash REST Token</span>
               <input type="password" id="upstash-token" name="upstash-token" placeholder="Paste token here...">
             </label>
-            <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem;">
-              <button id="save-sync-btn" class="button" style="margin-top: 0; min-width: auto; height: 36px; display: inline-flex; align-items: center;">Save & Sync</button>
-              <span id="sync-status" class="field-hint" style="margin-top: 0;"></span>
+            <div class="sync-actions">
+              <button id="save-sync-btn" class="button outlined small">Save & Sync</button>
+              <span id="sync-status" class="sync-status-msg"></span>
             </div>
+            <p class="field-hint">(Optional) Connecting to Upstash Redis backs up and syncs your saved player lists and game statistics across devices.</p>
           </div>
 
         </div>

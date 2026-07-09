@@ -46,6 +46,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- API KEY MANAGEMENT ---
 
   const apiKeyInput = document.getElementById("elevenlabs-api-key")
+  const saveApiKeyBtn = document.getElementById("save-api-key-btn")
+  const apiKeyStatus = document.getElementById("api-key-status")
   let userApiKey = ""
 
   // 1. On page load, try to get the key from localStorage
@@ -55,13 +57,58 @@ document.addEventListener("DOMContentLoaded", () => {
     apiKeyInput.value = userApiKey
   }
 
-  // 2. When the user types in the input, update the variable and save to localStorage
-  apiKeyInput.addEventListener("input", () => {
-    userApiKey = apiKeyInput.value
-    localStorage.setItem("elevenlabs_api_key", userApiKey)
-    resetCachedTurnVoices()
-    precachePlayerTurnAudios()
-  })
+  // 2. Click handler to save and verify ElevenLabs API Key
+  if (saveApiKeyBtn) {
+    saveApiKeyBtn.addEventListener("click", async () => {
+      const key = apiKeyInput.value.trim()
+
+      if (!key) {
+        localStorage.removeItem("elevenlabs_api_key")
+        userApiKey = ""
+        if (apiKeyStatus) {
+          apiKeyStatus.textContent = "API Key cleared."
+          apiKeyStatus.style.color = "#10b981"
+        }
+        resetCachedTurnVoices()
+        return
+      }
+
+      if (apiKeyStatus) {
+        apiKeyStatus.textContent = "Verifying..."
+        apiKeyStatus.style.color = ""
+      }
+      saveApiKeyBtn.disabled = true
+
+      try {
+        const response = await fetch("https://api.elevenlabs.io/v1/voices", {
+          headers: {
+            "xi-api-key": key
+          }
+        })
+
+        if (response.ok) {
+          localStorage.setItem("elevenlabs_api_key", key)
+          userApiKey = key
+          if (apiKeyStatus) {
+            apiKeyStatus.textContent = "Key verified & saved!"
+            apiKeyStatus.style.color = "#10b981"
+          }
+          resetCachedTurnVoices()
+          precachePlayerTurnAudios()
+        } else {
+          throw new Error("Invalid API key")
+        }
+      } catch (err) {
+        console.error("ElevenLabs verification failed:", err)
+        if (apiKeyStatus) {
+          apiKeyStatus.textContent = "Failed. Invalid key or network error."
+          apiKeyStatus.style.color = "#ef4444"
+        }
+      } finally {
+        saveApiKeyBtn.disabled = false
+      }
+    })
+  }
 
   // --- UPSTASH REDIS SYNC MANAGEMENT ---
 

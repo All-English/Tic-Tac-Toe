@@ -235,9 +235,31 @@ main {
   background-color: transparent;
 }
 
-/* We also need to center the text inside the hint paragraph */
-#api-settings-section {
-  text-align: center;
+.api-settings,
+.sync-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-3);
+  align-items: stretch;
+}
+
+.api-settings .field,
+.sync-settings .field {
+  width: 100%;
+}
+
+.api-actions,
+.sync-actions {
+  display: flex;
+  gap: var(--size-3);
+  align-items: center;
+  margin-top: var(--size-2);
+}
+
+.api-status-msg,
+.sync-status-msg {
+  font-size: var(--font-size-fluid-0);
+  color: var(--text-color-2);
 }
 
 .button-group {

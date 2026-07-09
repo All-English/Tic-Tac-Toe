@@ -401,8 +401,70 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- RENDERING SUB-FUNCTIONS ---
 
+  function adjustCellWordFontSize() {
+    if (!gameBoard) return
+
+    const firstCell = gameBoard.querySelector(".cell")
+    if (!firstCell) return
+
+    // Temporarily reset size to let the grid/cells shrink to their allocated layout sizes
+    const oldSize = gameBoard.style.getPropertyValue("--dynamic-word-size")
+    gameBoard.style.setProperty("--dynamic-word-size", "10px")
+
+    // Measure cell dimensions at minimum size
+    const cellWidth = firstCell.clientWidth
+    const cellHeight = firstCell.clientHeight
+
+    // Restore old size
+    if (oldSize) {
+      gameBoard.style.setProperty("--dynamic-word-size", oldSize)
+    } else {
+      gameBoard.style.removeProperty("--dynamic-word-size")
+    }
+
+    const cells = Array.from(gameBoard.querySelectorAll(".cell"))
+    if (cells.length === 0) return
+
+    const maxWidth = Math.max(10, cellWidth - 16)
+    const maxHeight = Math.max(10, cellHeight - 20)
+
+    let minFontSize = 10
+    let maxFontSize = maxHeight
+    if (maxFontSize < minFontSize) maxFontSize = minFontSize
+
+    let optimalSize = minFontSize
+
+    const canvas = document.createElement("canvas")
+    const context = canvas.getContext("2d")
+
+    while (minFontSize <= maxFontSize) {
+      const midSize = Math.floor((minFontSize + maxFontSize) / 2)
+      context.font = `700 ${midSize}px "Parkinsans", sans-serif`
+
+      let allFit = true
+      for (const cell of cells) {
+        const text = cell.textContent.trim()
+        const metrics = context.measureText(text)
+        
+        if (metrics.width > maxWidth || midSize > maxHeight) {
+          allFit = false
+          break
+        }
+      }
+
+      if (allFit) {
+        optimalSize = midSize
+        minFontSize = midSize + 1
+      } else {
+        maxFontSize = midSize - 1
+      }
+    }
+
+    gameBoard.style.setProperty("--dynamic-word-size", `${optimalSize}px`)
+  }
+
   function renderBoard() {
-    gameBoard.style.gridTemplateColumns = `repeat(${gameState.gridSize}, 1fr)`
+    gameBoard.style.gridTemplateColumns = `repeat(${gameState.gridSize}, minmax(0, 1fr))`
     const newTotalCells = gameState.gridSize * gameState.gridSize
 
     // Clean up cells from a previously larger grid
@@ -459,6 +521,13 @@ document.addEventListener("DOMContentLoaded", () => {
       if (cell.classList.contains("highlight") !== shouldBeHighlighted) {
         cell.classList.toggle("highlight", shouldBeHighlighted)
       }
+    }
+
+    const firstCell = gameBoard.querySelector(".cell")
+    if (firstCell) {
+      requestAnimationFrame(() => {
+        adjustCellWordFontSize()
+      })
     }
   }
 
@@ -3155,6 +3224,15 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     })
   }
+
+  window.addEventListener("resize", () => {
+    if (gameState.currentView === "game" || gameState.currentView === "reorder") {
+      const firstCell = gameBoard.querySelector(".cell")
+      if (firstCell) {
+        adjustCellWordFontSize()
+      }
+    }
+  })
 
   // Trigger sync on load if credentials exist
   syncWithUpstashOnLoad()

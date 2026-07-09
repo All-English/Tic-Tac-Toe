@@ -340,7 +340,7 @@ main {
   place-items: center;
   align-content: center;
   gap: var(--size-5);
-  width: fit-content;
+  width: 100%;
   margin-inline: auto;
 }
 
@@ -352,6 +352,9 @@ main {
   border: var(--border-size-1) solid var(--border-color);
   gap: var(--border-size-1);
   background-color: var(--border-color);
+  width: 100%;
+  max-width: min(800px, 70vh);
+  margin-inline: auto;
 }
 
 #game-controls:not(.hidden) {
@@ -374,45 +377,11 @@ main {
   place-content: center;
 
   text-align: center;
-  min-width: 6ch;
   transition: background-color 0.2s var(--ease-out-3);
   opacity: 1;
-}
 
-#game-board {
-
-  /* For 3x3 grids (9 cells) */
-  &:has(.cell:nth-child(9)) .cell {
-    font-size: var(--fs-step-6);
-    padding: var(--space-s-m);
-  }
-
-  /* For 4x4 grids (16 cells) */
-  &:has(.cell:nth-child(16)) .cell {
-    font-size: var(--fs-step-5);
-  }
-
-  /* For 5x5 grids (25 cells) */
-  &:has(.cell:nth-child(25)) .cell {
-    font-size: var(--fs-step-4);
-  }
-
-  /* For 6x6 and 7x7 grids (36 to 49 cells) */
-  &:has(.cell:nth-child(36)) .cell {
-    font-size: var(--fs-step-3);
-    padding: var(--space-s);
-  }
-
-  /* For 8x8 grids (64 cells) */
-  &:has(.cell:nth-child(64)) .cell {
-    font-size: var(--fs-step-2);
-  }
-
-  /* For 9x9 and 10x10 grids (81 to 100 cells) */
-  &:has(.cell:nth-child(81)) .cell {
-    font-size: var(--fs-step-1);
-    padding: var(--space-xs);
-  }
+  font-size: var(--dynamic-word-size, var(--fs-step-4));
+  padding: var(--space-2xs);
 }
 
 .cell:not(:disabled):hover {

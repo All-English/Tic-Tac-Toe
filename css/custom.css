@@ -374,7 +374,7 @@ main {
   align-content: center;
   gap: var(--size-5);
   padding: var(--size-fluid-2);
-  width: 70vw;
+  width: min(1400px, 70vw);
   margin-inline: auto;
 }
 
@@ -428,7 +428,7 @@ main {
   inset: 0;
   display: grid;
   place-content: center;
-  font-size: var(--font-size-fluid-3);
+  font-size: inherit;
   color: var(--player-color, var(--text-color-1));
   /* background-color: oklch(from var(--surface-card) l c h); */
   background-color: light-dark(oklch(from var(--player-color) 95% 0.02 h), oklch(from var(--player-color) 25% 0.02 h));

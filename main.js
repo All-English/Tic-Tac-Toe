@@ -475,8 +475,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const maxWidth = Math.max(10, cellWidth - 16)
     const maxHeight = Math.max(10, cellHeight - 20)
 
+    const ABSOLUTE_MAX_FONT_SIZE = 72
     let minFontSize = 10
-    let maxFontSize = maxHeight
+    let maxFontSize = Math.min(maxHeight, ABSOLUTE_MAX_FONT_SIZE)
     if (maxFontSize < minFontSize) maxFontSize = minFontSize
 
     let optimalSize = minFontSize

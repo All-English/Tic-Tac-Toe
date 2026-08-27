@@ -344,6 +344,11 @@ document.addEventListener("DOMContentLoaded", () => {
       },
     }
 
+    renderNameInputs()
+    updatePlayerButtonsState()
+    validatePlayerNames()
+    populatePlayerDatalist()
+    saveSettings()
     render()
   }
 
@@ -2180,7 +2185,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (isFromSetup) {
       // This block runs ONLY when you click "Start Game" from the main setup screen.
-      // It reads all the values directly from the DOM inputs.
+      // Ensure gameState.setup.players names reflect current input values in DOM
+      const currentInputs = playerNamesContainer.querySelectorAll(".player-name-input")
+      if (currentInputs.length === gameState.setup.players.length) {
+        currentInputs.forEach((input, index) => {
+          if (input.value.trim()) {
+            gameState.setup.players[index].name = input.value.trim()
+          }
+        })
+      }
 
       // Identify players, assigning existing IDs or creating new ones
       const preparedPlayers = identifyAndPreparePlayers(gameState.setup.players)
@@ -2288,6 +2301,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderNameInputs()
     updatePlayerButtonsState()
     saveSettings()
+    validatePlayerNames()
   }
 
   function handleRemovePlayer(e) {
@@ -2297,15 +2311,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const wrapper = e.target.closest(".player-field-wrapper")
     if (!wrapper) return // Safety check
 
-    const playerIdToRemove = parseInt(wrapper.dataset.playerId, 10)
+    const playerIdToRemove = String(wrapper.dataset.playerId)
 
     gameState.setup.players = gameState.setup.players.filter(
-      (p) => p.id !== playerIdToRemove,
+      (p) => String(p.id) !== playerIdToRemove,
     )
 
     renderNameInputs()
     updatePlayerButtonsState()
     saveSettings()
+    validatePlayerNames()
   }
 
   function updatePlayerButtonsState() {
@@ -2414,6 +2429,7 @@ document.addEventListener("DOMContentLoaded", () => {
     )
     renderNameInputs()
     saveSettings()
+    validatePlayerNames()
   }
 
   function renderNameInputs() {
@@ -2443,9 +2459,9 @@ document.addEventListener("DOMContentLoaded", () => {
       input.setAttribute("list", "player-list-data")
       input.value = player.name
       input.addEventListener("input", (e) => {
-        const playerId = parseInt(wrapper.dataset.playerId) // Read ID from wrapper
+        const playerId = String(wrapper.dataset.playerId) // Read ID from wrapper
         gameState.setup.players = gameState.setup.players.map((p) =>
-          p.id === playerId ? { ...p, name: e.target.value } : p,
+          String(p.id) === playerId ? { ...p, name: e.target.value } : p,
         )
         saveSettings()
         validatePlayerNames()
@@ -3092,13 +3108,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     dropTarget.classList.remove("drop-target")
 
-    const fromId = parseInt(draggingEl.dataset.playerId)
-    const toId = parseInt(dropTarget.dataset.playerId)
+    const fromId = String(draggingEl.dataset.playerId)
+    const toId = String(dropTarget.dataset.playerId)
 
     if (fromId === toId) return // Dropped on itself
 
-    const fromIndex = gameState.setup.players.findIndex((p) => p.id === fromId)
-    const toIndex = gameState.setup.players.findIndex((p) => p.id === toId)
+    const fromIndex = gameState.setup.players.findIndex((p) => String(p.id) === fromId)
+    const toIndex = gameState.setup.players.findIndex((p) => String(p.id) === toId)
 
     const newPlayers = [...gameState.setup.players]
     const [itemToMove] = newPlayers.splice(fromIndex, 1)
@@ -3114,6 +3130,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Re-render the inputs with the new order
     renderNameInputs()
     saveSettings()
+    validatePlayerNames()
   })
 
   manageSetsBtn.addEventListener("click", () => {

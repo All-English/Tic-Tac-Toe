@@ -26,6 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentTurnCellClicked = false
   let playingTurnAudio = null
   let pendingTurnAnnouncementTimeout = null
+  let currentLoadedSetName = null
 
   const sounds = {
     click: new Audio("sounds/click.mp3"),
@@ -201,41 +202,52 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      // 1. Sync sets (Database is source of truth if it exists)
-      const dbSets = await fetchFromUpstash(SHARED_SETS_KEY)
-      if (!localStorage.getItem(UPSTASH_URL_KEY)) return
-
-      if (dbSets) {
-        localStorage.setItem(SHARED_SETS_KEY, JSON.stringify(dbSets))
+      let activeClassMatch = null
+      if (typeof window.SharedClassSync !== "undefined") {
+        const { playerSets, classProfiles } = await window.SharedClassSync.loadAllClasses()
         if (typeof populateSetsDialog === "function") populateSetsDialog()
+        activeClassMatch = window.SharedClassSync.findActiveScheduledClass(classProfiles)
       } else {
-        // If cloud is empty but we have local sets, initialize the cloud
-        const localSets = getPlayerSets()
-        if (Object.keys(localSets).length > 0) {
-          await syncToUpstash(SHARED_SETS_KEY, localSets)
+        // 1. Sync sets (Database is source of truth if it exists)
+        const dbSets = await fetchFromUpstash(SHARED_SETS_KEY)
+        if (!localStorage.getItem(UPSTASH_URL_KEY)) return
+
+        if (dbSets) {
+          localStorage.setItem(SHARED_SETS_KEY, JSON.stringify(dbSets))
+          if (typeof populateSetsDialog === "function") populateSetsDialog()
+        } else {
+          // If cloud is empty but we have local sets, initialize the cloud
+          const localSets = getPlayerSets()
+          if (Object.keys(localSets).length > 0) {
+            await syncToUpstash(SHARED_SETS_KEY, localSets)
+          }
         }
       }
 
-      // 2. Sync active session (Database is source of truth if it exists)
-      const dbActive = await fetchFromUpstash(SHARED_ACTIVE_PLAYERS_KEY)
-      if (!localStorage.getItem(UPSTASH_URL_KEY)) return
-
-      if (dbActive && Array.isArray(dbActive)) {
-        localStorage.setItem(SHARED_ACTIVE_PLAYERS_KEY, JSON.stringify(dbActive))
-        loadSettings()
-        renderNameInputs()
-        validatePlayerNames()
+      // Priority 1: Scheduled active class in session right now
+      if (activeClassMatch) {
+        handleLoadSet(activeClassMatch.className)
       } else {
-        // If cloud is empty but we have local active players, initialize the cloud
-        const localActiveJSON = localStorage.getItem(SHARED_ACTIVE_PLAYERS_KEY)
-        if (localActiveJSON) {
-          try {
-            const localActive = JSON.parse(localActiveJSON)
-            if (Array.isArray(localActive) && localActive.length > 0) {
-              await syncToUpstash(SHARED_ACTIVE_PLAYERS_KEY, localActive)
+        // Priority 2: Outside class hours, fall back to active session players
+        const dbActive = await fetchFromUpstash(SHARED_ACTIVE_PLAYERS_KEY)
+        if (!localStorage.getItem(UPSTASH_URL_KEY)) return
+
+        if (dbActive && Array.isArray(dbActive)) {
+          localStorage.setItem(SHARED_ACTIVE_PLAYERS_KEY, JSON.stringify(dbActive))
+          loadSettings()
+          renderNameInputs()
+          validatePlayerNames()
+        } else {
+          const localActiveJSON = localStorage.getItem(SHARED_ACTIVE_PLAYERS_KEY)
+          if (localActiveJSON) {
+            try {
+              const localActive = JSON.parse(localActiveJSON)
+              if (Array.isArray(localActive) && localActive.length > 0) {
+                await syncToUpstash(SHARED_ACTIVE_PLAYERS_KEY, localActive)
+              }
+            } catch (e) {
+              console.error(e)
             }
-          } catch (e) {
-            console.error(e)
           }
         }
       }
@@ -2054,6 +2066,16 @@ document.addEventListener("DOMContentLoaded", () => {
     // Save active session players to shared storage and sync
     const activeNames = gameState.setup.players.map((p) => p.name).filter(Boolean)
     saveActiveSessionPlayers(activeNames)
+
+    // Auto-sync units to active class profile in SharedClassSync
+    if (currentLoadedSetName && typeof window.SharedClassSync !== "undefined") {
+      const canonicals = settingsToSave.selectedUnits
+        .map((s) => window.SharedClassSync.toCanonicalUnit(s)?.id)
+        .filter(Boolean)
+      if (canonicals.length > 0) {
+        window.SharedClassSync.saveClassUnits(currentLoadedSetName, canonicals)
+      }
+    }
   }
 
   function loadSettings() {
@@ -2954,6 +2976,54 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function applyUnitsToTicTacToe(canonicalUnits) {
+    if (!Array.isArray(canonicalUnits) || canonicalUnits.length === 0) return
+    if (!unitSelectorsContainer) return
+    unitSelectorsContainer.innerHTML = ""
+    canonicalUnits.forEach((u) => {
+      const ttValue = window.SharedClassSync.toTicTacToe(u)
+      if (ttValue) {
+        createUnitSelector(ttValue)
+      }
+    })
+    updateRemoveUnitButtonsVisibility()
+    updateUnitSelectorsState()
+  }
+
+  function initScheduleControls() {
+    const container = document.getElementById("save-set-days-container")
+    const startTimeInput = document.getElementById("save-set-start-time")
+    const endTimeInput = document.getElementById("save-set-end-time")
+    if (!container || !saveSetNameInput) return
+
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    container.innerHTML = ""
+    days.forEach((day) => {
+      const label = document.createElement("label")
+      label.style.cssText = "display: inline-flex; align-items: center; gap: 2px; font-size: 0.75rem; cursor: pointer;"
+      const chk = document.createElement("input")
+      chk.type = "checkbox"
+      chk.value = day
+      chk.className = "save-set-day-chk"
+      label.appendChild(chk)
+      label.appendChild(document.createTextNode(day))
+      container.appendChild(label)
+    })
+
+    saveSetNameInput.addEventListener("input", () => {
+      if (typeof window.SharedClassSync !== "undefined") {
+        const sched = window.SharedClassSync.parseScheduleFromName(saveSetNameInput.value)
+        if (sched) {
+          if (startTimeInput) startTimeInput.value = sched.startTime
+          if (endTimeInput) endTimeInput.value = sched.endTime
+          container.querySelectorAll(".save-set-day-chk").forEach((chk) => {
+            chk.checked = sched.days.includes(chk.value)
+          })
+        }
+      }
+    })
+  }
+
   function handleSaveSet() {
     const setName = saveSetNameInput.value.trim()
     if (!setName) {
@@ -2971,6 +3041,40 @@ document.addEventListener("DOMContentLoaded", () => {
     sets[setName] = currentPlayerNames
     setPlayerSets(sets)
 
+    currentLoadedSetName = setName
+
+    // Save schedule & current units in SharedClassSync
+    if (typeof window.SharedClassSync !== "undefined") {
+      const startTimeInput = document.getElementById("save-set-start-time")
+      const endTimeInput = document.getElementById("save-set-end-time")
+      const dayChks = document.querySelectorAll(".save-set-day-chk:checked")
+      const selectedDays = Array.from(dayChks).map((c) => c.value)
+
+      const selected = Array.from(document.querySelectorAll(".phonics-unit-select"))
+        .map((s) => s.value)
+        .filter(Boolean)
+      const canonicals = selected.map((s) => window.SharedClassSync.toCanonicalUnit(s)?.id).filter(Boolean)
+
+      const sched = {
+        days: selectedDays.length > 0 ? selectedDays : window.SharedClassSync.parseScheduleFromName(setName).days,
+        startTime: startTimeInput?.value || "15:00",
+        endTime: endTimeInput?.value || "16:00"
+      }
+
+      let profiles = {}
+      try {
+        profiles = JSON.parse(localStorage.getItem(window.SharedClassSync.SHARED_CLASS_PROFILES_KEY) || "{}")
+      } catch {}
+
+      profiles[setName] = {
+        schedule: sched,
+        units: canonicals,
+        updatedAt: Date.now()
+      }
+      localStorage.setItem(window.SharedClassSync.SHARED_CLASS_PROFILES_KEY, JSON.stringify(profiles))
+      window.SharedClassSync.syncUpstash(window.SharedClassSync.SHARED_CLASS_PROFILES_KEY, profiles)
+    }
+
     saveSetNameInput.value = "" // Clear the input
     populateSetsDialog() // Refresh the list
   }
@@ -2980,6 +3084,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const playerNames = sets[setName]
 
     if (!playerNames) return
+
+    currentLoadedSetName = setName
 
     const newPlayers = playerNames.map((name, index) => ({
       id: Date.now() + index,
@@ -2996,6 +3102,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     playerSetsDialog.close()
     validatePlayerNames()
+
+    // Also load unit settings for this class if available
+    if (typeof window.SharedClassSync !== "undefined") {
+      try {
+        const rawProfiles = localStorage.getItem(window.SharedClassSync.SHARED_CLASS_PROFILES_KEY)
+        const profiles = rawProfiles ? JSON.parse(rawProfiles) : {}
+        if (profiles[setName] && Array.isArray(profiles[setName].units) && profiles[setName].units.length > 0) {
+          applyUnitsToTicTacToe(profiles[setName].units)
+        }
+      } catch (e) {
+        console.warn("Error applying units for loaded set:", e)
+      }
+    }
   }
 
   function handleDeleteSet(setName) {
@@ -3134,6 +3253,7 @@ document.addEventListener("DOMContentLoaded", () => {
   })
 
   manageSetsBtn.addEventListener("click", () => {
+    initScheduleControls()
     populateSetsDialog()
     playerSetsDialog.showModal()
   })

@@ -381,9 +381,20 @@
       <div class="save-set-action">
         <label class="field">
           <span class="label">List Name</span>
-          <input type="text" id="save-set-name-input" placeholder="Name for current list...">
+          <input type="text" id="save-set-name-input" placeholder="e.g. MWF 4:00 or TTh 6:50">
         </label>
-        <button id="save-set-btn" class="button filled">Save Current List</button>
+        <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem;">
+          <label class="field" style="flex: 1; margin: 0;">
+            <span class="label" style="font-size: 0.75rem;">Start Time</span>
+            <input type="time" id="save-set-start-time" value="15:00">
+          </label>
+          <label class="field" style="flex: 1; margin: 0;">
+            <span class="label" style="font-size: 0.75rem;">End Time</span>
+            <input type="time" id="save-set-end-time" value="16:00">
+          </label>
+        </div>
+        <div id="save-set-days-container" style="display: flex; gap: 0.25rem; margin-top: 0.4rem; flex-wrap: wrap;"></div>
+        <button id="save-set-btn" class="button filled" style="margin-top: 0.75rem;">Save List &amp; Schedule</button>
       </div>
     </div>
   </dialog>
@@ -406,6 +417,7 @@
     </div>
     </article>
 
+  <script src="shared-class-sync.js"></script>
   <script src="main.js" type="module" defer></script>
 </body>
 

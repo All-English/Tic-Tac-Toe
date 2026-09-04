@@ -1823,6 +1823,36 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function updateMatchLengthDefault(previousMode = null) {
+    const currentSelectedBtn = gameModeSelector?.querySelector(
+      "button.selected",
+    )
+    const currentMode = currentSelectedBtn
+      ? currentSelectedBtn.dataset.mode
+      : gameState.gameMode
+    const playerCount = gameState.setup.players.length
+
+    if (currentMode === "Survivor" && playerCount > 2) {
+      if (matchLengthInput.value === "3" || previousMode !== "Survivor") {
+        matchLengthInput.value = 2
+        matchLengthValue.textContent = "2"
+        syncSliders()
+      }
+    } else if (previousMode === "Survivor" || currentMode !== "Survivor") {
+      if (matchLengthInput.value === "2") {
+        matchLengthInput.value = 3
+        matchLengthValue.textContent = "3"
+        syncSliders()
+      }
+    } else if (currentMode === "Survivor" && playerCount <= 2) {
+      if (matchLengthInput.value === "2") {
+        matchLengthInput.value = 3
+        matchLengthValue.textContent = "3"
+        syncSliders()
+      }
+    }
+  }
+
   function validatePlayerNames() {
     const nameInputs = Array.from(
       playerNamesContainer.querySelectorAll(".player-name-input"),
@@ -2366,7 +2396,15 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       gameState.setup.players = playersList
       gridSizeInput.value = settings.gridSize || 3
-      matchLengthInput.value = settings.matchLength || 3
+      if (
+        settings.gameMode === "Survivor" &&
+        playersList.length > 2 &&
+        (!settings.matchLength || settings.matchLength == 3)
+      ) {
+        matchLengthInput.value = 2
+      } else {
+        matchLengthInput.value = settings.matchLength || 3
+      }
       muteSoundsToggle.checked = settings.muteSounds === true
       pronounceWordsToggle.checked = settings.pronounceWords === true
       if (fairPlayToggle) {
@@ -2623,6 +2661,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     renderNameInputs()
     updatePlayerButtonsState()
+    updateMatchLengthDefault()
     saveSettings()
     validatePlayerNames()
   }
@@ -2642,6 +2681,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     renderNameInputs()
     updatePlayerButtonsState()
+    updateMatchLengthDefault()
     saveSettings()
     validatePlayerNames()
   }
@@ -2686,6 +2726,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
 
     updateGameModeHint(newMode)
+    updateMatchLengthDefault(currentMode)
     saveSettings()
     playSound("click")
   }
@@ -3428,6 +3469,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     renderNameInputs()
     updatePlayerButtonsState()
+    updateMatchLengthDefault()
+    saveSettings()
 
     playerSetsDialog.close()
     validatePlayerNames()
@@ -3527,6 +3570,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const clickedButton = e.target.closest("button")
     if (!clickedButton) return
 
+    const previousMode = gameModeSelector.querySelector("button.selected")?.dataset.mode
     const gameMode = clickedButton.dataset.mode
     updateGameModeHint(gameMode) // Use the new function
 
@@ -3536,6 +3580,8 @@ document.addEventListener("DOMContentLoaded", () => {
       button.classList.remove("selected")
     })
     clickedButton.classList.add("selected")
+
+    updateMatchLengthDefault(previousMode)
 
     saveSettings()
   })

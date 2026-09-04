@@ -339,6 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const feedbackSnackbar = document.getElementById("feedback-snackbar")
   const snackbarMessage = document.getElementById("snackbar-message")
   const randomizeBoardSizeBtn = document.getElementById("randomizeBoardSizeBtn")
+  let userSetRotatingStarters = false
 
   // --- EVENT HANDLER FUNCTIONS ---
 
@@ -2143,6 +2144,29 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function updateRotatingStartersDefault(previousPlayerCount = null) {
+    const playerCount = gameState.setup.players.length
+    if (previousPlayerCount !== null && previousPlayerCount === playerCount) {
+      return
+    }
+
+    const toggles = [
+      conquestRotatingStarterToggle,
+      stealthRotatingStarterToggle,
+      survivorRotatingStarterToggle,
+    ].filter(Boolean)
+
+    if (playerCount <= 2) {
+      toggles.forEach((toggle) => {
+        toggle.checked = false
+      })
+    } else {
+      toggles.forEach((toggle) => {
+        toggle.checked = true
+      })
+    }
+  }
+
   function validatePlayerNames() {
     const nameInputs = Array.from(
       playerNamesContainer.querySelectorAll(".player-name-input"),
@@ -2619,12 +2643,13 @@ document.addEventListener("DOMContentLoaded", () => {
       matchLength: matchLengthInput.value,
       muteSounds: muteSoundsToggle.checked,
       pronounceWords: pronounceWordsToggle.checked,
+      userSetRotatingStarters,
       fairPlay: survivorEqualRoundsToggle
         ? survivorEqualRoundsToggle.checked
         : true,
       survivorRotatingStarters: survivorRotatingStarterToggle
         ? survivorRotatingStarterToggle.checked
-        : true,
+        : false,
       survivorEqualRounds: survivorEqualRoundsToggle
         ? survivorEqualRoundsToggle.checked
         : true,
@@ -2633,13 +2658,13 @@ document.addEventListener("DOMContentLoaded", () => {
         : true,
       conquestRotatingStarters: conquestRotatingStarterToggle
         ? conquestRotatingStarterToggle.checked
-        : true,
+        : false,
       conquestEqualRounds: conquestEqualRoundsToggle
         ? conquestEqualRoundsToggle.checked
         : true,
       stealthRotatingStarters: stealthRotatingStarterToggle
         ? stealthRotatingStarterToggle.checked
-        : true,
+        : false,
       stealthEqualRounds: stealthEqualRoundsToggle
         ? stealthEqualRoundsToggle.checked
         : true,
@@ -2714,11 +2739,16 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       muteSoundsToggle.checked = settings.muteSounds === true
       pronounceWordsToggle.checked = settings.pronounceWords === true
+      userSetRotatingStarters = settings.userSetRotatingStarters === true
+      const isTwoPlayers = playersList.length <= 2
+
       if (survivorRotatingStarterToggle) {
         survivorRotatingStarterToggle.checked =
-          settings.survivorRotatingStarters !== undefined
-            ? settings.survivorRotatingStarters !== false
-            : settings.fairPlay !== false
+          isTwoPlayers && !userSetRotatingStarters
+            ? false
+            : (settings.survivorRotatingStarters !== undefined
+                ? settings.survivorRotatingStarters !== false
+                : settings.fairPlay !== false)
       }
       if (survivorEqualRoundsToggle) {
         survivorEqualRoundsToggle.checked =
@@ -2735,7 +2765,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (conquestRotatingStarterToggle) {
         conquestRotatingStarterToggle.checked =
-          settings.conquestRotatingStarters !== false
+          isTwoPlayers && !userSetRotatingStarters
+            ? false
+            : (settings.conquestRotatingStarters !== undefined
+                ? settings.conquestRotatingStarters !== false
+                : true)
       }
       if (conquestEqualRoundsToggle) {
         conquestEqualRoundsToggle.checked =
@@ -2743,7 +2777,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (stealthRotatingStarterToggle) {
         stealthRotatingStarterToggle.checked =
-          settings.stealthRotatingStarters !== false
+          isTwoPlayers && !userSetRotatingStarters
+            ? false
+            : (settings.stealthRotatingStarters !== undefined
+                ? settings.stealthRotatingStarters !== false
+                : true)
       }
       if (stealthEqualRoundsToggle) {
         stealthEqualRoundsToggle.checked =
@@ -2872,12 +2910,15 @@ document.addEventListener("DOMContentLoaded", () => {
       settings.gameMode = document.querySelector(
         "#gameModeSelector button.selected",
       ).dataset.mode
+      const isTwoPlayers = settings.numPlayers <= 2
       settings.fairPlay =
         (survivorEqualRoundsToggle ? survivorEqualRoundsToggle.checked : true) &&
-        (survivorRotatingStarterToggle ? survivorRotatingStarterToggle.checked : true)
+        (survivorRotatingStarterToggle
+          ? survivorRotatingStarterToggle.checked
+          : !isTwoPlayers)
       settings.survivorRotatingStarters = survivorRotatingStarterToggle
         ? survivorRotatingStarterToggle.checked
-        : true
+        : !isTwoPlayers
       settings.survivorEqualRounds = survivorEqualRoundsToggle
         ? survivorEqualRoundsToggle.checked
         : true
@@ -2886,13 +2927,13 @@ document.addEventListener("DOMContentLoaded", () => {
         : true
       settings.conquestRotatingStarters = conquestRotatingStarterToggle
         ? conquestRotatingStarterToggle.checked
-        : true
+        : !isTwoPlayers
       settings.conquestEqualRounds = conquestEqualRoundsToggle
         ? conquestEqualRoundsToggle.checked
         : true
       settings.stealthRotatingStarters = stealthRotatingStarterToggle
         ? stealthRotatingStarterToggle.checked
-        : true
+        : !isTwoPlayers
       settings.stealthEqualRounds = stealthEqualRoundsToggle
         ? stealthEqualRoundsToggle.checked
         : true
@@ -2989,6 +3030,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function handleAddPlayer() {
     if (gameState.setup.players.length >= MAX_PLAYERS) return
 
+    const previousPlayerCount = gameState.setup.players.length
     const currentNames = new Set(gameState.setup.players.map((p) => p.name))
     let newPlayerName = `Player ${gameState.setup.players.length + 1}` // Default fallback name
 
@@ -3001,7 +3043,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const newPlayer = {
-      id: Date.now(),
+      id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       name: newPlayerName,
     }
 
@@ -3010,6 +3052,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderNameInputs()
     updatePlayerButtonsState()
     updateMatchLengthDefault()
+    updateRotatingStartersDefault(previousPlayerCount)
     saveSettings()
     validatePlayerNames()
   }
@@ -3021,6 +3064,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const wrapper = e.target.closest(".player-field-wrapper")
     if (!wrapper) return // Safety check
 
+    const previousPlayerCount = gameState.setup.players.length
     const playerIdToRemove = String(wrapper.dataset.playerId)
 
     gameState.setup.players = gameState.setup.players.filter(
@@ -3030,6 +3074,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderNameInputs()
     updatePlayerButtonsState()
     updateMatchLengthDefault()
+    updateRotatingStartersDefault(previousPlayerCount)
     saveSettings()
     validatePlayerNames()
   }
@@ -3544,9 +3589,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function resetSettings() {
+    userSetRotatingStarters = false
     gameState.setup.players = [
-      { id: Date.now(), name: "Player 1" },
-      { id: Date.now() + 1, name: "Player 2" },
+      { id: `${Date.now()}_1`, name: "Player 1" },
+      { id: `${Date.now()}_2`, name: "Player 2" },
     ]
 
     gridSizeInput.value = 3
@@ -3554,25 +3600,25 @@ document.addEventListener("DOMContentLoaded", () => {
     muteSoundsToggle.checked = false
     pronounceWordsToggle.checked = true
     if (survivorRotatingStarterToggle) {
-      survivorRotatingStarterToggle.checked = true
+      survivorRotatingStarterToggle.checked = false
     }
     if (survivorEqualRoundsToggle) {
       survivorEqualRoundsToggle.checked = true
     }
     if (fairPlayToggle && fairPlayToggle !== survivorEqualRoundsToggle) {
-      fairPlayToggle.checked = true
+      fairPlayToggle.checked = false
     }
     if (conquestBlockPointsToggle) {
       conquestBlockPointsToggle.checked = true
     }
     if (conquestRotatingStarterToggle) {
-      conquestRotatingStarterToggle.checked = true
+      conquestRotatingStarterToggle.checked = false
     }
     if (conquestEqualRoundsToggle) {
       conquestEqualRoundsToggle.checked = true
     }
     if (stealthRotatingStarterToggle) {
-      stealthRotatingStarterToggle.checked = true
+      stealthRotatingStarterToggle.checked = false
     }
     if (stealthEqualRoundsToggle) {
       stealthEqualRoundsToggle.checked = true
@@ -3895,6 +3941,7 @@ document.addEventListener("DOMContentLoaded", () => {
   })
   if (survivorRotatingStarterToggle) {
     survivorRotatingStarterToggle.addEventListener("change", () => {
+      userSetRotatingStarters = true
       saveSettings()
     })
   }
@@ -3915,6 +3962,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (conquestRotatingStarterToggle) {
     conquestRotatingStarterToggle.addEventListener("change", () => {
+      userSetRotatingStarters = true
       saveSettings()
     })
   }
@@ -3925,6 +3973,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (stealthRotatingStarterToggle) {
     stealthRotatingStarterToggle.addEventListener("change", () => {
+      userSetRotatingStarters = true
       saveSettings()
     })
   }

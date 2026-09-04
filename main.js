@@ -296,6 +296,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const gameModeHint = document.getElementById("gameModeHint")
   const fairPlaySettingGroup = document.getElementById("fairPlaySettingGroup")
   const fairPlayToggle = document.getElementById("fairPlayToggle")
+  const conquestOptionsGroup = document.getElementById("conquestOptionsGroup")
+  const conquestBlockPointsToggle = document.getElementById(
+    "conquestBlockPointsToggle",
+  )
+  const conquestRotatingStarterToggle = document.getElementById(
+    "conquestRotatingStarterToggle",
+  )
+  const conquestEqualRoundsToggle = document.getElementById(
+    "conquestEqualRoundsToggle",
+  )
   const resetSettingsBtn = document.getElementById("resetSettingsBtn")
   const randomizePlayerOrderBtn_setup = document.getElementById(
     "randomizePlayerOrderBtn_setup",
@@ -947,6 +957,9 @@ document.addEventListener("DOMContentLoaded", () => {
       matchLength: gameState.matchLength,
       gameMode: gameState.gameMode,
       fairPlay: gameState.fairPlay,
+      conquestBlockPoints: gameState.conquestBlockPoints,
+      conquestRotatingStarters: gameState.conquestRotatingStarters,
+      conquestEqualRounds: gameState.conquestEqualRounds,
       selectedUnits: gameState.selectedUnits,
       pronounceWords: gameState.pronounceWords,
       isMuted: gameState.isMuted,
@@ -974,6 +987,12 @@ document.addEventListener("DOMContentLoaded", () => {
       ),
       survivorTurnIndex: 0,
       eliminatedThisRound: [],
+      conquestRoundStarter: 0,
+      conquestRoundOrder: Array.from(
+        { length: settings.numPlayers },
+        (_, i) => i,
+      ),
+      conquestTurnIndex: 0,
       playerStatsThisGame: Array(settings.numPlayers)
         .fill(null)
         .map(() => ({
@@ -1038,6 +1057,12 @@ document.addEventListener("DOMContentLoaded", () => {
       )
     }
 
+    if (lastMove.blockPoints && lastMove.blockPoints > 0) {
+      newScores[lastMove.player] =
+        Math.round((newScores[lastMove.player] - lastMove.blockPoints) * 10) /
+        10
+    }
+
     let survivorStateUpdates = {}
     if (lastMove.survivorState) {
       survivorStateUpdates = {
@@ -1045,6 +1070,15 @@ document.addEventListener("DOMContentLoaded", () => {
         survivorRoundOrder: [...lastMove.survivorState.roundOrder],
         survivorTurnIndex: lastMove.survivorState.turnIndex,
         eliminatedThisRound: [...lastMove.survivorState.eliminatedThisRound],
+      }
+    }
+
+    let conquestStateUpdates = {}
+    if (lastMove.conquestState) {
+      conquestStateUpdates = {
+        conquestRoundStarter: lastMove.conquestState.starter,
+        conquestRoundOrder: [...lastMove.conquestState.roundOrder],
+        conquestTurnIndex: lastMove.conquestState.turnIndex,
       }
     }
 
@@ -1061,6 +1095,7 @@ document.addEventListener("DOMContentLoaded", () => {
       currentPlayer: lastMove.player,
       moveHistory: gameState.moveHistory.slice(0, -1),
       ...survivorStateUpdates,
+      ...conquestStateUpdates,
     }
 
     render() // Re-render after state change
@@ -1129,15 +1164,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function processPlayerMove(index) {
     // This function now contains the core game logic
-    const wasBlock = checkForBlock(index)
+    const { wasBlock, linesBlocked } = checkForBlock(index)
     if (wasBlock) {
-      gameState.playerStatsThisGame[gameState.currentPlayer].blocks++
+      gameState.playerStatsThisGame[gameState.currentPlayer].blocks +=
+        linesBlocked
+    }
+
+    let blockPoints = 0
+    if (
+      wasBlock &&
+      gameState.gameMode === "Conquest" &&
+      gameState.conquestBlockPoints
+    ) {
+      blockPoints = Math.round(linesBlocked * 0.5 * 10) / 10
     }
 
     const move = {
       index: index,
       player: gameState.currentPlayer,
       scoredLines: [],
+      blockPoints: blockPoints,
+      conquestState:
+        gameState.gameMode === "Conquest" && gameState.conquestRotatingStarters
+          ? {
+              starter: gameState.conquestRoundStarter,
+              roundOrder: [...gameState.conquestRoundOrder],
+              turnIndex: gameState.conquestTurnIndex,
+            }
+          : null,
       survivorState:
         gameState.gameMode === "Survivor" && gameState.fairPlay
           ? {
@@ -1154,6 +1208,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const { pointsScored, shouldEndGame } = checkForWins(move, newBoard)
 
+    if (blockPoints > 0) {
+      const newScores = [...gameState.scores]
+      newScores[gameState.currentPlayer] =
+        Math.round((newScores[gameState.currentPlayer] + blockPoints) * 10) / 10
+      gameState = { ...gameState, scores: newScores }
+    }
+
     const scoreKey = pointsScored.toString()
     const playerGameStats =
       gameState.playerStatsThisGame[gameState.currentPlayer]
@@ -1166,11 +1227,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     let soundPromise = Promise.resolve()
-    if (pointsScored > 0) {
+    if (pointsScored > 0 && wasBlock) {
+      soundPromise = playSoundSequentially("score", pointsScored).then(() =>
+        playSoundSequentially("block", linesBlocked),
+      )
+    } else if (pointsScored > 0) {
       soundPromise = playSoundSequentially("score", pointsScored)
     } else if (wasBlock) {
-      playSound("block")
-      soundPromise = new Promise((resolve) => setTimeout(resolve, 600))
+      soundPromise = playSoundSequentially("block", linesBlocked)
       const cell = gameBoard.querySelector(`[data-index='${index}']`)
       if (cell) {
         cell.classList.add("blocked")
@@ -1185,6 +1249,13 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       playSound("click")
       soundPromise = new Promise((resolve) => setTimeout(resolve, 300))
+    }
+
+    if (blockPoints > 0) {
+      const playerName = gameState.playerNames[gameState.currentPlayer]
+      const ptsText = blockPoints === 1 ? "1 pt" : `${blockPoints} pts`
+      const lineText = linesBlocked === 1 ? "1 line" : `${linesBlocked} lines`
+      showSnackbar(`${playerName} blocked ${lineText}! (+${ptsText})`)
     }
 
     const newMoveHistory = [...gameState.moveHistory, move]
@@ -1253,6 +1324,57 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             isGameOver = false
           }
+        }
+      }
+    } else if (gameState.gameMode === "Conquest") {
+      let isConquestGameOver = false
+      if (gameState.conquestEqualRounds) {
+        const fullRounds = Math.floor(
+          (gameState.gridSize * gameState.gridSize) / gameState.numPlayers,
+        )
+        const maxMoves = fullRounds * gameState.numPlayers
+        if (newMovesMade >= maxMoves) {
+          isConquestGameOver = true
+        }
+      } else {
+        if (newMovesMade >= gameState.gridSize * gameState.gridSize) {
+          isConquestGameOver = true
+        }
+      }
+
+      isGameOver = isConquestGameOver
+
+      if (!isGameOver) {
+        if (gameState.conquestRotatingStarters) {
+          const nextTurnIndex = gameState.conquestTurnIndex + 1
+          if (nextTurnIndex < gameState.numPlayers) {
+            const nextPlayer = gameState.conquestRoundOrder[nextTurnIndex]
+            gameState = {
+              ...gameState,
+              conquestTurnIndex: nextTurnIndex,
+              currentPlayer: nextPlayer,
+            }
+          } else {
+            // Round finished! Advance starter and rotate for next round
+            const nextStarter =
+              (gameState.conquestRoundStarter + 1) % gameState.numPlayers
+            const nextRoundOrder = Array.from(
+              { length: gameState.numPlayers },
+              (_, i) => (nextStarter + i) % gameState.numPlayers,
+            )
+            gameState = {
+              ...gameState,
+              conquestRoundStarter: nextStarter,
+              conquestRoundOrder: nextRoundOrder,
+              conquestTurnIndex: 0,
+              currentPlayer: nextRoundOrder[0],
+            }
+          }
+        } else {
+          // Standard sequential order
+          const nextPlayer =
+            (gameState.currentPlayer + 1) % gameState.numPlayers
+          gameState = { ...gameState, currentPlayer: nextPlayer }
         }
       }
     } else {
@@ -1324,7 +1446,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function checkForBlock(moveIndex) {
-    let wasBlock = false
+    let totalLinesBlocked = 0
     const originalPlayer = gameState.currentPlayer
     for (
       let opponentIndex = 0;
@@ -1341,14 +1463,16 @@ document.addEventListener("DOMContentLoaded", () => {
         gameState.matchLength,
       )
       const newWins = potentialWins.filter(
-        (line) => !gameState.completedLines.has(lineToString(line)),
+        (line) =>
+          line.includes(moveIndex) &&
+          !gameState.completedLines.has(lineToString(line)),
       )
-      if (newWins.length > 0) {
-        wasBlock = true
-        break
-      }
+      totalLinesBlocked += newWins.length
     }
-    return wasBlock
+    return {
+      wasBlock: totalLinesBlocked > 0,
+      linesBlocked: totalLinesBlocked,
+    }
   }
 
   // --- STATS MANAGEMENT FUNCTIONS ---
@@ -1658,6 +1782,9 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateGameModeHint(mode) {
     if (fairPlaySettingGroup) {
       fairPlaySettingGroup.classList.toggle("hidden", mode !== "Survivor")
+    }
+    if (conquestOptionsGroup) {
+      conquestOptionsGroup.classList.toggle("hidden", mode !== "Conquest")
     }
     switch (mode) {
       case "Conquest":
@@ -2154,6 +2281,15 @@ document.addEventListener("DOMContentLoaded", () => {
       muteSounds: muteSoundsToggle.checked,
       pronounceWords: pronounceWordsToggle.checked,
       fairPlay: fairPlayToggle ? fairPlayToggle.checked : true,
+      conquestBlockPoints: conquestBlockPointsToggle
+        ? conquestBlockPointsToggle.checked
+        : true,
+      conquestRotatingStarters: conquestRotatingStarterToggle
+        ? conquestRotatingStarterToggle.checked
+        : true,
+      conquestEqualRounds: conquestEqualRoundsToggle
+        ? conquestEqualRoundsToggle.checked
+        : true,
       gameMode: document.querySelector("#gameModeSelector button.selected")
         ?.dataset.mode,
       selectedUnits: Array.from(
@@ -2217,6 +2353,18 @@ document.addEventListener("DOMContentLoaded", () => {
       if (fairPlayToggle) {
         fairPlayToggle.checked = settings.fairPlay !== false
       }
+      if (conquestBlockPointsToggle) {
+        conquestBlockPointsToggle.checked =
+          settings.conquestBlockPoints !== false
+      }
+      if (conquestRotatingStarterToggle) {
+        conquestRotatingStarterToggle.checked =
+          settings.conquestRotatingStarters !== false
+      }
+      if (conquestEqualRoundsToggle) {
+        conquestEqualRoundsToggle.checked =
+          settings.conquestEqualRounds !== false
+      }
       darkModeToggle.checked = settings.darkMode === true
       themeHueSelect.value = settings.themeHue || "var(--oklch-indigo)"
 
@@ -2229,6 +2377,8 @@ document.addEventListener("DOMContentLoaded", () => {
           )
         })
         updateGameModeHint(settings.gameMode)
+      } else {
+        updateGameModeHint("Conquest")
       }
 
       // Re-create the saved word unit selectors
@@ -2245,6 +2395,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // --- IF NO SETTINGS ARE FOUND (NEW USER), CREATE DEFAULTS ---
       createUnitSelector()
       selectRandomUnit()
+      updateGameModeHint("Conquest")
     }
 
     // Refresh the entire UI to reflect the loaded settings
@@ -2337,6 +2488,15 @@ document.addEventListener("DOMContentLoaded", () => {
         "#gameModeSelector button.selected",
       ).dataset.mode
       settings.fairPlay = fairPlayToggle ? fairPlayToggle.checked : true
+      settings.conquestBlockPoints = conquestBlockPointsToggle
+        ? conquestBlockPointsToggle.checked
+        : true
+      settings.conquestRotatingStarters = conquestRotatingStarterToggle
+        ? conquestRotatingStarterToggle.checked
+        : true
+      settings.conquestEqualRounds = conquestEqualRoundsToggle
+        ? conquestEqualRoundsToggle.checked
+        : true
       settings.selectedUnits = [
         ...document.querySelectorAll(".phonics-unit-select"),
       ]
@@ -2390,6 +2550,12 @@ document.addEventListener("DOMContentLoaded", () => {
       ),
       survivorTurnIndex: 0,
       eliminatedThisRound: [],
+      conquestRoundStarter: 0,
+      conquestRoundOrder: Array.from(
+        { length: gameState.numPlayers },
+        (_, i) => i,
+      ),
+      conquestTurnIndex: 0,
       playerStatsThisGame: Array(gameState.numPlayers)
         .fill(null)
         .map(() => ({
@@ -2982,6 +3148,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (fairPlayToggle) {
       fairPlayToggle.checked = true
     }
+    if (conquestBlockPointsToggle) {
+      conquestBlockPointsToggle.checked = true
+    }
+    if (conquestRotatingStarterToggle) {
+      conquestRotatingStarterToggle.checked = true
+    }
+    if (conquestEqualRoundsToggle) {
+      conquestEqualRoundsToggle.checked = true
+    }
 
     // Reset theme color dropdown and trigger the change
     // themeHueSelect.value = "var(--oklch-indigo)"
@@ -3298,6 +3473,21 @@ document.addEventListener("DOMContentLoaded", () => {
   })
   if (fairPlayToggle) {
     fairPlayToggle.addEventListener("change", () => {
+      saveSettings()
+    })
+  }
+  if (conquestBlockPointsToggle) {
+    conquestBlockPointsToggle.addEventListener("change", () => {
+      saveSettings()
+    })
+  }
+  if (conquestRotatingStarterToggle) {
+    conquestRotatingStarterToggle.addEventListener("change", () => {
+      saveSettings()
+    })
+  }
+  if (conquestEqualRoundsToggle) {
+    conquestEqualRoundsToggle.addEventListener("change", () => {
       saveSettings()
     })
   }

@@ -664,6 +664,34 @@ dialog#game-over-dialog {
   max-width: 28ch;
 }
 
+/* --- Conquest Fairness Options --- */
+
+.conquest-options {
+  margin-block-start: var(--size-3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--size-2);
+}
+
+.conquest-options.hidden {
+  display: none !important;
+}
+
+.option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 250px;
+  gap: var(--size-1);
+}
+
+.option-row .switch {
+  cursor: pointer;
+  flex: 1;
+}
+
 /* --- Fair Play Toggle & Tooltip --- */
 
 .survivor-fair-play {

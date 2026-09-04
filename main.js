@@ -339,7 +339,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const feedbackSnackbar = document.getElementById("feedback-snackbar")
   const snackbarMessage = document.getElementById("snackbar-message")
   const randomizeBoardSizeBtn = document.getElementById("randomizeBoardSizeBtn")
-  let userSetRotatingStarters = false
+  let userSetConquestRotatingStarters = false
+  let userSetStealthRotatingStarters = false
+  let userSetSurvivorRotatingStarters = false
 
   // --- EVENT HANDLER FUNCTIONS ---
 
@@ -2150,20 +2152,17 @@ document.addEventListener("DOMContentLoaded", () => {
       return
     }
 
-    const toggles = [
-      conquestRotatingStarterToggle,
-      stealthRotatingStarterToggle,
-      survivorRotatingStarterToggle,
-    ].filter(Boolean)
+    // Conquest and Stealth default to OFF all the time
+    if (conquestRotatingStarterToggle && !userSetConquestRotatingStarters) {
+      conquestRotatingStarterToggle.checked = false
+    }
+    if (stealthRotatingStarterToggle && !userSetStealthRotatingStarters) {
+      stealthRotatingStarterToggle.checked = false
+    }
 
-    if (playerCount <= 2) {
-      toggles.forEach((toggle) => {
-        toggle.checked = false
-      })
-    } else {
-      toggles.forEach((toggle) => {
-        toggle.checked = true
-      })
+    // Survivor mode defaults to ON for > 2 players and OFF for <= 2 players
+    if (survivorRotatingStarterToggle && !userSetSurvivorRotatingStarters) {
+      survivorRotatingStarterToggle.checked = playerCount > 2
     }
   }
 
@@ -2643,7 +2642,9 @@ document.addEventListener("DOMContentLoaded", () => {
       matchLength: matchLengthInput.value,
       muteSounds: muteSoundsToggle.checked,
       pronounceWords: pronounceWordsToggle.checked,
-      userSetRotatingStarters,
+      userSetConquestRotatingStarters,
+      userSetStealthRotatingStarters,
+      userSetSurvivorRotatingStarters,
       fairPlay: survivorEqualRoundsToggle
         ? survivorEqualRoundsToggle.checked
         : true,
@@ -2739,16 +2740,19 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       muteSoundsToggle.checked = settings.muteSounds === true
       pronounceWordsToggle.checked = settings.pronounceWords === true
-      userSetRotatingStarters = settings.userSetRotatingStarters === true
+      userSetConquestRotatingStarters =
+        settings.userSetConquestRotatingStarters === true
+      userSetStealthRotatingStarters =
+        settings.userSetStealthRotatingStarters === true
+      userSetSurvivorRotatingStarters =
+        settings.userSetSurvivorRotatingStarters === true
       const isTwoPlayers = playersList.length <= 2
 
       if (survivorRotatingStarterToggle) {
         survivorRotatingStarterToggle.checked =
-          isTwoPlayers && !userSetRotatingStarters
-            ? false
-            : (settings.survivorRotatingStarters !== undefined
-                ? settings.survivorRotatingStarters !== false
-                : settings.fairPlay !== false)
+          userSetSurvivorRotatingStarters
+            ? settings.survivorRotatingStarters === true
+            : !isTwoPlayers
       }
       if (survivorEqualRoundsToggle) {
         survivorEqualRoundsToggle.checked =
@@ -2765,11 +2769,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (conquestRotatingStarterToggle) {
         conquestRotatingStarterToggle.checked =
-          isTwoPlayers && !userSetRotatingStarters
-            ? false
-            : (settings.conquestRotatingStarters !== undefined
-                ? settings.conquestRotatingStarters !== false
-                : true)
+          userSetConquestRotatingStarters
+            ? settings.conquestRotatingStarters === true
+            : false
       }
       if (conquestEqualRoundsToggle) {
         conquestEqualRoundsToggle.checked =
@@ -2777,11 +2779,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (stealthRotatingStarterToggle) {
         stealthRotatingStarterToggle.checked =
-          isTwoPlayers && !userSetRotatingStarters
-            ? false
-            : (settings.stealthRotatingStarters !== undefined
-                ? settings.stealthRotatingStarters !== false
-                : true)
+          userSetStealthRotatingStarters
+            ? settings.stealthRotatingStarters === true
+            : false
       }
       if (stealthEqualRoundsToggle) {
         stealthEqualRoundsToggle.checked =
@@ -2927,13 +2927,13 @@ document.addEventListener("DOMContentLoaded", () => {
         : true
       settings.conquestRotatingStarters = conquestRotatingStarterToggle
         ? conquestRotatingStarterToggle.checked
-        : !isTwoPlayers
+        : false
       settings.conquestEqualRounds = conquestEqualRoundsToggle
         ? conquestEqualRoundsToggle.checked
         : true
       settings.stealthRotatingStarters = stealthRotatingStarterToggle
         ? stealthRotatingStarterToggle.checked
-        : !isTwoPlayers
+        : false
       settings.stealthEqualRounds = stealthEqualRoundsToggle
         ? stealthEqualRoundsToggle.checked
         : true
@@ -3589,7 +3589,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function resetSettings() {
-    userSetRotatingStarters = false
+    userSetConquestRotatingStarters = false
+    userSetStealthRotatingStarters = false
+    userSetSurvivorRotatingStarters = false
     gameState.setup.players = [
       { id: `${Date.now()}_1`, name: "Player 1" },
       { id: `${Date.now()}_2`, name: "Player 2" },
@@ -3941,7 +3943,7 @@ document.addEventListener("DOMContentLoaded", () => {
   })
   if (survivorRotatingStarterToggle) {
     survivorRotatingStarterToggle.addEventListener("change", () => {
-      userSetRotatingStarters = true
+      userSetSurvivorRotatingStarters = true
       saveSettings()
     })
   }
@@ -3962,7 +3964,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (conquestRotatingStarterToggle) {
     conquestRotatingStarterToggle.addEventListener("change", () => {
-      userSetRotatingStarters = true
+      userSetConquestRotatingStarters = true
       saveSettings()
     })
   }
@@ -3973,7 +3975,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (stealthRotatingStarterToggle) {
     stealthRotatingStarterToggle.addEventListener("change", () => {
-      userSetRotatingStarters = true
+      userSetStealthRotatingStarters = true
       saveSettings()
     })
   }

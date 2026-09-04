@@ -315,21 +315,42 @@
                 </div>
               </div>
             </div>
-            <div id="fairPlaySettingGroup" class="setting-group survivor-fair-play hidden">
-              <label class="switch fair-play-switch">
-                <input type="checkbox" role="switch" id="fairPlayToggle" checked>
-                <span class="label">Fair Play</span>
-              </label>
-              <div class="tooltip-container">
-                <button type="button" class="icon-button small tooltip-trigger" aria-label="What is Fair Play?" aria-describedby="fair-play-tooltip">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                  </svg>
-                </button>
-                <div id="fair-play-tooltip" class="tooltip-popup" role="tooltip">
-                  Ensures all players get equal turns per round and rotates who starts each round so the last player doesn't have an unfair advantage.
+            <div id="survivorOptionsGroup" class="setting-group survivor-options hidden">
+              <div class="option-row">
+                <label class="switch">
+                  <input type="checkbox" role="switch" id="survivorRotatingStarterToggle" checked>
+                  <span class="label">Rotating Starters</span>
+                </label>
+                <div class="tooltip-container">
+                  <button type="button" class="icon-button small tooltip-trigger" aria-label="Rotating Starters Info" aria-describedby="survivor-starter-tooltip">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="16" x2="12" y2="12"></line>
+                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                  </button>
+                  <div id="survivor-starter-tooltip" class="tooltip-popup" role="tooltip">
+                    Rotates who starts each round among surviving players so the last player doesn't have an unfair advantage.
+                  </div>
+                </div>
+              </div>
+
+              <div class="option-row">
+                <label class="switch">
+                  <input type="checkbox" role="switch" id="survivorEqualRoundsToggle" checked>
+                  <span class="label">Equal Rounds</span>
+                </label>
+                <div class="tooltip-container">
+                  <button type="button" class="icon-button small tooltip-trigger" aria-label="Equal Rounds Info" aria-describedby="survivor-equal-rounds-tooltip">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="16" x2="12" y2="12"></line>
+                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                  </button>
+                  <div id="survivor-equal-rounds-tooltip" class="tooltip-popup" role="tooltip">
+                    Ensures all players get equal turns per round. When a player is eliminated, the round is completed so nobody is eliminated with fewer turns.
+                  </div>
                 </div>
               </div>
             </div>

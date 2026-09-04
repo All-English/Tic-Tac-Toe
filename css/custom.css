@@ -673,7 +673,8 @@ dialog#game-over-dialog {
 /* --- Conquest Fairness Options --- */
 
 .conquest-options,
-.stealth-options {
+.stealth-options,
+.survivor-options {
   margin-block-start: var(--size-3);
   display: flex;
   flex-direction: column;
@@ -682,7 +683,8 @@ dialog#game-over-dialog {
 }
 
 .conquest-options.hidden,
-.stealth-options.hidden {
+.stealth-options.hidden,
+.survivor-options.hidden {
   display: none !important;
 }
 

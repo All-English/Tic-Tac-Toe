@@ -293,9 +293,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const pronounceWordsToggle = document.getElementById("pronounceWordsToggle")
   const gameModeSelector = document.getElementById("gameModeSelector")
   const randomizeGameModeBtn = document.getElementById("randomizeGameModeBtn")
-  const gameModeHint = document.getElementById("gameModeHint")
-  const fairPlaySettingGroup = document.getElementById("fairPlaySettingGroup")
-  const fairPlayToggle = document.getElementById("fairPlayToggle")
+  const survivorOptionsGroup =
+    document.getElementById("survivorOptionsGroup") ||
+    document.getElementById("fairPlaySettingGroup")
+  const survivorRotatingStarterToggle = document.getElementById(
+    "survivorRotatingStarterToggle",
+  )
+  const survivorEqualRoundsToggle = document.getElementById(
+    "survivorEqualRoundsToggle",
+  )
+  const fairPlaySettingGroup = survivorOptionsGroup
+  const fairPlayToggle = survivorEqualRoundsToggle
   const conquestOptionsGroup = document.getElementById("conquestOptionsGroup")
   const conquestBlockPointsToggle = document.getElementById(
     "conquestBlockPointsToggle",
@@ -637,7 +645,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (
       gameState.gameMode === "Survivor" &&
-      gameState.fairPlay &&
+      gameState.survivorRotatingStarters &&
       Array.isArray(gameState.survivorRoundOrder)
     ) {
       const active = gameState.survivorRoundOrder
@@ -1069,6 +1077,8 @@ document.addEventListener("DOMContentLoaded", () => {
       matchLength: gameState.matchLength,
       gameMode: gameState.gameMode,
       fairPlay: gameState.fairPlay,
+      survivorRotatingStarters: gameState.survivorRotatingStarters,
+      survivorEqualRounds: gameState.survivorEqualRounds,
       conquestBlockPoints: gameState.conquestBlockPoints,
       conquestRotatingStarters: gameState.conquestRotatingStarters,
       conquestEqualRounds: gameState.conquestEqualRounds,
@@ -1328,7 +1338,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           : null,
       survivorState:
-        gameState.gameMode === "Survivor" && gameState.fairPlay
+        gameState.gameMode === "Survivor" &&
+        (gameState.survivorRotatingStarters || gameState.survivorEqualRounds)
           ? {
               starter: gameState.survivorRoundStarter,
               roundOrder: [...gameState.survivorRoundOrder],
@@ -1406,58 +1417,135 @@ document.addEventListener("DOMContentLoaded", () => {
     // Determine if the game is over, but don't call endGame here.
     let isGameOver = false
 
-    if (gameState.gameMode === "Survivor" && gameState.fairPlay) {
+    if (gameState.gameMode === "Survivor") {
       const boardFull = newMovesMade === gameState.gridSize * gameState.gridSize
-      if (boardFull) {
-        isGameOver = true
-      } else {
-        const nextTurnIndex = gameState.survivorTurnIndex + 1
-        if (nextTurnIndex < gameState.survivorRoundOrder.length) {
-          // Current round continues with the next scheduled player
-          const nextPlayer = gameState.survivorRoundOrder[nextTurnIndex]
-          gameState = {
-            ...gameState,
-            survivorTurnIndex: nextTurnIndex,
-            currentPlayer: nextPlayer,
-          }
-          isGameOver = false
+
+      if (gameState.survivorEqualRounds) {
+        if (boardFull) {
+          isGameOver = true
         } else {
-          // --- CURRENT ROUND IS COMPLETE! ---
-          const survivingPlayers = []
-          for (let i = 0; i < gameState.numPlayers; i++) {
-            if (!gameState.eliminatedPlayers.includes(i)) {
-              survivingPlayers.push(i)
+          const nextTurnIndex = gameState.survivorTurnIndex + 1
+          if (nextTurnIndex < gameState.survivorRoundOrder.length) {
+            // Current round continues with the next scheduled player
+            const nextPlayer = gameState.survivorRoundOrder[nextTurnIndex]
+            gameState = {
+              ...gameState,
+              survivorTurnIndex: nextTurnIndex,
+              currentPlayer: nextPlayer,
             }
-          }
-
-          if (survivingPlayers.length <= 1) {
-            // Either 1 survivor (winner) or 0 survivors (tie among those eliminated this round)
-            isGameOver = true
+            isGameOver = false
           } else {
-            // 2 or more players survived! Advance to next round and ROTATE starter!
-            let nextStarter =
-              (gameState.survivorRoundStarter + 1) % gameState.numPlayers
-            while (gameState.eliminatedPlayers.includes(nextStarter)) {
-              nextStarter = (nextStarter + 1) % gameState.numPlayers
-            }
-
-            const nextRoundOrder = []
+            // --- CURRENT ROUND IS COMPLETE! ---
+            const survivingPlayers = []
             for (let i = 0; i < gameState.numPlayers; i++) {
-              const p = (nextStarter + i) % gameState.numPlayers
-              if (survivingPlayers.includes(p)) {
-                nextRoundOrder.push(p)
+              if (!gameState.eliminatedPlayers.includes(i)) {
+                survivingPlayers.push(i)
               }
             }
 
-            gameState = {
-              ...gameState,
-              survivorRoundStarter: nextStarter,
-              survivorRoundOrder: nextRoundOrder,
-              survivorTurnIndex: 0,
-              eliminatedThisRound: [],
-              currentPlayer: nextRoundOrder[0],
+            if (survivingPlayers.length <= 1) {
+              // Either 1 survivor (winner) or 0 survivors (tie among those eliminated this round)
+              isGameOver = true
+            } else {
+              let nextStarter
+              let nextRoundOrder
+
+              if (gameState.survivorRotatingStarters) {
+                // Advance to next round and ROTATE starter!
+                nextStarter =
+                  (gameState.survivorRoundStarter + 1) % gameState.numPlayers
+                while (gameState.eliminatedPlayers.includes(nextStarter)) {
+                  nextStarter = (nextStarter + 1) % gameState.numPlayers
+                }
+
+                nextRoundOrder = []
+                for (let i = 0; i < gameState.numPlayers; i++) {
+                  const p = (nextStarter + i) % gameState.numPlayers
+                  if (survivingPlayers.includes(p)) {
+                    nextRoundOrder.push(p)
+                  }
+                }
+              } else {
+                // Fixed sequential order of surviving players
+                nextRoundOrder = [...survivingPlayers]
+                nextStarter = nextRoundOrder[0]
+              }
+
+              gameState = {
+                ...gameState,
+                survivorRoundStarter: nextStarter,
+                survivorRoundOrder: nextRoundOrder,
+                survivorTurnIndex: 0,
+                eliminatedThisRound: [],
+                currentPlayer: nextRoundOrder[0],
+              }
+              isGameOver = false
             }
-            isGameOver = false
+          }
+        }
+      } else {
+        // Sudden death (survivorEqualRounds is false)
+        isGameOver = shouldEndGame || boardFull
+
+        if (!isGameOver) {
+          if (gameState.survivorRotatingStarters) {
+            let nextTurnIndex = gameState.survivorTurnIndex + 1
+            while (
+              nextTurnIndex < gameState.survivorRoundOrder.length &&
+              gameState.eliminatedPlayers.includes(
+                gameState.survivorRoundOrder[nextTurnIndex],
+              )
+            ) {
+              nextTurnIndex++
+            }
+
+            if (nextTurnIndex < gameState.survivorRoundOrder.length) {
+              const nextPlayer = gameState.survivorRoundOrder[nextTurnIndex]
+              gameState = {
+                ...gameState,
+                survivorTurnIndex: nextTurnIndex,
+                currentPlayer: nextPlayer,
+              }
+            } else {
+              // Round complete! Rotate starter among surviving players
+              const survivingPlayers = []
+              for (let i = 0; i < gameState.numPlayers; i++) {
+                if (!gameState.eliminatedPlayers.includes(i)) {
+                  survivingPlayers.push(i)
+                }
+              }
+
+              if (survivingPlayers.length <= 1) {
+                isGameOver = true
+              } else {
+                let nextStarter =
+                  (gameState.survivorRoundStarter + 1) % gameState.numPlayers
+                while (gameState.eliminatedPlayers.includes(nextStarter)) {
+                  nextStarter = (nextStarter + 1) % gameState.numPlayers
+                }
+
+                const nextRoundOrder = []
+                for (let i = 0; i < gameState.numPlayers; i++) {
+                  const p = (nextStarter + i) % gameState.numPlayers
+                  if (survivingPlayers.includes(p)) {
+                    nextRoundOrder.push(p)
+                  }
+                }
+
+                gameState = {
+                  ...gameState,
+                  survivorRoundStarter: nextStarter,
+                  survivorRoundOrder: nextRoundOrder,
+                  survivorTurnIndex: 0,
+                  eliminatedThisRound: [],
+                  currentPlayer: nextRoundOrder[0],
+                }
+              }
+            }
+          } else {
+            // Standard sequential order skipping eliminated players
+            const nextPlayer = getNextPlayerIndex(gameState.currentPlayer)
+            gameState = { ...gameState, currentPlayer: nextPlayer }
           }
         }
       }
@@ -1635,7 +1723,7 @@ document.addEventListener("DOMContentLoaded", () => {
         !gameState.eliminatedPlayers.includes(currentPlayer)
       ) {
         gameState.eliminatedPlayers.push(currentPlayer)
-        if (gameState.fairPlay) {
+        if (gameState.survivorEqualRounds) {
           if (!gameState.eliminatedThisRound.includes(currentPlayer)) {
             gameState.eliminatedThisRound.push(currentPlayer)
           }
@@ -1998,8 +2086,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateGameModeHint(mode) {
-    if (fairPlaySettingGroup) {
-      fairPlaySettingGroup.classList.toggle("hidden", mode !== "Survivor")
+    if (survivorOptionsGroup) {
+      survivorOptionsGroup.classList.toggle("hidden", mode !== "Survivor")
     }
     if (conquestOptionsGroup) {
       conquestOptionsGroup.classList.toggle("hidden", mode !== "Conquest")
@@ -2531,7 +2619,15 @@ document.addEventListener("DOMContentLoaded", () => {
       matchLength: matchLengthInput.value,
       muteSounds: muteSoundsToggle.checked,
       pronounceWords: pronounceWordsToggle.checked,
-      fairPlay: fairPlayToggle ? fairPlayToggle.checked : true,
+      fairPlay: survivorEqualRoundsToggle
+        ? survivorEqualRoundsToggle.checked
+        : true,
+      survivorRotatingStarters: survivorRotatingStarterToggle
+        ? survivorRotatingStarterToggle.checked
+        : true,
+      survivorEqualRounds: survivorEqualRoundsToggle
+        ? survivorEqualRoundsToggle.checked
+        : true,
       conquestBlockPoints: conquestBlockPointsToggle
         ? conquestBlockPointsToggle.checked
         : true,
@@ -2618,7 +2714,19 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       muteSoundsToggle.checked = settings.muteSounds === true
       pronounceWordsToggle.checked = settings.pronounceWords === true
-      if (fairPlayToggle) {
+      if (survivorRotatingStarterToggle) {
+        survivorRotatingStarterToggle.checked =
+          settings.survivorRotatingStarters !== undefined
+            ? settings.survivorRotatingStarters !== false
+            : settings.fairPlay !== false
+      }
+      if (survivorEqualRoundsToggle) {
+        survivorEqualRoundsToggle.checked =
+          settings.survivorEqualRounds !== undefined
+            ? settings.survivorEqualRounds !== false
+            : settings.fairPlay !== false
+      }
+      if (fairPlayToggle && fairPlayToggle !== survivorEqualRoundsToggle) {
         fairPlayToggle.checked = settings.fairPlay !== false
       }
       if (conquestBlockPointsToggle) {
@@ -2764,7 +2872,15 @@ document.addEventListener("DOMContentLoaded", () => {
       settings.gameMode = document.querySelector(
         "#gameModeSelector button.selected",
       ).dataset.mode
-      settings.fairPlay = fairPlayToggle ? fairPlayToggle.checked : true
+      settings.fairPlay =
+        (survivorEqualRoundsToggle ? survivorEqualRoundsToggle.checked : true) &&
+        (survivorRotatingStarterToggle ? survivorRotatingStarterToggle.checked : true)
+      settings.survivorRotatingStarters = survivorRotatingStarterToggle
+        ? survivorRotatingStarterToggle.checked
+        : true
+      settings.survivorEqualRounds = survivorEqualRoundsToggle
+        ? survivorEqualRoundsToggle.checked
+        : true
       settings.conquestBlockPoints = conquestBlockPointsToggle
         ? conquestBlockPointsToggle.checked
         : true
@@ -3305,7 +3421,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (survivors.length > 0) {
         survivors.forEach((p) => winnerIds.push(p.id))
       } else if (
-        finalGameState.fairPlay &&
+        finalGameState.survivorEqualRounds &&
         finalGameState.eliminatedThisRound &&
         finalGameState.eliminatedThisRound.length > 0
       ) {
@@ -3437,7 +3553,13 @@ document.addEventListener("DOMContentLoaded", () => {
     matchLengthInput.value = 3
     muteSoundsToggle.checked = false
     pronounceWordsToggle.checked = true
-    if (fairPlayToggle) {
+    if (survivorRotatingStarterToggle) {
+      survivorRotatingStarterToggle.checked = true
+    }
+    if (survivorEqualRoundsToggle) {
+      survivorEqualRoundsToggle.checked = true
+    }
+    if (fairPlayToggle && fairPlayToggle !== survivorEqualRoundsToggle) {
       fairPlayToggle.checked = true
     }
     if (conquestBlockPointsToggle) {
@@ -3771,7 +3893,17 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePronunciationToggleState()
     saveSettings()
   })
-  if (fairPlayToggle) {
+  if (survivorRotatingStarterToggle) {
+    survivorRotatingStarterToggle.addEventListener("change", () => {
+      saveSettings()
+    })
+  }
+  if (survivorEqualRoundsToggle) {
+    survivorEqualRoundsToggle.addEventListener("change", () => {
+      saveSettings()
+    })
+  }
+  if (fairPlayToggle && fairPlayToggle !== survivorEqualRoundsToggle) {
     fairPlayToggle.addEventListener("change", () => {
       saveSettings()
     })

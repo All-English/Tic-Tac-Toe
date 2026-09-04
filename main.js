@@ -1098,6 +1098,12 @@ document.addEventListener("DOMContentLoaded", () => {
       ...conquestStateUpdates,
     }
 
+    if (feedbackSnackbar) {
+      try {
+        feedbackSnackbar.hidePopover()
+      } catch (e) {}
+    }
+
     render() // Re-render after state change
 
     // Re-announce the current player turn since it was reverted
@@ -1251,13 +1257,6 @@ document.addEventListener("DOMContentLoaded", () => {
       soundPromise = new Promise((resolve) => setTimeout(resolve, 300))
     }
 
-    if (blockPoints > 0) {
-      const playerName = gameState.playerNames[gameState.currentPlayer]
-      const ptsText = blockPoints === 1 ? "1 pt" : `${blockPoints} pts`
-      const lineText = linesBlocked === 1 ? "1 line" : `${linesBlocked} lines`
-      showSnackbar(`${playerName} blocked ${lineText}! (+${ptsText})`)
-    }
-
     const newMoveHistory = [...gameState.moveHistory, move]
     const newMovesMade = gameState.movesMade + 1
 
@@ -1328,6 +1327,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } else if (gameState.gameMode === "Conquest") {
       let isConquestGameOver = false
+      let equalRoundsEnded = false
       if (gameState.conquestEqualRounds) {
         const fullRounds = Math.floor(
           (gameState.gridSize * gameState.gridSize) / gameState.numPlayers,
@@ -1335,6 +1335,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const maxMoves = fullRounds * gameState.numPlayers
         if (newMovesMade >= maxMoves) {
           isConquestGameOver = true
+          equalRoundsEnded = true
         }
       } else {
         if (newMovesMade >= gameState.gridSize * gameState.gridSize) {
@@ -1343,6 +1344,24 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       isGameOver = isConquestGameOver
+
+      if (isGameOver && equalRoundsEnded) {
+        if (blockPoints > 0) {
+          const playerName = gameState.playerNames[gameState.currentPlayer]
+          const ptsText = blockPoints === 1 ? "1 pt" : `${blockPoints} pts`
+          const lineText = linesBlocked === 1 ? "1 line" : `${linesBlocked} lines`
+          showSnackbar(
+            `${playerName} blocked ${lineText}! (+${ptsText}) • No more equal rounds are left.`,
+          )
+        } else {
+          showSnackbar("No more equal rounds are left.")
+        }
+      } else if (blockPoints > 0) {
+        const playerName = gameState.playerNames[gameState.currentPlayer]
+        const ptsText = blockPoints === 1 ? "1 pt" : `${blockPoints} pts`
+        const lineText = linesBlocked === 1 ? "1 line" : `${linesBlocked} lines`
+        showSnackbar(`${playerName} blocked ${lineText}! (+${ptsText})`)
+      }
 
       if (!isGameOver) {
         if (gameState.conquestRotatingStarters) {

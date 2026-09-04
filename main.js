@@ -306,6 +306,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const conquestEqualRoundsToggle = document.getElementById(
     "conquestEqualRoundsToggle",
   )
+  const stealthOptionsGroup = document.getElementById("stealthOptionsGroup")
+  const stealthRotatingStarterToggle = document.getElementById(
+    "stealthRotatingStarterToggle",
+  )
+  const stealthEqualRoundsToggle = document.getElementById(
+    "stealthEqualRoundsToggle",
+  )
   const resetSettingsBtn = document.getElementById("resetSettingsBtn")
   const randomizePlayerOrderBtn_setup = document.getElementById(
     "randomizePlayerOrderBtn_setup",
@@ -960,6 +967,8 @@ document.addEventListener("DOMContentLoaded", () => {
       conquestBlockPoints: gameState.conquestBlockPoints,
       conquestRotatingStarters: gameState.conquestRotatingStarters,
       conquestEqualRounds: gameState.conquestEqualRounds,
+      stealthRotatingStarters: gameState.stealthRotatingStarters,
+      stealthEqualRounds: gameState.stealthEqualRounds,
       selectedUnits: gameState.selectedUnits,
       pronounceWords: gameState.pronounceWords,
       isMuted: gameState.isMuted,
@@ -993,6 +1002,12 @@ document.addEventListener("DOMContentLoaded", () => {
         (_, i) => i,
       ),
       conquestTurnIndex: 0,
+      stealthRoundStarter: 0,
+      stealthRoundOrder: Array.from(
+        { length: settings.numPlayers },
+        (_, i) => i,
+      ),
+      stealthTurnIndex: 0,
       playerStatsThisGame: Array(settings.numPlayers)
         .fill(null)
         .map(() => ({
@@ -1082,6 +1097,15 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    let stealthStateUpdates = {}
+    if (lastMove.stealthState) {
+      stealthStateUpdates = {
+        stealthRoundStarter: lastMove.stealthState.starter,
+        stealthRoundOrder: [...lastMove.stealthState.roundOrder],
+        stealthTurnIndex: lastMove.stealthState.turnIndex,
+      }
+    }
+
     // Set the new, reverted state
     gameState = {
       ...gameState,
@@ -1096,6 +1120,7 @@ document.addEventListener("DOMContentLoaded", () => {
       moveHistory: gameState.moveHistory.slice(0, -1),
       ...survivorStateUpdates,
       ...conquestStateUpdates,
+      ...stealthStateUpdates,
     }
 
     if (feedbackSnackbar) {
@@ -1196,6 +1221,14 @@ document.addEventListener("DOMContentLoaded", () => {
               starter: gameState.conquestRoundStarter,
               roundOrder: [...gameState.conquestRoundOrder],
               turnIndex: gameState.conquestTurnIndex,
+            }
+          : null,
+      stealthState:
+        gameState.gameMode === "Stealth" && gameState.stealthRotatingStarters
+          ? {
+              starter: gameState.stealthRoundStarter,
+              roundOrder: [...gameState.stealthRoundOrder],
+              turnIndex: gameState.stealthTurnIndex,
             }
           : null,
       survivorState:
@@ -1386,6 +1419,63 @@ document.addEventListener("DOMContentLoaded", () => {
               conquestRoundStarter: nextStarter,
               conquestRoundOrder: nextRoundOrder,
               conquestTurnIndex: 0,
+              currentPlayer: nextRoundOrder[0],
+            }
+          }
+        } else {
+          // Standard sequential order
+          const nextPlayer =
+            (gameState.currentPlayer + 1) % gameState.numPlayers
+          gameState = { ...gameState, currentPlayer: nextPlayer }
+        }
+      }
+    } else if (gameState.gameMode === "Stealth") {
+      let isStealthGameOver = false
+      let equalRoundsEnded = false
+      if (gameState.stealthEqualRounds) {
+        const fullRounds = Math.floor(
+          (gameState.gridSize * gameState.gridSize) / gameState.numPlayers,
+        )
+        const maxMoves = fullRounds * gameState.numPlayers
+        if (newMovesMade >= maxMoves) {
+          isStealthGameOver = true
+          equalRoundsEnded = true
+        }
+      } else {
+        if (newMovesMade >= gameState.gridSize * gameState.gridSize) {
+          isStealthGameOver = true
+        }
+      }
+
+      isGameOver = isStealthGameOver
+
+      if (isGameOver && equalRoundsEnded) {
+        showSnackbar("No more equal rounds are left.")
+      }
+
+      if (!isGameOver) {
+        if (gameState.stealthRotatingStarters) {
+          const nextTurnIndex = gameState.stealthTurnIndex + 1
+          if (nextTurnIndex < gameState.numPlayers) {
+            const nextPlayer = gameState.stealthRoundOrder[nextTurnIndex]
+            gameState = {
+              ...gameState,
+              stealthTurnIndex: nextTurnIndex,
+              currentPlayer: nextPlayer,
+            }
+          } else {
+            // Round finished! Advance starter and rotate for next round
+            const nextStarter =
+              (gameState.stealthRoundStarter + 1) % gameState.numPlayers
+            const nextRoundOrder = Array.from(
+              { length: gameState.numPlayers },
+              (_, i) => (nextStarter + i) % gameState.numPlayers,
+            )
+            gameState = {
+              ...gameState,
+              stealthRoundStarter: nextStarter,
+              stealthRoundOrder: nextRoundOrder,
+              stealthTurnIndex: 0,
               currentPlayer: nextRoundOrder[0],
             }
           }
@@ -1805,6 +1895,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (conquestOptionsGroup) {
       conquestOptionsGroup.classList.toggle("hidden", mode !== "Conquest")
     }
+    if (stealthOptionsGroup) {
+      stealthOptionsGroup.classList.toggle("hidden", mode !== "Stealth")
+    }
     switch (mode) {
       case "Conquest":
         gameModeHint.textContent = "Get the most points."
@@ -1831,20 +1924,20 @@ document.addEventListener("DOMContentLoaded", () => {
       ? currentSelectedBtn.dataset.mode
       : gameState.gameMode
     const playerCount = gameState.setup.players.length
+    const currentGridSize = parseInt(gridSizeInput.value, 10)
 
-    if (currentMode === "Survivor" && playerCount > 2) {
-      if (matchLengthInput.value === "3" || previousMode !== "Survivor") {
+    const shouldDefaultToTwo =
+      (currentMode === "Survivor" && playerCount > 2) ||
+      (currentMode === "Stealth" && currentGridSize === 3)
+
+    if (shouldDefaultToTwo) {
+      const modeChanged = previousMode && previousMode !== currentMode
+      if (matchLengthInput.value === "3" || modeChanged) {
         matchLengthInput.value = 2
         matchLengthValue.textContent = "2"
         syncSliders()
       }
-    } else if (previousMode === "Survivor" || currentMode !== "Survivor") {
-      if (matchLengthInput.value === "2") {
-        matchLengthInput.value = 3
-        matchLengthValue.textContent = "3"
-        syncSliders()
-      }
-    } else if (currentMode === "Survivor" && playerCount <= 2) {
+    } else {
       if (matchLengthInput.value === "2") {
         matchLengthInput.value = 3
         matchLengthValue.textContent = "3"
@@ -2339,6 +2432,12 @@ document.addEventListener("DOMContentLoaded", () => {
       conquestEqualRounds: conquestEqualRoundsToggle
         ? conquestEqualRoundsToggle.checked
         : true,
+      stealthRotatingStarters: stealthRotatingStarterToggle
+        ? stealthRotatingStarterToggle.checked
+        : true,
+      stealthEqualRounds: stealthEqualRoundsToggle
+        ? stealthEqualRoundsToggle.checked
+        : true,
       gameMode: document.querySelector("#gameModeSelector button.selected")
         ?.dataset.mode,
       selectedUnits: Array.from(
@@ -2397,9 +2496,12 @@ document.addEventListener("DOMContentLoaded", () => {
       gameState.setup.players = playersList
       gridSizeInput.value = settings.gridSize || 3
       if (
-        settings.gameMode === "Survivor" &&
-        playersList.length > 2 &&
-        (!settings.matchLength || settings.matchLength == 3)
+        (settings.gameMode === "Survivor" &&
+          playersList.length > 2 &&
+          (!settings.matchLength || settings.matchLength == 3)) ||
+        (settings.gameMode === "Stealth" &&
+          (settings.gridSize || 3) == 3 &&
+          (!settings.matchLength || settings.matchLength == 3))
       ) {
         matchLengthInput.value = 2
       } else {
@@ -2421,6 +2523,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (conquestEqualRoundsToggle) {
         conquestEqualRoundsToggle.checked =
           settings.conquestEqualRounds !== false
+      }
+      if (stealthRotatingStarterToggle) {
+        stealthRotatingStarterToggle.checked =
+          settings.stealthRotatingStarters !== false
+      }
+      if (stealthEqualRoundsToggle) {
+        stealthEqualRoundsToggle.checked =
+          settings.stealthEqualRounds !== false
       }
       darkModeToggle.checked = settings.darkMode === true
       themeHueSelect.value = settings.themeHue || "var(--oklch-indigo)"
@@ -2554,6 +2664,12 @@ document.addEventListener("DOMContentLoaded", () => {
       settings.conquestEqualRounds = conquestEqualRoundsToggle
         ? conquestEqualRoundsToggle.checked
         : true
+      settings.stealthRotatingStarters = stealthRotatingStarterToggle
+        ? stealthRotatingStarterToggle.checked
+        : true
+      settings.stealthEqualRounds = stealthEqualRoundsToggle
+        ? stealthEqualRoundsToggle.checked
+        : true
       settings.selectedUnits = [
         ...document.querySelectorAll(".phonics-unit-select"),
       ]
@@ -2613,6 +2729,12 @@ document.addEventListener("DOMContentLoaded", () => {
         (_, i) => i,
       ),
       conquestTurnIndex: 0,
+      stealthRoundStarter: 0,
+      stealthRoundOrder: Array.from(
+        { length: gameState.numPlayers },
+        (_, i) => i,
+      ),
+      stealthTurnIndex: 0,
       playerStatsThisGame: Array(gameState.numPlayers)
         .fill(null)
         .map(() => ({
@@ -3217,6 +3339,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (conquestEqualRoundsToggle) {
       conquestEqualRoundsToggle.checked = true
     }
+    if (stealthRotatingStarterToggle) {
+      stealthRotatingStarterToggle.checked = true
+    }
+    if (stealthEqualRoundsToggle) {
+      stealthEqualRoundsToggle.checked = true
+    }
 
     // Reset theme color dropdown and trigger the change
     // themeHueSelect.value = "var(--oklch-indigo)"
@@ -3553,10 +3681,21 @@ document.addEventListener("DOMContentLoaded", () => {
       saveSettings()
     })
   }
+  if (stealthRotatingStarterToggle) {
+    stealthRotatingStarterToggle.addEventListener("change", () => {
+      saveSettings()
+    })
+  }
+  if (stealthEqualRoundsToggle) {
+    stealthEqualRoundsToggle.addEventListener("change", () => {
+      saveSettings()
+    })
+  }
   addPlayerBtn.addEventListener("click", handleAddPlayer)
   playerNamesContainer.addEventListener("click", handleRemovePlayer)
   gridSizeInput.addEventListener("input", () => {
     syncSliders()
+    updateMatchLengthDefault()
     saveSettings()
   })
   matchLengthInput.addEventListener("input", () => {

@@ -276,6 +276,45 @@
                 </div>
               </div>
             </div>
+            <div id="stealthOptionsGroup" class="setting-group stealth-options hidden">
+              <div class="option-row">
+                <label class="switch">
+                  <input type="checkbox" role="switch" id="stealthRotatingStarterToggle" checked>
+                  <span class="label">Rotating Starters</span>
+                </label>
+                <div class="tooltip-container">
+                  <button type="button" class="icon-button small tooltip-trigger" aria-label="Rotating Starters Info" aria-describedby="stealth-starter-tooltip">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="16" x2="12" y2="12"></line>
+                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                  </button>
+                  <div id="stealth-starter-tooltip" class="tooltip-popup" role="tooltip">
+                    Rotates which player moves first at the start of each round to balance opening tempo.
+                  </div>
+                </div>
+              </div>
+
+              <div class="option-row">
+                <label class="switch">
+                  <input type="checkbox" role="switch" id="stealthEqualRoundsToggle" checked>
+                  <span class="label">Equal Rounds</span>
+                </label>
+                <div class="tooltip-container">
+                  <button type="button" class="icon-button small tooltip-trigger" aria-label="Equal Rounds Info" aria-describedby="stealth-rounds-tooltip">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="16" x2="12" y2="12"></line>
+                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                  </button>
+                  <div id="stealth-rounds-tooltip" class="tooltip-popup" role="tooltip">
+                    Ends the match once all players have taken an equal number of turns so no player is forced to take an extra turn.
+                  </div>
+                </div>
+              </div>
+            </div>
             <div id="fairPlaySettingGroup" class="setting-group survivor-fair-play hidden">
               <label class="switch fair-play-switch">
                 <input type="checkbox" role="switch" id="fairPlayToggle" checked>

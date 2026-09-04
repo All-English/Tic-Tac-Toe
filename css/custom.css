@@ -666,7 +666,8 @@ dialog#game-over-dialog {
 
 /* --- Conquest Fairness Options --- */
 
-.conquest-options {
+.conquest-options,
+.stealth-options {
   margin-block-start: var(--size-3);
   display: flex;
   flex-direction: column;
@@ -674,7 +675,8 @@ dialog#game-over-dialog {
   gap: var(--size-2);
 }
 
-.conquest-options.hidden {
+.conquest-options.hidden,
+.stealth-options.hidden {
   display: none !important;
 }
 

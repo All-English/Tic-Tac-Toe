@@ -664,6 +664,95 @@ dialog#game-over-dialog {
   max-width: 28ch;
 }
 
+/* --- Fair Play Toggle & Tooltip --- */
+
+.survivor-fair-play {
+  margin-block-start: var(--size-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--size-1);
+}
+
+.survivor-fair-play.hidden {
+  display: none !important;
+}
+
+.survivor-fair-play .fair-play-switch {
+  cursor: pointer;
+}
+
+.tooltip-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tooltip-trigger {
+  color: var(--text-color-2);
+  cursor: pointer;
+  padding: 0;
+  width: var(--size-5);
+  height: var(--size-5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-round, 50%);
+  background: transparent;
+  border: none;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.tooltip-trigger:hover,
+.tooltip-trigger:focus-visible {
+  color: var(--primary);
+  transform: scale(1.1);
+  outline: none;
+}
+
+.tooltip-popup {
+  position: absolute;
+  bottom: calc(100% + var(--size-2));
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background-color: light-dark(var(--gray-14), var(--gray-2));
+  color: light-dark(var(--gray-1), var(--gray-14));
+  border: 1px solid light-dark(var(--gray-12), var(--gray-4));
+  padding: var(--size-2) var(--size-3);
+  border-radius: var(--radius-2);
+  font-size: var(--font-size-xs);
+  line-height: 1.35;
+  width: max-content;
+  max-width: 260px;
+  text-align: center;
+  box-shadow: 0 4px 12px light-dark(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.4));
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  z-index: 100;
+}
+
+.tooltip-popup::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: light-dark(var(--gray-14), var(--gray-2)) transparent transparent transparent;
+}
+
+.tooltip-container:hover .tooltip-popup,
+.tooltip-container:focus-within .tooltip-popup,
+.tooltip-trigger:focus + .tooltip-popup,
+.tooltip-trigger:focus-visible + .tooltip-popup {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
 #view-container {
   display: grid;
   perspective: 1000px;

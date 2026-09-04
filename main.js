@@ -294,6 +294,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const gameModeSelector = document.getElementById("gameModeSelector")
   const randomizeGameModeBtn = document.getElementById("randomizeGameModeBtn")
   const gameModeHint = document.getElementById("gameModeHint")
+  const fairPlaySettingGroup = document.getElementById("fairPlaySettingGroup")
+  const fairPlayToggle = document.getElementById("fairPlayToggle")
   const resetSettingsBtn = document.getElementById("resetSettingsBtn")
   const randomizePlayerOrderBtn_setup = document.getElementById(
     "randomizePlayerOrderBtn_setup",
@@ -944,6 +946,7 @@ document.addEventListener("DOMContentLoaded", () => {
       gridSize: gameState.gridSize,
       matchLength: gameState.matchLength,
       gameMode: gameState.gameMode,
+      fairPlay: gameState.fairPlay,
       selectedUnits: gameState.selectedUnits,
       pronounceWords: gameState.pronounceWords,
       isMuted: gameState.isMuted,
@@ -964,6 +967,13 @@ document.addEventListener("DOMContentLoaded", () => {
       highlightedCells: new Set(),
       winLinesToDraw: [],
       eliminatedPlayers: [],
+      survivorRoundStarter: 0,
+      survivorRoundOrder: Array.from(
+        { length: settings.numPlayers },
+        (_, i) => i,
+      ),
+      survivorTurnIndex: 0,
+      eliminatedThisRound: [],
       playerStatsThisGame: Array(settings.numPlayers)
         .fill(null)
         .map(() => ({
@@ -1028,6 +1038,16 @@ document.addEventListener("DOMContentLoaded", () => {
       )
     }
 
+    let survivorStateUpdates = {}
+    if (lastMove.survivorState) {
+      survivorStateUpdates = {
+        survivorRoundStarter: lastMove.survivorState.starter,
+        survivorRoundOrder: [...lastMove.survivorState.roundOrder],
+        survivorTurnIndex: lastMove.survivorState.turnIndex,
+        eliminatedThisRound: [...lastMove.survivorState.eliminatedThisRound],
+      }
+    }
+
     // Set the new, reverted state
     gameState = {
       ...gameState,
@@ -1040,6 +1060,7 @@ document.addEventListener("DOMContentLoaded", () => {
       movesMade: gameState.movesMade - 1,
       currentPlayer: lastMove.player,
       moveHistory: gameState.moveHistory.slice(0, -1),
+      ...survivorStateUpdates,
     }
 
     render() // Re-render after state change
@@ -1117,6 +1138,15 @@ document.addEventListener("DOMContentLoaded", () => {
       index: index,
       player: gameState.currentPlayer,
       scoredLines: [],
+      survivorState:
+        gameState.gameMode === "Survivor" && gameState.fairPlay
+          ? {
+              starter: gameState.survivorRoundStarter,
+              roundOrder: [...gameState.survivorRoundOrder],
+              turnIndex: gameState.survivorTurnIndex,
+              eliminatedThisRound: [...gameState.eliminatedThisRound],
+            }
+          : null,
     }
 
     const newBoard = [...gameState.board]
@@ -1168,13 +1198,72 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Determine if the game is over, but don't call endGame here.
-    const isGameOver =
-      shouldEndGame || newMovesMade === gameState.gridSize * gameState.gridSize
+    let isGameOver = false
 
-    if (!isGameOver) {
-      // Find the next active player if the game continues
-      const nextPlayer = getNextPlayerIndex(gameState.currentPlayer)
-      gameState = { ...gameState, currentPlayer: nextPlayer }
+    if (gameState.gameMode === "Survivor" && gameState.fairPlay) {
+      const boardFull = newMovesMade === gameState.gridSize * gameState.gridSize
+      if (boardFull) {
+        isGameOver = true
+      } else {
+        const nextTurnIndex = gameState.survivorTurnIndex + 1
+        if (nextTurnIndex < gameState.survivorRoundOrder.length) {
+          // Current round continues with the next scheduled player
+          const nextPlayer = gameState.survivorRoundOrder[nextTurnIndex]
+          gameState = {
+            ...gameState,
+            survivorTurnIndex: nextTurnIndex,
+            currentPlayer: nextPlayer,
+          }
+          isGameOver = false
+        } else {
+          // --- CURRENT ROUND IS COMPLETE! ---
+          const survivingPlayers = []
+          for (let i = 0; i < gameState.numPlayers; i++) {
+            if (!gameState.eliminatedPlayers.includes(i)) {
+              survivingPlayers.push(i)
+            }
+          }
+
+          if (survivingPlayers.length <= 1) {
+            // Either 1 survivor (winner) or 0 survivors (tie among those eliminated this round)
+            isGameOver = true
+          } else {
+            // 2 or more players survived! Advance to next round and ROTATE starter!
+            let nextStarter =
+              (gameState.survivorRoundStarter + 1) % gameState.numPlayers
+            while (gameState.eliminatedPlayers.includes(nextStarter)) {
+              nextStarter = (nextStarter + 1) % gameState.numPlayers
+            }
+
+            const nextRoundOrder = []
+            for (let i = 0; i < gameState.numPlayers; i++) {
+              const p = (nextStarter + i) % gameState.numPlayers
+              if (survivingPlayers.includes(p)) {
+                nextRoundOrder.push(p)
+              }
+            }
+
+            gameState = {
+              ...gameState,
+              survivorRoundStarter: nextStarter,
+              survivorRoundOrder: nextRoundOrder,
+              survivorTurnIndex: 0,
+              eliminatedThisRound: [],
+              currentPlayer: nextRoundOrder[0],
+            }
+            isGameOver = false
+          }
+        }
+      }
+    } else {
+      isGameOver =
+        shouldEndGame || newMovesMade === gameState.gridSize * gameState.gridSize
+
+      if (!isGameOver) {
+        // Find the next active player if the game continues
+        const nextPlayer = getNextPlayerIndex(gameState.currentPlayer)
+        gameState = { ...gameState, currentPlayer: nextPlayer }
+      }
     }
 
     return { isGameOver, soundPromise, wasBlock }
@@ -1206,10 +1295,18 @@ document.addEventListener("DOMContentLoaded", () => {
         !gameState.eliminatedPlayers.includes(currentPlayer)
       ) {
         gameState.eliminatedPlayers.push(currentPlayer)
-        const activePlayerCount =
-          gameState.numPlayers - gameState.eliminatedPlayers.length
-        if (activePlayerCount <= 1) {
-          shouldEndGame = true
+        if (gameState.fairPlay) {
+          if (!gameState.eliminatedThisRound.includes(currentPlayer)) {
+            gameState.eliminatedThisRound.push(currentPlayer)
+          }
+          const playerName = gameState.playerNames[currentPlayer]
+          showSnackbar(`${playerName} is out! Completing the round...`)
+        } else {
+          const activePlayerCount =
+            gameState.numPlayers - gameState.eliminatedPlayers.length
+          if (activePlayerCount <= 1) {
+            shouldEndGame = true
+          }
         }
       }
 
@@ -1442,16 +1539,20 @@ document.addEventListener("DOMContentLoaded", () => {
           break
         case "Survivor":
           let rank
-          const eliminationIndex =
-            finalGameState.eliminatedPlayers.indexOf(index)
-
-          if (eliminationIndex === -1) {
-            // The player was not eliminated, so they are the winner (1st place)
+          if (winnerIds.includes(players[index].id)) {
             rank = 1
           } else {
-            // The player was eliminated. Their rank is calculated from the end of the list.
-            // e.g., in a 4-player game, 1st eliminated is 4th place (4 - 0).
-            rank = players.length - eliminationIndex
+            const eliminationIndex =
+              finalGameState.eliminatedPlayers.indexOf(index)
+
+            if (eliminationIndex === -1) {
+              // The player was not eliminated, so they are the winner (1st place)
+              rank = 1
+            } else {
+              // The player was eliminated. Their rank is calculated from the end of the list.
+              // e.g., in a 4-player game, 1st eliminated is 4th place (4 - 0).
+              rank = players.length - eliminationIndex
+            }
           }
           modeStats.totalSurvivalRank += rank
           modeStats.gamesFinished++
@@ -1555,6 +1656,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateGameModeHint(mode) {
+    if (fairPlaySettingGroup) {
+      fairPlaySettingGroup.classList.toggle("hidden", mode !== "Survivor")
+    }
     switch (mode) {
       case "Conquest":
         gameModeHint.textContent = "Get the most points."
@@ -2049,6 +2153,7 @@ document.addEventListener("DOMContentLoaded", () => {
       matchLength: matchLengthInput.value,
       muteSounds: muteSoundsToggle.checked,
       pronounceWords: pronounceWordsToggle.checked,
+      fairPlay: fairPlayToggle ? fairPlayToggle.checked : true,
       gameMode: document.querySelector("#gameModeSelector button.selected")
         ?.dataset.mode,
       selectedUnits: Array.from(
@@ -2109,6 +2214,9 @@ document.addEventListener("DOMContentLoaded", () => {
       matchLengthInput.value = settings.matchLength || 3
       muteSoundsToggle.checked = settings.muteSounds === true
       pronounceWordsToggle.checked = settings.pronounceWords === true
+      if (fairPlayToggle) {
+        fairPlayToggle.checked = settings.fairPlay !== false
+      }
       darkModeToggle.checked = settings.darkMode === true
       themeHueSelect.value = settings.themeHue || "var(--oklch-indigo)"
 
@@ -2228,6 +2336,7 @@ document.addEventListener("DOMContentLoaded", () => {
       settings.gameMode = document.querySelector(
         "#gameModeSelector button.selected",
       ).dataset.mode
+      settings.fairPlay = fairPlayToggle ? fairPlayToggle.checked : true
       settings.selectedUnits = [
         ...document.querySelectorAll(".phonics-unit-select"),
       ]
@@ -2274,6 +2383,13 @@ document.addEventListener("DOMContentLoaded", () => {
       highlightedCells: new Set(),
       winLinesToDraw: [],
       eliminatedPlayers: [],
+      survivorRoundStarter: 0,
+      survivorRoundOrder: Array.from(
+        { length: gameState.numPlayers },
+        (_, i) => i,
+      ),
+      survivorTurnIndex: 0,
+      eliminatedThisRound: [],
       playerStatsThisGame: Array(gameState.numPlayers)
         .fill(null)
         .map(() => ({
@@ -2725,11 +2841,23 @@ document.addEventListener("DOMContentLoaded", () => {
         if (scores[i] === minScore) winnerIds.push(p.id)
       })
     } else if (gameMode === "Survivor") {
-      // Find the player whose INDEX is not in the eliminatedPlayers array
-      const winner = players.find(
+      const survivors = players.filter(
         (p, index) => !eliminatedPlayers.includes(index),
       )
-      if (winner) winnerIds.push(winner.id)
+      if (survivors.length > 0) {
+        survivors.forEach((p) => winnerIds.push(p.id))
+      } else if (
+        finalGameState.fairPlay &&
+        finalGameState.eliminatedThisRound &&
+        finalGameState.eliminatedThisRound.length > 0
+      ) {
+        // If all remaining players were eliminated in the same round, they tie!
+        finalGameState.eliminatedThisRound.forEach((playerIndex) => {
+          if (players[playerIndex]) {
+            winnerIds.push(players[playerIndex].id)
+          }
+        })
+      }
     } else {
       // Conquest and Classic
       const maxScore = Math.max(...scores)
@@ -2781,11 +2909,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const sortedPlayers = gameState.players.map((player, index) => {
         let rank = null
         if (gameState.gameMode === "Survivor") {
-          const eliminationIndex = gameState.eliminatedPlayers.indexOf(index)
-          if (eliminationIndex === -1) {
-            rank = 1 // Winner
+          if (winnerIds.includes(player.id)) {
+            rank = 1
           } else {
-            rank = gameState.players.length - eliminationIndex
+            const eliminationIndex = gameState.eliminatedPlayers.indexOf(index)
+            if (eliminationIndex === -1) {
+              rank = 1 // Winner
+            } else {
+              rank = gameState.players.length - eliminationIndex
+            }
           }
         }
         return {
@@ -2847,6 +2979,9 @@ document.addEventListener("DOMContentLoaded", () => {
     matchLengthInput.value = 3
     muteSoundsToggle.checked = false
     pronounceWordsToggle.checked = true
+    if (fairPlayToggle) {
+      fairPlayToggle.checked = true
+    }
 
     // Reset theme color dropdown and trigger the change
     // themeHueSelect.value = "var(--oklch-indigo)"
@@ -3161,6 +3296,11 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePronunciationToggleState()
     saveSettings()
   })
+  if (fairPlayToggle) {
+    fairPlayToggle.addEventListener("change", () => {
+      saveSettings()
+    })
+  }
   addPlayerBtn.addEventListener("click", handleAddPlayer)
   playerNamesContainer.addEventListener("click", handleRemovePlayer)
   gridSizeInput.addEventListener("input", () => {

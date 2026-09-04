@@ -1201,20 +1201,11 @@ document.addEventListener("DOMContentLoaded", () => {
         linesBlocked
     }
 
-    let blockPoints = 0
-    if (
-      wasBlock &&
-      gameState.gameMode === "Conquest" &&
-      gameState.conquestBlockPoints
-    ) {
-      blockPoints = Math.round(linesBlocked * 0.5 * 10) / 10
-    }
-
     const move = {
       index: index,
       player: gameState.currentPlayer,
       scoredLines: [],
-      blockPoints: blockPoints,
+      blockPoints: 0,
       conquestState:
         gameState.gameMode === "Conquest" && gameState.conquestRotatingStarters
           ? {
@@ -1247,6 +1238,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const { pointsScored, shouldEndGame } = checkForWins(move, newBoard)
 
+    let blockPoints = 0
+    if (
+      wasBlock &&
+      pointsScored === 0 &&
+      gameState.gameMode === "Conquest" &&
+      gameState.conquestBlockPoints
+    ) {
+      blockPoints = Math.round(linesBlocked * 0.5 * 10) / 10
+    }
+    move.blockPoints = blockPoints
+
     if (blockPoints > 0) {
       const newScores = [...gameState.scores]
       newScores[gameState.currentPlayer] =
@@ -1266,11 +1268,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     let soundPromise = Promise.resolve()
-    if (pointsScored > 0 && wasBlock) {
-      soundPromise = playSoundSequentially("score", pointsScored).then(() =>
-        playSoundSequentially("block", linesBlocked),
-      )
-    } else if (pointsScored > 0) {
+    if (pointsScored > 0) {
       soundPromise = playSoundSequentially("score", pointsScored)
     } else if (wasBlock) {
       soundPromise = playSoundSequentially("block", linesBlocked)

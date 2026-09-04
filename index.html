@@ -221,25 +221,6 @@
             <div id="conquestOptionsGroup" class="setting-group conquest-options">
               <div class="option-row">
                 <label class="switch">
-                  <input type="checkbox" role="switch" id="conquestBlockPointsToggle" checked>
-                  <span class="label">Points for Blocks</span>
-                </label>
-                <div class="tooltip-container">
-                  <button type="button" class="icon-button small tooltip-trigger" aria-label="Points for Blocks Info" aria-describedby="conquest-block-tooltip">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="16" x2="12" y2="12"></line>
-                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                  </button>
-                  <div id="conquest-block-tooltip" class="tooltip-popup" role="tooltip">
-                    Earn 0.5 points for each opponent scoring line blocked by your move (when not scoring a point).
-                  </div>
-                </div>
-              </div>
-
-              <div class="option-row">
-                <label class="switch">
                   <input type="checkbox" role="switch" id="conquestRotatingStarterToggle" checked>
                   <span class="label">Rotating Starters</span>
                 </label>
@@ -272,6 +253,25 @@
                   </button>
                   <div id="conquest-rounds-tooltip" class="tooltip-popup" role="tooltip">
                     Ends the match once all players have taken an equal number of turns so no player gets an extra move on odd grids.
+                  </div>
+                </div>
+              </div>
+
+              <div class="option-row">
+                <label class="switch">
+                  <input type="checkbox" role="switch" id="conquestBlockPointsToggle" checked>
+                  <span class="label">Points for Blocks</span>
+                </label>
+                <div class="tooltip-container">
+                  <button type="button" class="icon-button small tooltip-trigger" aria-label="Points for Blocks Info" aria-describedby="conquest-block-tooltip">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="16" x2="12" y2="12"></line>
+                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                  </button>
+                  <div id="conquest-block-tooltip" class="tooltip-popup" role="tooltip">
+                    Earn 0.5 points for each opponent scoring line blocked by your move (when not scoring a point).
                   </div>
                 </div>
               </div>

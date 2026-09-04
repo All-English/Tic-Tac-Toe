@@ -1481,7 +1481,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       isGameOver = isConquestGameOver
 
-      if (isGameOver && equalRoundsEnded) {
+      const hasRemainingMoves =
+        newMovesMade < gameState.gridSize * gameState.gridSize
+
+      if (isGameOver && equalRoundsEnded && hasRemainingMoves) {
         if (blockPoints > 0) {
           const playerName = gameState.playerNames[gameState.currentPlayer]
           const ptsText = blockPoints === 1 ? "1 pt" : `${blockPoints} pts`
@@ -1552,7 +1555,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       isGameOver = isStealthGameOver
 
-      if (isGameOver && equalRoundsEnded) {
+      const hasRemainingMoves =
+        newMovesMade < gameState.gridSize * gameState.gridSize
+
+      if (isGameOver && equalRoundsEnded && hasRemainingMoves) {
         showSnackbar("No more equal rounds are left.")
       }
 

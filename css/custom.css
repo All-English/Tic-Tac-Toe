@@ -568,7 +568,13 @@ dialog#game-over-dialog {
   border-radius: var(--radius-2);
   gap: 0;
   box-shadow: var(--shadow-1), 0 0 0 0 transparent;
-  transition: opacity 0.4s ease, filter 0.4s ease, transform 0.6s var(--ease-out-3), box-shadow 0.6s var(--ease-out-3);
+  position: relative;
+  will-change: translate;
+  transition: opacity 0.4s ease, filter 0.4s ease, transform 0.6s var(--ease-out-3), translate 0.6s var(--ease-out-3), box-shadow 0.6s var(--ease-out-3);
+}
+
+.player-info-block.sliding {
+  z-index: 2;
 }
 
 .player-info-block.badge {

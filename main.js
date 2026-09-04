@@ -615,9 +615,42 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function renderPlayerInfo() {
-    playerInfoList.innerHTML = "" // Clear the list to re-render in new order
+  function getCurrentRoundOrder() {
+    if (gameState.currentView === "reorder") {
+      return Array.from({ length: gameState.numPlayers }, (_, i) => i)
+    }
+    if (
+      gameState.gameMode === "Conquest" &&
+      gameState.conquestRotatingStarters &&
+      Array.isArray(gameState.conquestRoundOrder) &&
+      gameState.conquestRoundOrder.length === gameState.numPlayers
+    ) {
+      return gameState.conquestRoundOrder
+    }
+    if (
+      gameState.gameMode === "Stealth" &&
+      gameState.stealthRotatingStarters &&
+      Array.isArray(gameState.stealthRoundOrder) &&
+      gameState.stealthRoundOrder.length === gameState.numPlayers
+    ) {
+      return gameState.stealthRoundOrder
+    }
+    if (
+      gameState.gameMode === "Survivor" &&
+      gameState.fairPlay &&
+      Array.isArray(gameState.survivorRoundOrder)
+    ) {
+      const active = gameState.survivorRoundOrder
+      const rest = []
+      for (let i = 0; i < gameState.numPlayers; i++) {
+        if (!active.includes(i)) rest.push(i)
+      }
+      return [...active, ...rest]
+    }
+    return Array.from({ length: gameState.numPlayers }, (_, i) => i)
+  }
 
+  function renderPlayerInfo() {
     const {
       playerNames,
       scores,
@@ -626,30 +659,56 @@ document.addEventListener("DOMContentLoaded", () => {
       playerRadii,
       eliminatedPlayers,
       currentView,
+      numPlayers,
     } = gameState
+
+    if (!playerNames || playerNames.length === 0) return
+
     const isReordering = currentView === "reorder"
+    const order = getCurrentRoundOrder()
 
-    playerNames.forEach((name, i) => {
-      const playerBlock = document.createElement("div")
-      playerBlock.id = `player-info-block-${i}`
-      playerBlock.className = "card outlined player-info-block"
-      playerBlock.dataset.index = i // Set index for drag-drop
+    // 1. Check if the order changed and measure FIRST rects
+    const currentBlocks = Array.from(
+      playerInfoList.querySelectorAll(".player-info-block"),
+    )
+    const currentDomOrder = currentBlocks.map((el) =>
+      parseInt(el.dataset.index, 10),
+    )
+    const orderChanged =
+      !isReordering &&
+      currentView === "game" &&
+      currentDomOrder.length === order.length &&
+      currentDomOrder.some((pIndex, idx) => pIndex !== order[idx])
 
-      // Add badge classes and set the symbol in the aria-label
-      playerBlock.classList.add("badge")
-      playerBlock.setAttribute("aria-label", playerSymbols[i])
+    const firstRects = new Map()
+    if (orderChanged) {
+      currentBlocks.forEach((el) => {
+        const pIndex = parseInt(el.dataset.index, 10)
+        firstRects.set(pIndex, el.getBoundingClientRect())
+      })
+    }
 
-      // Add drag-and-drop functionality only in reorder mode
-      if (isReordering) {
-        playerBlock.draggable = true
-        playerBlock.addEventListener("dragstart", handleDragStart)
-        playerBlock.addEventListener("dragend", handleDragEnd)
+    // 2. Ensure each card exists and update its state in target order
+    order.forEach((i) => {
+      let playerBlock = document.getElementById(`player-info-block-${i}`)
+      if (!playerBlock) {
+        playerBlock = document.createElement("div")
+        playerBlock.id = `player-info-block-${i}`
+        playerBlock.className = "card outlined player-info-block"
+        playerBlock.classList.add("badge")
+        playerBlock.innerHTML = `
+          <hgroup><h3 data-role="name"></h3></hgroup>
+          <div class="content" data-role="score"></div>
+        `
       }
 
-      playerBlock.innerHTML = `
-      <hgroup><h3 data-role="name">${name}</h3></hgroup>
-      <div class="content" data-role="score">${scores[i]}</div>
-    `
+      playerBlock.dataset.index = i
+      playerBlock.setAttribute("aria-label", playerSymbols[i])
+
+      const nameEl = playerBlock.querySelector('[data-role="name"]')
+      if (nameEl) nameEl.textContent = playerNames[i]
+      const scoreEl = playerBlock.querySelector('[data-role="score"]')
+      if (scoreEl) scoreEl.textContent = scores[i]
 
       playerBlock.style.setProperty("--player-color", playerColors[i])
       if (playerRadii && playerRadii[i]) {
@@ -662,8 +721,57 @@ document.addEventListener("DOMContentLoaded", () => {
       )
       playerBlock.classList.toggle("eliminated", eliminatedPlayers?.includes(i))
 
+      if (isReordering) {
+        playerBlock.draggable = true
+        playerBlock.removeEventListener("dragstart", handleDragStart)
+        playerBlock.removeEventListener("dragend", handleDragEnd)
+        playerBlock.addEventListener("dragstart", handleDragStart)
+        playerBlock.addEventListener("dragend", handleDragEnd)
+      } else {
+        playerBlock.draggable = false
+      }
+
       playerInfoList.appendChild(playerBlock)
     })
+
+    // Clean up any extraneous blocks (e.g. if player count decreased)
+    Array.from(playerInfoList.children).forEach((child) => {
+      const pIndex = parseInt(child.dataset.index, 10)
+      if (!order.includes(pIndex)) {
+        child.remove()
+      }
+    })
+
+    // 3. FLIP Play: if order changed, invert with translate and smoothly animate to new positions!
+    if (orderChanged && firstRects.size > 0) {
+      playerInfoList.querySelectorAll(".player-info-block").forEach((el) => {
+        const pIndex = parseInt(el.dataset.index, 10)
+        const firstRect = firstRects.get(pIndex)
+        if (!firstRect) return
+
+        const lastRect = el.getBoundingClientRect()
+        const deltaX = firstRect.left - lastRect.left
+        const deltaY = firstRect.top - lastRect.top
+
+        if (deltaX !== 0 || deltaY !== 0) {
+          el.classList.add("sliding")
+          el.style.transition = "none"
+          el.style.translate = `${deltaX}px ${deltaY}px`
+
+          void el.offsetHeight // Force layout reflow
+
+          requestAnimationFrame(() => {
+            el.style.transition =
+              "translate 0.6s var(--ease-out-3, cubic-bezier(0, 0, 0, 1))"
+            el.style.translate = ""
+            setTimeout(() => {
+              el.classList.remove("sliding")
+              el.style.transition = ""
+            }, 600)
+          })
+        }
+      })
+    }
   }
 
   function renderWinLines() {
@@ -932,9 +1040,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isGameOver) {
       endGame()
     } else {
-      // If not game over, we just need to update the player highlight
-      renderPlayerInfo()
-
       // Reset turn click state for the next player
       currentTurnCellClicked = false
 
@@ -2626,6 +2731,7 @@ document.addEventListener("DOMContentLoaded", () => {
     gameBoard.querySelectorAll(".cell.pulse").forEach((cell) => {
       cell.classList.remove("pulse")
     })
+    playerInfoList.innerHTML = ""
 
     let settings = {}
 

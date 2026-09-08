@@ -734,12 +734,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (isReordering) {
         playerBlock.draggable = true
+        playerBlock.removeAttribute("tabindex")
+        playerBlock.removeAttribute("role")
         playerBlock.removeEventListener("dragstart", handleDragStart)
         playerBlock.removeEventListener("dragend", handleDragEnd)
         playerBlock.addEventListener("dragstart", handleDragStart)
         playerBlock.addEventListener("dragend", handleDragEnd)
       } else {
         playerBlock.draggable = false
+        playerBlock.tabIndex = 0
+        playerBlock.setAttribute("role", "button")
       }
 
       playerInfoList.appendChild(playerBlock)
@@ -2334,6 +2338,40 @@ document.addEventListener("DOMContentLoaded", () => {
       if (currentTurnCellClicked || gameState.currentPlayer !== targetPlayerIndex) return
       announceCurrentPlayerTurn()
     }, delay)
+  }
+
+  async function playPlayerTurnAudio(playerIndex) {
+    if (gameState.isMuted) return
+
+    const player = gameState.players?.[playerIndex]
+    const playerName = player?.name || gameState.playerNames?.[playerIndex]
+    if (!playerName) return
+
+    stopAllTurnVoices()
+    if (pendingTurnAnnouncementTimeout) {
+      clearTimeout(pendingTurnAnnouncementTimeout)
+      pendingTurnAnnouncementTimeout = null
+    }
+
+    if (player && player.turnAudio) {
+      player.turnAudio.currentTime = 0
+      playingTurnAudio = player.turnAudio
+      player.turnAudio.play().catch((e) => console.error("Error playing turn audio:", e))
+      return
+    }
+
+    if (userApiKey && player && player.voiceId) {
+      const audio = await fetchElevenLabsAudio(`${playerName}'s turn`, player.voiceId)
+      if (audio) {
+        player.turnAudio = audio
+        stopAllTurnVoices()
+        playingTurnAudio = audio
+        audio.play().catch((e) => console.error("Error playing turn audio:", e))
+        return
+      }
+    }
+
+    speak(`${playerName}'s turn`)
   }
 
   async function speak(text) {
@@ -4168,6 +4206,28 @@ document.addEventListener("DOMContentLoaded", () => {
     // Re-render the player info cards to show the final new order
     renderPlayerInfo()
     saveActiveSessionPlayers(gameState.playerNames)
+  })
+
+  // Click or press Enter/Space on a player's box to announce that player's turn
+  playerInfoList.addEventListener("click", (e) => {
+    if (gameState.currentView !== "game") return
+    const block = e.target.closest(".player-info-block")
+    if (!block) return
+    const playerIndex = parseInt(block.dataset.index, 10)
+    if (isNaN(playerIndex)) return
+    playPlayerTurnAudio(playerIndex)
+  })
+
+  playerInfoList.addEventListener("keydown", (e) => {
+    if (gameState.currentView !== "game") return
+    if (e.key === "Enter" || e.key === " ") {
+      const block = e.target.closest(".player-info-block")
+      if (!block) return
+      e.preventDefault()
+      const playerIndex = parseInt(block.dataset.index, 10)
+      if (isNaN(playerIndex)) return
+      playPlayerTurnAudio(playerIndex)
+    }
   })
 
   loadSettings()

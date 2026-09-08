@@ -576,6 +576,18 @@ dialog#game-over-dialog {
   position: relative;
   will-change: translate;
   transition: opacity 0.4s ease, filter 0.4s ease, transform 0.6s var(--ease-out-3), translate 0.6s var(--ease-out-3), box-shadow 0.6s var(--ease-out-3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.player-info-block:active:not(.sliding) {
+  transform: scale(0.96);
+  transition: transform 0.1s ease;
+}
+
+.player-info-block:focus-visible {
+  outline: 2px solid var(--player-color);
+  outline-offset: 2px;
 }
 
 .player-info-block.sliding {

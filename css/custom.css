@@ -701,6 +701,45 @@ dialog#game-over-dialog {
   transition: clip-path .5s var(--ease-out-3);
 }
 
+.points-popup {
+  position: fixed;
+  pointer-events: none;
+  z-index: 1000;
+  font-weight: 800;
+  font-size: var(--font-size-fluid-3, 3rem);
+  line-height: 1;
+  color: #ffffff;
+  text-shadow:
+    -1px -1px 0 rgba(0, 0, 0, 0.4),
+    1px -1px 0 rgba(0, 0, 0, 0.4),
+    -1px 1px 0 rgba(0, 0, 0, 0.4),
+    1px 1px 0 rgba(0, 0, 0, 0.4),
+    0 4px 10px rgba(0, 0, 0, 0.7),
+    0 0 16px var(--player-color, rgba(0, 0, 0, 0.4));
+  animation: points-popup-float 1.8s var(--ease-out-3, cubic-bezier(0, 0, 0.2, 1)) forwards;
+  user-select: none;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes points-popup-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.7);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -20px) scale(1.15);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(-50%, -35px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -85px) scale(0.9);
+  }
+}
+
 .setting-group .label {
   color: var(--text-color-2);
   white-space: nowrap;

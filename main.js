@@ -830,6 +830,26 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   }
 
+  function showFloatingPoints(targetCell, text, color) {
+    if (!targetCell) return
+
+    const rect = targetCell.getBoundingClientRect()
+    const popup = document.createElement("div")
+    popup.className = "points-popup"
+    popup.textContent = text
+    if (color) {
+      popup.style.setProperty("--player-color", color)
+    }
+
+    popup.style.left = `${rect.left + rect.width / 2}px`
+    popup.style.top = `${rect.top + rect.height / 3}px`
+
+    document.body.appendChild(popup)
+
+    popup.addEventListener("animationend", () => popup.remove(), { once: true })
+    setTimeout(() => popup.remove(), 2500)
+  }
+
   function renderStatsView() {
     const stats = getStats()
     const playerIds = Object.keys(stats)
@@ -1070,10 +1090,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Call the core game logic (skip redundant click sound since click already played on tap)
-    const { isGameOver, soundPromise } = processPlayerMove(index, true)
+    const { isGameOver, soundPromise, pointsScored, blockPoints } =
+      processPlayerMove(index, true)
 
     // Render the result of the move (now cell receives player's symbol and color)
     render()
+
+    // Show floating points popup when points are scored
+    if (gameState.gameMode !== "Survivor") {
+      const scoringPlayerColor =
+        gameState.playerColors[gameState.board[index]] ||
+        gameState.playerColors[gameState.currentPlayer]
+      if (pointsScored > 0) {
+        showFloatingPoints(cell, `+${pointsScored}`, scoringPlayerColor)
+      } else if (blockPoints > 0) {
+        showFloatingPoints(cell, `+${blockPoints}`, scoringPlayerColor)
+      }
+    }
 
     // Handle the end of the game after rendering
     if (isGameOver) {
@@ -1727,7 +1760,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    return { isGameOver, soundPromise, wasBlock }
+    return { isGameOver, soundPromise, wasBlock, pointsScored, blockPoints }
   }
 
   function checkForWins(move, currentBoard) {

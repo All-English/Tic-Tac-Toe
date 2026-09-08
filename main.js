@@ -1389,7 +1389,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let soundPromise = Promise.resolve()
     if (pointsScored > 0) {
       soundPromise = playSoundSequentially("score", pointsScored)
-    } else if (wasBlock) {
+    } else if (wasBlock && gameState.gameMode !== "Survivor") {
       soundPromise = playSoundSequentially("block", linesBlocked)
       const cell = gameBoard.querySelector(`[data-index='${index}']`)
       if (cell) {

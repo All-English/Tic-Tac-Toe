@@ -3764,7 +3764,10 @@ document.addEventListener("DOMContentLoaded", () => {
         createUnitSelector(ttValue)
       }
     })
-    updateRemoveUnitButtonsVisibility()
+    if (unitSelectorsContainer.children.length === 0) {
+      createUnitSelector()
+    }
+    updateRemoveButtonsVisibility()
     updateUnitSelectorsState()
   }
 

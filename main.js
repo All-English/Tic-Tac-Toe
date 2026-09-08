@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let areGameEventListenersAttached = false
   let wordCache = []
   let isOrderLocked = false
+  let isMoveProcessing = false
   let hasSeenQuotaWarning = false
   let currentTurnCellClicked = false
   let playingTurnAudio = null
@@ -1031,7 +1032,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    if (!isOrderLocked) return
+    if (!isOrderLocked || isMoveProcessing) return
     const cell = event.target.closest(".cell")
     if (!cell || cell.disabled) return
 
@@ -1045,16 +1046,33 @@ document.addEventListener("DOMContentLoaded", () => {
       pendingTurnAnnouncementTimeout = null
     }
 
-    // Capture the state of the cell text and pronounce if enabled
-    let speechPromise = Promise.resolve()
+    // Play click feedback immediately on tap
+    playSound("click")
+
+    // If word pronunciation is enabled, show visual indicator and wait for audio to finish
     if (gameState.pronounceWords) {
-      speechPromise = speak(cell.textContent)
+      isMoveProcessing = true
+      if (gameBoard) gameBoard.classList.add("processing-move")
+      const activePlayerColor = gameState.playerColors[gameState.currentPlayer]
+      cell.style.setProperty("--active-player-color", activePlayerColor)
+      cell.classList.add("pronouncing")
+
+      try {
+        await speak(cell.textContent)
+      } catch (e) {
+        console.error("Error pronouncing word:", e)
+      } finally {
+        cell.classList.remove("pronouncing")
+        cell.style.removeProperty("--active-player-color")
+        if (gameBoard) gameBoard.classList.remove("processing-move")
+        isMoveProcessing = false
+      }
     }
 
-    // Call the new logic function
-    const { isGameOver, soundPromise } = processPlayerMove(index)
+    // Call the core game logic (skip redundant click sound since click already played on tap)
+    const { isGameOver, soundPromise } = processPlayerMove(index, true)
 
-    // Render the result of the move
+    // Render the result of the move (now cell receives player's symbol and color)
     render()
 
     // Handle the end of the game after rendering
@@ -1064,8 +1082,8 @@ document.addEventListener("DOMContentLoaded", () => {
       // Reset turn click state for the next player
       currentTurnCellClicked = false
 
-      // Wait for speech and chimes to finish before playing next turn's announcement
-      Promise.all([speechPromise, soundPromise]).then(() => {
+      // Wait for sound chimes to finish before playing next turn's announcement
+      soundPromise.then(() => {
         // Double check they didn't click another cell in the meantime
         if (currentTurnCellClicked) return
         announceCurrentPlayerTurnWithDelay(500)
@@ -1152,7 +1170,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function undoLastMove() {
-    if (gameState.moveHistory.length === 0) return
+    if (gameState.moveHistory.length === 0 || isMoveProcessing) return
 
     const lastMove = gameState.moveHistory[gameState.moveHistory.length - 1]
 
@@ -1321,7 +1339,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function processPlayerMove(index) {
+  function processPlayerMove(index, skipClickSound = false) {
     // This function now contains the core game logic
     const { wasBlock, linesBlocked } = checkForBlock(index)
     if (wasBlock) {
@@ -1413,7 +1431,9 @@ document.addEventListener("DOMContentLoaded", () => {
         )
       }
     } else {
-      playSound("click")
+      if (!skipClickSound) {
+        playSound("click")
+      }
       soundPromise = new Promise((resolve) => setTimeout(resolve, 300))
     }
 
@@ -2923,6 +2943,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- SETUP PHASE FUNCTIONS (Imperative, run before game starts) ---
 
   function initGame(isFromSetup) {
+    isMoveProcessing = false
+    if (gameBoard) gameBoard.classList.remove("processing-move")
     // Clear any lingering pulse animations from the previous game
     gameBoard.querySelectorAll(".cell.pulse").forEach((cell) => {
       cell.classList.remove("pulse")

@@ -457,6 +457,35 @@ main {
   animation: pulse 0.8s var(--ease-in-out-3);
 }
 
+.cell.pronouncing {
+  --_player-active-color: var(--active-player-color, var(--primary));
+  outline: 3px solid var(--_player-active-color);
+  outline-offset: -3px;
+  background-color: light-dark(
+    oklch(from var(--_player-active-color) 95% 0.04 h),
+    oklch(from var(--_player-active-color) 25% 0.05 h)
+  );
+  box-shadow: 0 0 16px 2px light-dark(
+    oklch(from var(--_player-active-color) 70% 0.15 h / 0.45),
+    oklch(from var(--_player-active-color) 60% 0.2 h / 0.55)
+  );
+  animation: cell-pronouncing-pulse 1s var(--ease-in-out-3) infinite alternate;
+  z-index: 2;
+}
+
+@keyframes cell-pronouncing-pulse {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+
+.game-board.processing-move {
+  pointer-events: none;
+}
+
 .phonics-unit-container {
   display: grid;
   gap: var(--size-1);

@@ -732,6 +732,7 @@ document.addEventListener("DOMContentLoaded", () => {
       )
       playerBlock.classList.toggle("eliminated", eliminatedPlayers?.includes(i))
 
+      const isCurrentActivePlayer = i === currentPlayer && !isReordering
       if (isReordering) {
         playerBlock.draggable = true
         playerBlock.removeAttribute("tabindex")
@@ -742,8 +743,13 @@ document.addEventListener("DOMContentLoaded", () => {
         playerBlock.addEventListener("dragend", handleDragEnd)
       } else {
         playerBlock.draggable = false
-        playerBlock.tabIndex = 0
-        playerBlock.setAttribute("role", "button")
+        if (isCurrentActivePlayer) {
+          playerBlock.tabIndex = 0
+          playerBlock.setAttribute("role", "button")
+        } else {
+          playerBlock.removeAttribute("tabindex")
+          playerBlock.removeAttribute("role")
+        }
       }
 
       playerInfoList.appendChild(playerBlock)
@@ -2341,7 +2347,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function playPlayerTurnAudio(playerIndex) {
-    if (gameState.isMuted) return
+    if (gameState.isMuted || playerIndex !== gameState.currentPlayer) return
 
     const player = gameState.players?.[playerIndex]
     const playerName = player?.name || gameState.playerNames?.[playerIndex]
@@ -4208,13 +4214,13 @@ document.addEventListener("DOMContentLoaded", () => {
     saveActiveSessionPlayers(gameState.playerNames)
   })
 
-  // Click or press Enter/Space on a player's box to announce that player's turn
+  // Click or press Enter/Space on the active player's box to announce their turn
   playerInfoList.addEventListener("click", (e) => {
     if (gameState.currentView !== "game") return
     const block = e.target.closest(".player-info-block")
     if (!block) return
     const playerIndex = parseInt(block.dataset.index, 10)
-    if (isNaN(playerIndex)) return
+    if (isNaN(playerIndex) || playerIndex !== gameState.currentPlayer) return
     playPlayerTurnAudio(playerIndex)
   })
 
@@ -4223,9 +4229,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "Enter" || e.key === " ") {
       const block = e.target.closest(".player-info-block")
       if (!block) return
-      e.preventDefault()
       const playerIndex = parseInt(block.dataset.index, 10)
-      if (isNaN(playerIndex)) return
+      if (isNaN(playerIndex) || playerIndex !== gameState.currentPlayer) return
+      e.preventDefault()
       playPlayerTurnAudio(playerIndex)
     }
   })

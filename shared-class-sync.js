@@ -142,15 +142,24 @@
    *
    * Handles:
    * - "L2U3", "L2U03" (Phonics Flash)
-   * - "Book2|Unit3" (Word-Tac-Toe)
-   * - "SmartPhonics|2|3" (MatchMaker)
+   * - "level2|unit3", "Book2|Unit3" (Word-Tac-Toe)
+   * - "SmartPhonics|2|3", "SP|2|3" (MatchMaker)
    * - "level2:unit3" (Treasure Hunt)
    */
   function toCanonicalUnit(unitStr) {
-    if (!unitStr || typeof unitStr !== 'string') return null;
+    if (!unitStr) return null;
+    if (typeof unitStr === 'object' && unitStr !== null) {
+      const level = parseInt(unitStr.level, 10);
+      const unit = parseInt(unitStr.unit, 10);
+      if (!isNaN(level) && !isNaN(unit)) {
+        return { level, unit, id: `L${level}U${unit}` };
+      }
+      return null;
+    }
+    if (typeof unitStr !== 'string') return null;
     const str = unitStr.trim();
 
-    // 1. Phonics Flash: L2U3
+    // 1. Phonics Flash: L2U3, L2U03
     let m = str.match(/L(\d+)U(\d+)/i);
     if (m) {
       const level = parseInt(m[1], 10);
@@ -158,28 +167,30 @@
       return { level, unit, id: `L${level}U${unit}` };
     }
 
-    // 2. Word-Tac-Toe: Book2|Unit3
-    m = str.match(/Book(\d+)\|Unit(\d+)/i);
+    // 2. Word-Tac-Toe / Treasure Hunt: level2|unit3, Book2|Unit3, level2:unit3
+    m = str.match(/(?:level|Book)(\d+)[:|]unit(\d+)/i);
     if (m) {
       const level = parseInt(m[1], 10);
       const unit = parseInt(m[2], 10);
       return { level, unit, id: `L${level}U${unit}` };
     }
 
-    // 3. MatchMaker: SmartPhonics|2|3
-    m = str.match(/(?:SmartPhonics|SP)\|(\d+)\|(\d+)/i);
+    // 3. MatchMaker: SmartPhonics|2|3, SP|2|3
+    m = str.match(/(?:SmartPhonics|SP)[|:](\d+)[|:](\d+)/i);
     if (m) {
       const level = parseInt(m[1], 10);
       const unit = parseInt(m[2], 10);
       return { level, unit, id: `L${level}U${unit}` };
     }
 
-    // 4. Treasure Hunt: level2:unit3
-    m = str.match(/level(\d+):unit(\d+)/i);
+    // 4. Fallback: match any two digits like "2-3" or "2|3"
+    m = str.match(/(\d+)[^0-9]+(\d+)/);
     if (m) {
       const level = parseInt(m[1], 10);
       const unit = parseInt(m[2], 10);
-      return { level, unit, id: `L${level}U${unit}` };
+      if (level >= 1 && level <= 5 && unit >= 1 && unit <= 8) {
+        return { level, unit, id: `L${level}U${unit}` };
+      }
     }
 
     return null;
@@ -187,25 +198,33 @@
 
   function toPhonicsFlash(canonical) {
     if (!canonical) return null;
-    const c = typeof canonical === 'string' ? toCanonicalUnit(canonical) : canonical;
+    const c = typeof canonical === 'object' && canonical !== null && canonical.level && canonical.unit
+      ? canonical
+      : toCanonicalUnit(canonical);
     return c ? `L${c.level}U${c.unit}` : null;
   }
 
   function toTicTacToe(canonical) {
     if (!canonical) return null;
-    const c = typeof canonical === 'string' ? toCanonicalUnit(canonical) : canonical;
-    return c ? `Book${c.level}|Unit${c.unit}` : null;
+    const c = typeof canonical === 'object' && canonical !== null && canonical.level && canonical.unit
+      ? canonical
+      : toCanonicalUnit(canonical);
+    return c ? `level${c.level}|unit${c.unit}` : null;
   }
 
   function toMatchMaker(canonical) {
     if (!canonical) return null;
-    const c = typeof canonical === 'string' ? toCanonicalUnit(canonical) : canonical;
+    const c = typeof canonical === 'object' && canonical !== null && canonical.level && canonical.unit
+      ? canonical
+      : toCanonicalUnit(canonical);
     return c ? `SmartPhonics|${c.level}|${c.unit}` : null;
   }
 
   function toTreasureHunt(canonical) {
     if (!canonical) return null;
-    const c = typeof canonical === 'string' ? toCanonicalUnit(canonical) : canonical;
+    const c = typeof canonical === 'object' && canonical !== null && canonical.level && canonical.unit
+      ? canonical
+      : toCanonicalUnit(canonical);
     return c ? `level${c.level}:unit${c.unit}` : null;
   }
 

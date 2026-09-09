@@ -2902,9 +2902,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Re-create the saved word unit selectors
       unitSelectorsContainer.innerHTML = "" // Clear defaults
-      if (settings.selectedUnits && settings.selectedUnits.length > 0) {
-        settings.selectedUnits.forEach((unitValue) => {
-          createUnitSelector(unitValue) // We'll modify createUnitSelector to accept a value
+      const validSavedUnits = (settings.selectedUnits || []).filter(Boolean)
+      if (validSavedUnits.length > 0) {
+        validSavedUnits.forEach((unitValue) => {
+          createUnitSelector(unitValue)
         })
       } else {
         createUnitSelector() // Create one default selector if none were saved
@@ -3379,14 +3380,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     select.append(...allOptions)
 
-    if (selectedValue !== null) {
+    if (selectedValue !== null && selectedValue !== "") {
       select.value = selectedValue
+      // If direct value didn't match an option, try translating with SharedClassSync
+      if (
+        (select.selectedIndex <= 0 || select.value !== selectedValue) &&
+        typeof window.SharedClassSync !== "undefined"
+      ) {
+        const translated = window.SharedClassSync.toTicTacToe(selectedValue)
+        if (translated) {
+          select.value = translated
+        }
+      }
     } else if (resetToBlank) {
       select.selectedIndex = 0
     } else {
-      const allExistingSelectors = unitSelectorsContainer.querySelectorAll(
-        ".phonics-unit-select",
-      )
+      const allExistingSelectors = unitSelectorsContainer
+        ? unitSelectorsContainer.querySelectorAll(".phonics-unit-select")
+        : []
       const usedValues = new Set()
       allExistingSelectors.forEach((s) => {
         if (s.value) usedValues.add(s.value)
@@ -3421,6 +3432,31 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!foundNext) {
         select.selectedIndex = 0 // Fallback if no options are available
       }
+    }
+
+    // Guard against invalid/blank state unless explicitly requested via resetToBlank
+    if (!resetToBlank && (select.selectedIndex <= 0 || !select.value)) {
+      const allExistingSelectors = unitSelectorsContainer
+        ? unitSelectorsContainer.querySelectorAll(".phonics-unit-select")
+        : []
+      const usedValues = new Set()
+      allExistingSelectors.forEach((s) => {
+        if (s.value) usedValues.add(s.value)
+      })
+      for (let i = 0; i < select.options.length; i++) {
+        const opt = select.options[i]
+        if (opt.value && !usedValues.has(opt.value)) {
+          select.value = opt.value
+          break
+        }
+      }
+      if (!select.value && select.options.length > 2) {
+        select.selectedIndex = 2 // First actual unit option
+      }
+    }
+
+    if (select.selectedIndex === -1) {
+      select.selectedIndex = 0
     }
 
     label.appendChild(select)
@@ -3495,7 +3531,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const firstSelector = document.querySelector(".phonics-unit-select")
     if (!firstSelector) return
     const options = Array.from(firstSelector.options).filter(
-      (opt) => !opt.disabled,
+      (opt) => !opt.disabled && opt.value !== "",
     )
     if (options.length > 0) {
       const randomIndex = Math.floor(Math.random() * options.length)
@@ -3749,6 +3785,7 @@ document.addEventListener("DOMContentLoaded", () => {
     syncSliders()
     updateApiFieldVisibility()
     updatePronunciationToggleState()
+    currentLoadedSetName = null
     saveSettings()
   }
 
@@ -3980,23 +4017,30 @@ document.addEventListener("DOMContentLoaded", () => {
     renderNameInputs()
     updatePlayerButtonsState()
     updateMatchLengthDefault()
-    saveSettings()
 
-    playerSetsDialog.close()
-    validatePlayerNames()
-
-    // Also load unit settings for this class if available
+    // Also load unit settings for this class if available BEFORE saving settings
     if (typeof window.SharedClassSync !== "undefined") {
       try {
         const rawProfiles = localStorage.getItem(window.SharedClassSync.SHARED_CLASS_PROFILES_KEY)
         const profiles = rawProfiles ? JSON.parse(rawProfiles) : {}
         if (profiles[setName] && Array.isArray(profiles[setName].units) && profiles[setName].units.length > 0) {
           applyUnitsToTicTacToe(profiles[setName].units)
+        } else {
+          // If profile has no units or current selectors are blank, ensure a valid unit is selected
+          const currentSelects = Array.from(document.querySelectorAll(".phonics-unit-select"))
+          const hasValid = currentSelects.some((s) => s.value)
+          if (!hasValid) {
+            selectRandomUnit()
+          }
         }
       } catch (e) {
         console.warn("Error applying units for loaded set:", e)
       }
     }
+
+    playerSetsDialog.close()
+    validatePlayerNames()
+    saveSettings()
   }
 
   function handleDeleteSet(setName) {

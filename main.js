@@ -620,6 +620,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (cell.classList.contains("highlight") !== shouldBeHighlighted) {
         cell.classList.toggle("highlight", shouldBeHighlighted)
       }
+
+      cell.classList.toggle("corner-tl", i === 0)
+      cell.classList.toggle("corner-tr", i === gameState.gridSize - 1)
+      cell.classList.toggle("corner-bl", i === gameState.gridSize * (gameState.gridSize - 1))
+      cell.classList.toggle("corner-br", i === newTotalCells - 1)
     }
 
     const firstCell = gameBoard.querySelector(".cell")

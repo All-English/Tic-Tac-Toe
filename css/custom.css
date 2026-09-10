@@ -387,7 +387,7 @@ main {
   display: grid;
   position: relative;
   border-radius: var(--radius-3);
-  overflow: hidden;
+  overflow: visible;
   border: var(--border-size-1) solid var(--border-color);
   gap: var(--border-size-1);
   background-color: var(--border-color);
@@ -421,6 +421,25 @@ main {
 
   font-size: var(--dynamic-word-size, var(--fs-step-4));
   padding: var(--space-2xs);
+  border-radius: var(--_border-radius);
+}
+
+.cell.corner-tl,
+.cell:first-child {
+  --_border-radius: calc(var(--radius-3) - var(--border-size-1)) 0 0 0;
+}
+
+.cell.corner-tr {
+  --_border-radius: 0 calc(var(--radius-3) - var(--border-size-1)) 0 0;
+}
+
+.cell.corner-bl {
+  --_border-radius: 0 0 0 calc(var(--radius-3) - var(--border-size-1));
+}
+
+.cell.corner-br,
+.cell:last-child {
+  --_border-radius: 0 0 calc(var(--radius-3) - var(--border-size-1)) 0;
 }
 
 .cell:not(:disabled):hover {
@@ -440,6 +459,7 @@ main {
   opacity: 0;
   transform: scale(0.8);
   transition: opacity 0.2s var(--ease-out-3), transform 0.2s var(--ease-out-3);
+  border-radius: inherit;
 }
 
 .cell[data-player-symbol]::after {

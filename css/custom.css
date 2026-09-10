@@ -416,7 +416,14 @@ main {
   place-content: center;
 
   text-align: center;
-  transition: background-color 0.2s var(--ease-out-3);
+  transition:
+    background-color 0.35s ease-out,
+    outline-color 0.35s ease-out,
+    box-shadow 0.35s ease-out,
+    transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  outline: 0px solid transparent;
+  outline-offset: -3px;
+  box-shadow: 0 0 0 0 transparent;
   opacity: 1;
 
   font-size: var(--dynamic-word-size, var(--fs-step-4));
@@ -457,9 +464,13 @@ main {
   /* background-color: oklch(from var(--surface-card) l c h); */
   background-color: light-dark(oklch(from var(--player-color) 95% 0.02 h), oklch(from var(--player-color) 25% 0.02 h));
   opacity: 0;
-  transform: scale(0.8);
-  transition: opacity 0.2s var(--ease-out-3), transform 0.2s var(--ease-out-3);
+  transform: scale(0.85);
+  transition: opacity 0.35s ease-out, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
   border-radius: inherit;
+}
+
+.cell[data-player-symbol] {
+  z-index: 1;
 }
 
 .cell[data-player-symbol]::after {
@@ -478,7 +489,7 @@ main {
 }
 
 .cell.pronouncing {
-  --_player-active-color: var(--active-player-color, var(--primary));
+  --_player-active-color: var(--active-player-color, var(--player-color, var(--primary)));
   outline: 3px solid var(--_player-active-color);
   outline-offset: -3px;
   background-color: light-dark(

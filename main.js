@@ -1087,6 +1087,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         await speak(cell.textContent)
+        // Brief breath delay before transition (allows user to absorb pronunciation)
+        await new Promise((resolve) => setTimeout(resolve, 150))
       } catch (e) {
         console.error("Error pronouncing word:", e)
       } finally {

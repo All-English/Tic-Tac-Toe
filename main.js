@@ -343,6 +343,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let userSetConquestRotatingStarters = false
   let userSetStealthRotatingStarters = false
   let userSetSurvivorRotatingStarters = false
+  let userSetConquestEqualRounds = false
+  let userSetStealthEqualRounds = false
+  let userSetSurvivorEqualRounds = false
 
   // --- EVENT HANDLER FUNCTIONS ---
 
@@ -2229,6 +2232,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function updateEqualRoundsDefault(previousPlayerCount = null) {
+    const playerCount = gameState.setup.players.length
+    if (previousPlayerCount !== null && previousPlayerCount === playerCount) {
+      return
+    }
+
+    const isTwoPlayers = playerCount <= 2
+
+    if (conquestEqualRoundsToggle && !userSetConquestEqualRounds) {
+      conquestEqualRoundsToggle.checked = !isTwoPlayers
+    }
+    if (stealthEqualRoundsToggle && !userSetStealthEqualRounds) {
+      stealthEqualRoundsToggle.checked = !isTwoPlayers
+    }
+    if (survivorEqualRoundsToggle && !userSetSurvivorEqualRounds) {
+      survivorEqualRoundsToggle.checked = !isTwoPlayers
+    }
+    if (fairPlayToggle && fairPlayToggle !== survivorEqualRoundsToggle && !userSetSurvivorEqualRounds) {
+      fairPlayToggle.checked = !isTwoPlayers
+    }
+  }
+
   function validatePlayerNames() {
     const nameInputs = Array.from(
       playerNamesContainer.querySelectorAll(".player-name-input"),
@@ -2732,6 +2757,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function saveSettings() {
+    const isTwoPlayers = gameState.setup.players.length <= 2
     const settingsToSave = {
       numPlayers: gameState.setup.players.length,
       playerNames: gameState.setup.players,
@@ -2742,15 +2768,18 @@ document.addEventListener("DOMContentLoaded", () => {
       userSetConquestRotatingStarters,
       userSetStealthRotatingStarters,
       userSetSurvivorRotatingStarters,
+      userSetConquestEqualRounds,
+      userSetStealthEqualRounds,
+      userSetSurvivorEqualRounds,
       fairPlay: survivorEqualRoundsToggle
         ? survivorEqualRoundsToggle.checked
-        : true,
+        : !isTwoPlayers,
       survivorRotatingStarters: survivorRotatingStarterToggle
         ? survivorRotatingStarterToggle.checked
         : false,
       survivorEqualRounds: survivorEqualRoundsToggle
         ? survivorEqualRoundsToggle.checked
-        : true,
+        : !isTwoPlayers,
       conquestBlockPoints: conquestBlockPointsToggle
         ? conquestBlockPointsToggle.checked
         : true,
@@ -2759,13 +2788,13 @@ document.addEventListener("DOMContentLoaded", () => {
         : false,
       conquestEqualRounds: conquestEqualRoundsToggle
         ? conquestEqualRoundsToggle.checked
-        : true,
+        : !isTwoPlayers,
       stealthRotatingStarters: stealthRotatingStarterToggle
         ? stealthRotatingStarterToggle.checked
         : false,
       stealthEqualRounds: stealthEqualRoundsToggle
         ? stealthEqualRoundsToggle.checked
-        : true,
+        : !isTwoPlayers,
       gameMode: document.querySelector("#gameModeSelector button.selected")
         ?.dataset.mode,
       selectedUnits: Array.from(
@@ -2843,6 +2872,12 @@ document.addEventListener("DOMContentLoaded", () => {
         settings.userSetStealthRotatingStarters === true
       userSetSurvivorRotatingStarters =
         settings.userSetSurvivorRotatingStarters === true
+      userSetConquestEqualRounds =
+        settings.userSetConquestEqualRounds === true
+      userSetStealthEqualRounds =
+        settings.userSetStealthEqualRounds === true
+      userSetSurvivorEqualRounds =
+        settings.userSetSurvivorEqualRounds === true
       const isTwoPlayers = playersList.length <= 2
 
       if (survivorRotatingStarterToggle) {
@@ -2852,13 +2887,17 @@ document.addEventListener("DOMContentLoaded", () => {
             : !isTwoPlayers
       }
       if (survivorEqualRoundsToggle) {
-        survivorEqualRoundsToggle.checked =
+        const savedEqualRounds =
           settings.survivorEqualRounds !== undefined
-            ? settings.survivorEqualRounds !== false
-            : settings.fairPlay !== false
+            ? settings.survivorEqualRounds === true
+            : settings.fairPlay === true
+        survivorEqualRoundsToggle.checked =
+          userSetSurvivorEqualRounds
+            ? savedEqualRounds
+            : !isTwoPlayers
       }
       if (fairPlayToggle && fairPlayToggle !== survivorEqualRoundsToggle) {
-        fairPlayToggle.checked = settings.fairPlay !== false
+        fairPlayToggle.checked = survivorEqualRoundsToggle.checked
       }
       if (conquestBlockPointsToggle) {
         conquestBlockPointsToggle.checked =
@@ -2872,7 +2911,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (conquestEqualRoundsToggle) {
         conquestEqualRoundsToggle.checked =
-          settings.conquestEqualRounds !== false
+          userSetConquestEqualRounds
+            ? settings.conquestEqualRounds === true
+            : !isTwoPlayers
       }
       if (stealthRotatingStarterToggle) {
         stealthRotatingStarterToggle.checked =
@@ -2882,7 +2923,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (stealthEqualRoundsToggle) {
         stealthEqualRoundsToggle.checked =
-          settings.stealthEqualRounds !== false
+          userSetStealthEqualRounds
+            ? settings.stealthEqualRounds === true
+            : !isTwoPlayers
       }
       darkModeToggle.checked = settings.darkMode === true
       themeHueSelect.value = settings.themeHue || "var(--oklch-indigo)"
@@ -2913,6 +2956,13 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } else {
       // --- IF NO SETTINGS ARE FOUND (NEW USER), CREATE DEFAULTS ---
+      if (playersList.length === 0) {
+        playersList = [
+          { id: `${Date.now()}_1`, name: "Player 1" },
+          { id: `${Date.now()}_2`, name: "Player 2" },
+        ]
+      }
+      gameState.setup.players = playersList
       createUnitSelector()
       selectRandomUnit()
       updateGameModeHint("Conquest")
@@ -2926,6 +2976,8 @@ document.addEventListener("DOMContentLoaded", () => {
     updateApiFieldVisibility()
     updatePronunciationToggleState()
     populatePlayerDatalist()
+    updateRotatingStartersDefault()
+    updateEqualRoundsDefault()
   }
 
   // --- UNIFIED THEME LOGIC ---
@@ -3012,7 +3064,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ).dataset.mode
       const isTwoPlayers = settings.numPlayers <= 2
       settings.fairPlay =
-        (survivorEqualRoundsToggle ? survivorEqualRoundsToggle.checked : true) &&
+        (survivorEqualRoundsToggle ? survivorEqualRoundsToggle.checked : !isTwoPlayers) &&
         (survivorRotatingStarterToggle
           ? survivorRotatingStarterToggle.checked
           : !isTwoPlayers)
@@ -3021,7 +3073,7 @@ document.addEventListener("DOMContentLoaded", () => {
         : !isTwoPlayers
       settings.survivorEqualRounds = survivorEqualRoundsToggle
         ? survivorEqualRoundsToggle.checked
-        : true
+        : !isTwoPlayers
       settings.conquestBlockPoints = conquestBlockPointsToggle
         ? conquestBlockPointsToggle.checked
         : true
@@ -3030,13 +3082,13 @@ document.addEventListener("DOMContentLoaded", () => {
         : false
       settings.conquestEqualRounds = conquestEqualRoundsToggle
         ? conquestEqualRoundsToggle.checked
-        : true
+        : !isTwoPlayers
       settings.stealthRotatingStarters = stealthRotatingStarterToggle
         ? stealthRotatingStarterToggle.checked
         : false
       settings.stealthEqualRounds = stealthEqualRoundsToggle
         ? stealthEqualRoundsToggle.checked
-        : true
+        : !isTwoPlayers
       settings.selectedUnits = [
         ...document.querySelectorAll(".phonics-unit-select"),
       ]
@@ -3153,6 +3205,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePlayerButtonsState()
     updateMatchLengthDefault()
     updateRotatingStartersDefault(previousPlayerCount)
+    updateEqualRoundsDefault(previousPlayerCount)
     saveSettings()
     validatePlayerNames()
   }
@@ -3175,6 +3228,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePlayerButtonsState()
     updateMatchLengthDefault()
     updateRotatingStartersDefault(previousPlayerCount)
+    updateEqualRoundsDefault(previousPlayerCount)
     saveSettings()
     validatePlayerNames()
   }
@@ -3727,6 +3781,9 @@ document.addEventListener("DOMContentLoaded", () => {
     userSetConquestRotatingStarters = false
     userSetStealthRotatingStarters = false
     userSetSurvivorRotatingStarters = false
+    userSetConquestEqualRounds = false
+    userSetStealthEqualRounds = false
+    userSetSurvivorEqualRounds = false
     gameState.setup.players = [
       { id: `${Date.now()}_1`, name: "Player 1" },
       { id: `${Date.now()}_2`, name: "Player 2" },
@@ -3740,7 +3797,7 @@ document.addEventListener("DOMContentLoaded", () => {
       survivorRotatingStarterToggle.checked = false
     }
     if (survivorEqualRoundsToggle) {
-      survivorEqualRoundsToggle.checked = true
+      survivorEqualRoundsToggle.checked = false
     }
     if (fairPlayToggle && fairPlayToggle !== survivorEqualRoundsToggle) {
       fairPlayToggle.checked = false
@@ -3752,13 +3809,13 @@ document.addEventListener("DOMContentLoaded", () => {
       conquestRotatingStarterToggle.checked = false
     }
     if (conquestEqualRoundsToggle) {
-      conquestEqualRoundsToggle.checked = true
+      conquestEqualRoundsToggle.checked = false
     }
     if (stealthRotatingStarterToggle) {
       stealthRotatingStarterToggle.checked = false
     }
     if (stealthEqualRoundsToggle) {
-      stealthEqualRoundsToggle.checked = true
+      stealthEqualRoundsToggle.checked = false
     }
 
     // Reset theme color dropdown and trigger the change
@@ -4017,6 +4074,8 @@ document.addEventListener("DOMContentLoaded", () => {
     renderNameInputs()
     updatePlayerButtonsState()
     updateMatchLengthDefault()
+    updateRotatingStartersDefault()
+    updateEqualRoundsDefault()
 
     // Also load unit settings for this class if available BEFORE saving settings
     if (typeof window.SharedClassSync !== "undefined") {
@@ -4095,11 +4154,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (survivorEqualRoundsToggle) {
     survivorEqualRoundsToggle.addEventListener("change", () => {
+      userSetSurvivorEqualRounds = true
       saveSettings()
     })
   }
   if (fairPlayToggle && fairPlayToggle !== survivorEqualRoundsToggle) {
     fairPlayToggle.addEventListener("change", () => {
+      userSetSurvivorEqualRounds = true
       saveSettings()
     })
   }
@@ -4116,6 +4177,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (conquestEqualRoundsToggle) {
     conquestEqualRoundsToggle.addEventListener("change", () => {
+      userSetConquestEqualRounds = true
       saveSettings()
     })
   }
@@ -4127,6 +4189,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (stealthEqualRoundsToggle) {
     stealthEqualRoundsToggle.addEventListener("change", () => {
+      userSetStealthEqualRounds = true
       saveSettings()
     })
   }

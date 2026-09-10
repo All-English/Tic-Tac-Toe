@@ -710,33 +710,32 @@ dialog#game-over-dialog {
   line-height: 1;
   color: #ffffff;
   text-shadow:
-    -1px -1px 0 rgba(0, 0, 0, 0.4),
-    1px -1px 0 rgba(0, 0, 0, 0.4),
-    -1px 1px 0 rgba(0, 0, 0, 0.4),
-    1px 1px 0 rgba(0, 0, 0, 0.4),
-    0 4px 10px rgba(0, 0, 0, 0.7),
-    0 0 16px var(--player-color, rgba(0, 0, 0, 0.4));
-  animation: points-popup-float 1.8s var(--ease-out-3, cubic-bezier(0, 0, 0.2, 1)) forwards;
+    -1px -1px 0 rgba(0, 0, 0, 0.5),
+    1px -1px 0 rgba(0, 0, 0, 0.5),
+    -1px 1px 0 rgba(0, 0, 0, 0.5),
+    1px 1px 0 rgba(0, 0, 0, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.7),
+    0 0 16px var(--player-color, rgba(0, 0, 0, 0.5));
+  animation: points-popup-float 1.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   user-select: none;
   transform: translate(-50%, -50%);
+  will-change: transform, opacity;
 }
 
 @keyframes points-popup-float {
   0% {
     opacity: 0;
-    transform: translate(-50%, 0) scale(0.7);
+    transform: translate(-50%, 0) scale(0.8);
   }
-  15% {
+  18% {
     opacity: 1;
-    transform: translate(-50%, -20px) scale(1.15);
   }
-  30% {
+  65% {
     opacity: 1;
-    transform: translate(-50%, -35px) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -85px) scale(0.9);
+    transform: translate(-50%, -65px) scale(1.05);
   }
 }
 

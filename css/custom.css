@@ -469,10 +469,6 @@ main {
   border-radius: inherit;
 }
 
-.cell[data-player-symbol] {
-  z-index: 1;
-}
-
 .cell[data-player-symbol]::after {
   opacity: 1;
   transform: scale(1);
@@ -725,6 +721,8 @@ dialog#game-over-dialog {
   box-shadow: var(--shadow-2);
   background-color: currentColor;
   transform-origin: left center;
+  z-index: 10;
+  pointer-events: none;
 
   clip-path: inset(0 100% 0 0);
   opacity: 1;

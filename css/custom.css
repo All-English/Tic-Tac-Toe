@@ -796,6 +796,11 @@ dialog#game-over-dialog {
   max-width: none;
 }
 
+.field-hint .inline-tooltip {
+  vertical-align: -0.15em;
+  margin-inline-start: var(--size-1);
+}
+
 /* --- Conquest Fairness Options --- */
 
 .conquest-options,

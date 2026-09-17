@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-title" content="Word-Tac-Toe" />
   <link rel="manifest" href="/favicon/site.webmanifest" />
-  <link rel="stylesheet" href="css/main.css?v=9">
+  <link rel="stylesheet" href="css/main.css?v=10">
 </head>
 
 <body>
@@ -154,7 +154,20 @@
                 <input type="range" id="matchLength" min="2" max="5" value="3">
               </label>
             </div>
-            <p class="field-hint">The number of words in a row to score a point.</p>
+            <p class="field-hint">
+              The number of words in a row to score a point.
+              <span class="tooltip-container inline-tooltip">
+                <button type="button" class="icon-button small tooltip-trigger" aria-label="Words in a Row Korean Info" aria-describedby="match-length-tooltip-ko">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <text x="12" y="12" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-family="'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-weight="700" fill="currentColor" stroke="none">한</text>
+                  </svg>
+                </button>
+                <span id="match-length-tooltip-ko" class="tooltip-popup" role="tooltip">
+                  점수를 획득하기 위해 한 줄로 이어야 하는 단어 수입니다.
+                </span>
+              </span>
+            </p>
             <div class="setting-group">
               <label class="switch">
                 <input type="checkbox" role="switch" id="muteSoundsToggle">
@@ -658,7 +671,7 @@
     </article>
 
   <script src="shared-class-sync.js"></script>
-  <script src="main.js?v=9" type="module" defer></script>
+  <script src="main.js?v=10" type="module" defer></script>
 </body>
 
 </html>

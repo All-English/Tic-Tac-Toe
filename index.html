@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-title" content="Word-Tac-Toe" />
   <link rel="manifest" href="/favicon/site.webmanifest" />
-  <link rel="stylesheet" href="css/main.css?v=8">
+  <link rel="stylesheet" href="css/main.css?v=9">
 </head>
 
 <body>
@@ -217,23 +217,49 @@
                 <span>Survivor</span>
               </button>
             </div>
-            <p class="field-hint" id="gameModeHint">Get the most points.</p>
+            <div class="game-mode-hint-wrapper">
+              <p class="field-hint" id="gameModeHint">Get the most points.</p>
+              <div class="tooltip-container">
+                <button type="button" class="icon-button small tooltip-trigger" aria-label="Game Mode Korean Info" aria-describedby="game-mode-tooltip-ko">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <text x="12" y="12" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-family="'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-weight="700" fill="currentColor" stroke="none">한</text>
+                  </svg>
+                </button>
+                <div id="game-mode-tooltip-ko" class="tooltip-popup" role="tooltip">
+                  가장 많은 점수를 획득하세요.
+                </div>
+              </div>
+            </div>
             <div id="conquestOptionsGroup" class="setting-group conquest-options">
               <div class="option-row">
                 <label class="switch">
                   <input type="checkbox" role="switch" id="conquestRotatingStarterToggle">
                   <span class="label">Rotating Starters</span>
                 </label>
-                <div class="tooltip-container">
-                  <button type="button" class="icon-button small tooltip-trigger" aria-label="Rotating Starters Info" aria-describedby="conquest-starter-tooltip">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="16" x2="12" y2="12"></line>
-                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                  </button>
-                  <div id="conquest-starter-tooltip" class="tooltip-popup" role="tooltip">
-                    Rotates which player moves first at the start of each round to balance opening tempo.
+                <div class="tooltip-group">
+                  <div class="tooltip-container">
+                    <button type="button" class="icon-button small tooltip-trigger" aria-label="Rotating Starters Info" aria-describedby="conquest-starter-tooltip">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                      </svg>
+                    </button>
+                    <div id="conquest-starter-tooltip" class="tooltip-popup" role="tooltip">
+                      Rotates which player moves first at the start of each round to balance opening tempo.
+                    </div>
+                  </div>
+                  <div class="tooltip-container">
+                    <button type="button" class="icon-button small tooltip-trigger" aria-label="Rotating Starters Korean Info" aria-describedby="conquest-starter-tooltip-ko">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <text x="12" y="12" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-family="'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-weight="700" fill="currentColor" stroke="none">한</text>
+                      </svg>
+                    </button>
+                    <div id="conquest-starter-tooltip-ko" class="tooltip-popup" role="tooltip">
+                      매 라운드마다 선공 플레이어를 교대하여 첫 번째 턴의 유리함을 조절합니다.
+                    </div>
                   </div>
                 </div>
               </div>
@@ -243,16 +269,29 @@
                   <input type="checkbox" role="switch" id="conquestEqualRoundsToggle">
                   <span class="label">Equal Rounds</span>
                 </label>
-                <div class="tooltip-container">
-                  <button type="button" class="icon-button small tooltip-trigger" aria-label="Equal Rounds Info" aria-describedby="conquest-rounds-tooltip">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="16" x2="12" y2="12"></line>
-                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                  </button>
-                  <div id="conquest-rounds-tooltip" class="tooltip-popup" role="tooltip">
-                    Ends the match once all players have taken an equal number of turns so no player gets an extra move on odd grids.
+                <div class="tooltip-group">
+                  <div class="tooltip-container">
+                    <button type="button" class="icon-button small tooltip-trigger" aria-label="Equal Rounds Info" aria-describedby="conquest-rounds-tooltip">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                      </svg>
+                    </button>
+                    <div id="conquest-rounds-tooltip" class="tooltip-popup" role="tooltip">
+                      Ends the match once all players have taken an equal number of turns so no player gets an extra move on odd grids.
+                    </div>
+                  </div>
+                  <div class="tooltip-container">
+                    <button type="button" class="icon-button small tooltip-trigger" aria-label="Equal Rounds Korean Info" aria-describedby="conquest-rounds-tooltip-ko">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <text x="12" y="12" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-family="'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-weight="700" fill="currentColor" stroke="none">한</text>
+                      </svg>
+                    </button>
+                    <div id="conquest-rounds-tooltip-ko" class="tooltip-popup" role="tooltip">
+                      모든 플레이어가 동일한 횟수의 턴을 마친 후 경기를 종료하여, 홀수 칸 그리드에서 특정 플레이어가 추가 턴을 갖지 않도록 합니다.
+                    </div>
                   </div>
                 </div>
               </div>
@@ -262,16 +301,29 @@
                   <input type="checkbox" role="switch" id="conquestBlockPointsToggle" checked>
                   <span class="label">Points for Blocks</span>
                 </label>
-                <div class="tooltip-container">
-                  <button type="button" class="icon-button small tooltip-trigger" aria-label="Points for Blocks Info" aria-describedby="conquest-block-tooltip">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="16" x2="12" y2="12"></line>
-                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                  </button>
-                  <div id="conquest-block-tooltip" class="tooltip-popup" role="tooltip">
-                    Earn 0.5 points for each opponent scoring line blocked by your move (when not scoring a point).
+                <div class="tooltip-group">
+                  <div class="tooltip-container">
+                    <button type="button" class="icon-button small tooltip-trigger" aria-label="Points for Blocks Info" aria-describedby="conquest-block-tooltip">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                      </svg>
+                    </button>
+                    <div id="conquest-block-tooltip" class="tooltip-popup" role="tooltip">
+                      Earn 0.5 points for each opponent scoring line blocked by your move (when not scoring a point).
+                    </div>
+                  </div>
+                  <div class="tooltip-container">
+                    <button type="button" class="icon-button small tooltip-trigger" aria-label="Points for Blocks Korean Info" aria-describedby="conquest-block-tooltip-ko">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <text x="12" y="12" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-family="'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-weight="700" fill="currentColor" stroke="none">한</text>
+                      </svg>
+                    </button>
+                    <div id="conquest-block-tooltip-ko" class="tooltip-popup" role="tooltip">
+                      자신의 턴에 점수를 내지 않더라도, 상대방의 득점 라인을 방어(블록)할 때마다 0.5점을 획득합니다.
+                    </div>
                   </div>
                 </div>
               </div>
@@ -282,16 +334,29 @@
                   <input type="checkbox" role="switch" id="stealthRotatingStarterToggle">
                   <span class="label">Rotating Starters</span>
                 </label>
-                <div class="tooltip-container">
-                  <button type="button" class="icon-button small tooltip-trigger" aria-label="Rotating Starters Info" aria-describedby="stealth-starter-tooltip">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="16" x2="12" y2="12"></line>
-                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                  </button>
-                  <div id="stealth-starter-tooltip" class="tooltip-popup" role="tooltip">
-                    Rotates which player moves first at the start of each round to balance opening tempo.
+                <div class="tooltip-group">
+                  <div class="tooltip-container">
+                    <button type="button" class="icon-button small tooltip-trigger" aria-label="Rotating Starters Info" aria-describedby="stealth-starter-tooltip">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                      </svg>
+                    </button>
+                    <div id="stealth-starter-tooltip" class="tooltip-popup" role="tooltip">
+                      Rotates which player moves first at the start of each round to balance opening tempo.
+                    </div>
+                  </div>
+                  <div class="tooltip-container">
+                    <button type="button" class="icon-button small tooltip-trigger" aria-label="Rotating Starters Korean Info" aria-describedby="stealth-starter-tooltip-ko">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <text x="12" y="12" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-family="'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-weight="700" fill="currentColor" stroke="none">한</text>
+                      </svg>
+                    </button>
+                    <div id="stealth-starter-tooltip-ko" class="tooltip-popup" role="tooltip">
+                      매 라운드마다 선공 플레이어를 교대하여 첫 번째 턴의 유리함을 조절합니다.
+                    </div>
                   </div>
                 </div>
               </div>
@@ -301,16 +366,29 @@
                   <input type="checkbox" role="switch" id="stealthEqualRoundsToggle">
                   <span class="label">Equal Rounds</span>
                 </label>
-                <div class="tooltip-container">
-                  <button type="button" class="icon-button small tooltip-trigger" aria-label="Equal Rounds Info" aria-describedby="stealth-rounds-tooltip">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="16" x2="12" y2="12"></line>
-                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                  </button>
-                  <div id="stealth-rounds-tooltip" class="tooltip-popup" role="tooltip">
-                    Ends the match once all players have taken an equal number of turns so no player is forced to take an extra turn.
+                <div class="tooltip-group">
+                  <div class="tooltip-container">
+                    <button type="button" class="icon-button small tooltip-trigger" aria-label="Equal Rounds Info" aria-describedby="stealth-rounds-tooltip">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                      </svg>
+                    </button>
+                    <div id="stealth-rounds-tooltip" class="tooltip-popup" role="tooltip">
+                      Ends the match once all players have taken an equal number of turns so no player is forced to take an extra turn.
+                    </div>
+                  </div>
+                  <div class="tooltip-container">
+                    <button type="button" class="icon-button small tooltip-trigger" aria-label="Equal Rounds Korean Info" aria-describedby="stealth-rounds-tooltip-ko">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <text x="12" y="12" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-family="'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-weight="700" fill="currentColor" stroke="none">한</text>
+                      </svg>
+                    </button>
+                    <div id="stealth-rounds-tooltip-ko" class="tooltip-popup" role="tooltip">
+                      모든 플레이어가 동일한 횟수의 턴을 마친 후 경기를 종료하여, 특정 플레이어가 불필요하게 추가 턴을 하지 않도록 합니다.
+                    </div>
                   </div>
                 </div>
               </div>
@@ -321,16 +399,29 @@
                   <input type="checkbox" role="switch" id="survivorRotatingStarterToggle">
                   <span class="label">Rotating Starters</span>
                 </label>
-                <div class="tooltip-container">
-                  <button type="button" class="icon-button small tooltip-trigger" aria-label="Rotating Starters Info" aria-describedby="survivor-starter-tooltip">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="16" x2="12" y2="12"></line>
-                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                  </button>
-                  <div id="survivor-starter-tooltip" class="tooltip-popup" role="tooltip">
-                    Rotates who starts each round among surviving players so the last player doesn't have an unfair advantage.
+                <div class="tooltip-group">
+                  <div class="tooltip-container">
+                    <button type="button" class="icon-button small tooltip-trigger" aria-label="Rotating Starters Info" aria-describedby="survivor-starter-tooltip">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                      </svg>
+                    </button>
+                    <div id="survivor-starter-tooltip" class="tooltip-popup" role="tooltip">
+                      Rotates who starts each round among surviving players so the last player doesn't have an unfair advantage.
+                    </div>
+                  </div>
+                  <div class="tooltip-container">
+                    <button type="button" class="icon-button small tooltip-trigger" aria-label="Rotating Starters Korean Info" aria-describedby="survivor-starter-tooltip-ko">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <text x="12" y="12" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-family="'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-weight="700" fill="currentColor" stroke="none">한</text>
+                      </svg>
+                    </button>
+                    <div id="survivor-starter-tooltip-ko" class="tooltip-popup" role="tooltip">
+                      마지막 플레이어에게 불리하지 않도록, 살아남은 플레이어들 사이에서 매 라운드 선공을 번갈아 변경합니다.
+                    </div>
                   </div>
                 </div>
               </div>
@@ -340,16 +431,29 @@
                   <input type="checkbox" role="switch" id="survivorEqualRoundsToggle">
                   <span class="label">Equal Rounds</span>
                 </label>
-                <div class="tooltip-container">
-                  <button type="button" class="icon-button small tooltip-trigger" aria-label="Equal Rounds Info" aria-describedby="survivor-equal-rounds-tooltip">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="16" x2="12" y2="12"></line>
-                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                  </button>
-                  <div id="survivor-equal-rounds-tooltip" class="tooltip-popup" role="tooltip">
-                    Ensures all players get equal turns per round. When a player is eliminated, the round is completed so nobody is eliminated with fewer turns.
+                <div class="tooltip-group">
+                  <div class="tooltip-container">
+                    <button type="button" class="icon-button small tooltip-trigger" aria-label="Equal Rounds Info" aria-describedby="survivor-equal-rounds-tooltip">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                      </svg>
+                    </button>
+                    <div id="survivor-equal-rounds-tooltip" class="tooltip-popup" role="tooltip">
+                      Ensures all players get equal turns per round. When a player is eliminated, the round is completed so nobody is eliminated with fewer turns.
+                    </div>
+                  </div>
+                  <div class="tooltip-container">
+                    <button type="button" class="icon-button small tooltip-trigger" aria-label="Equal Rounds Korean Info" aria-describedby="survivor-equal-rounds-tooltip-ko">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <text x="12" y="12" text-anchor="middle" dominant-baseline="central" font-size="10.5" font-family="'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-weight="700" fill="currentColor" stroke="none">한</text>
+                      </svg>
+                    </button>
+                    <div id="survivor-equal-rounds-tooltip-ko" class="tooltip-popup" role="tooltip">
+                      모든 플레이어가 라운드당 동일한 턴을 갖도록 합니다. 탈락자가 발생해도 해당 라운드를 끝까지 마쳐 더 적은 턴으로 탈락하지 않도록 보장합니다.
+                    </div>
                   </div>
                 </div>
               </div>
@@ -554,7 +658,7 @@
     </article>
 
   <script src="shared-class-sync.js"></script>
-  <script src="main.js" type="module" defer></script>
+  <script src="main.js?v=9" type="module" defer></script>
 </body>
 
 </html>

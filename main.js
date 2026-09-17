@@ -322,6 +322,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const stealthEqualRoundsToggle = document.getElementById(
     "stealthEqualRoundsToggle",
   )
+  const gameModeHint = document.getElementById("gameModeHint")
+  const gameModeTooltipKo = document.getElementById("game-mode-tooltip-ko")
   const resetSettingsBtn = document.getElementById("resetSettingsBtn")
   const randomizePlayerOrderBtn_setup = document.getElementById(
     "randomizePlayerOrderBtn_setup",
@@ -2173,19 +2175,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     switch (mode) {
       case "Conquest":
-        gameModeHint.textContent = "Get the most points."
+        if (gameModeHint) gameModeHint.textContent = "Get the most points."
+        if (gameModeTooltipKo) {
+          gameModeTooltipKo.textContent = "가장 많은 점수를 획득하세요."
+        }
         break
       case "Stealth":
-        gameModeHint.textContent = "Get the fewest points."
+        if (gameModeHint) gameModeHint.textContent = "Get the fewest points."
+        if (gameModeTooltipKo) {
+          gameModeTooltipKo.textContent = "가장 적은 점수를 획득하세요."
+        }
         break
       case "Classic":
-        gameModeHint.textContent = "The first score wins."
+        if (gameModeHint) gameModeHint.textContent = "The first score wins."
+        if (gameModeTooltipKo) {
+          gameModeTooltipKo.textContent = "먼저 점수를 획득하는 플레이어가 승리합니다."
+        }
         break
       case "Survivor":
-        gameModeHint.textContent = "Get a point and you're out."
+        if (gameModeHint) gameModeHint.textContent = "Get a point and you're out."
+        if (gameModeTooltipKo) {
+          gameModeTooltipKo.textContent = "점수를 얻으면 탈락합니다."
+        }
         break
       default:
-        gameModeHint.textContent = "Get the most points."
+        if (gameModeHint) gameModeHint.textContent = "Get the most points."
+        if (gameModeTooltipKo) {
+          gameModeTooltipKo.textContent = "가장 많은 점수를 획득하세요."
+        }
     }
   }
 

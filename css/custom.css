@@ -783,6 +783,19 @@ dialog#game-over-dialog {
   max-width: 28ch;
 }
 
+.game-mode-hint-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--size-1);
+  margin-block-start: var(--size-1);
+}
+
+.game-mode-hint-wrapper .field-hint {
+  margin: 0;
+  max-width: none;
+}
+
 /* --- Conquest Fairness Options --- */
 
 .conquest-options,
@@ -806,13 +819,20 @@ dialog#game-over-dialog {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 250px;
-  gap: var(--size-1);
+  max-width: 280px;
+  gap: var(--size-2);
 }
 
 .option-row .switch {
   cursor: pointer;
   flex: 1;
+}
+
+.tooltip-group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-1);
+  flex-shrink: 0;
 }
 
 /* --- Fair Play Toggle & Tooltip --- */
@@ -873,6 +893,7 @@ dialog#game-over-dialog {
   border-radius: var(--radius-2);
   font-size: var(--font-size-xs);
   line-height: 1.35;
+  word-break: keep-all;
   width: max-content;
   max-width: 260px;
   text-align: center;

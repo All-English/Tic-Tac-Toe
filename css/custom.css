@@ -195,6 +195,7 @@ main {
   max-width: 70ch;
   margin-inline: auto;
   background-color: var(--surface-card);
+  overflow: visible;
 }
 
 #game-setup>hgroup {
@@ -928,6 +929,25 @@ dialog#game-over-dialog {
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(0);
+}
+
+.option-row .tooltip-popup {
+  left: auto;
+  right: 0;
+  transform: translateY(4px);
+}
+
+.option-row .tooltip-popup::after {
+  left: auto;
+  right: 7px;
+  transform: none;
+}
+
+.option-row .tooltip-container:hover .tooltip-popup,
+.option-row .tooltip-container:focus-within .tooltip-popup,
+.option-row .tooltip-trigger:focus + .tooltip-popup,
+.option-row .tooltip-trigger:focus-visible + .tooltip-popup {
+  transform: translateY(0);
 }
 
 #view-container {

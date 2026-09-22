@@ -3944,8 +3944,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function endGame() {
-    playSound("gameOver")
-
     const winnerIds = determineWinners(gameState)
     updatePlayerStats(gameState, winnerIds)
 
@@ -4038,6 +4036,7 @@ document.addEventListener("DOMContentLoaded", () => {
     dialogContent.innerHTML = winnerHTML + finalScoresHTML
 
     setTimeout(() => {
+      playSound("gameOver")
       gameDialog.showModal()
     }, 1500)
   }

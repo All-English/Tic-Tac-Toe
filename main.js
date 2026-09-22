@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
     block: new Audio("sounds/block.mp3"),
     score: new Audio("sounds/score.mp3"),
     gameOver: new Audio("sounds/game-over.mp3"),
+    eliminated: new Audio("sounds/eliminated.mp3"),
   }
 
   // --- WEB AUDIO API (For pitch-shifted score sounds and timed block sounds) ---
@@ -1189,7 +1190,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Handle the end of the game after rendering
     if (isGameOver) {
-      endGame()
+      if (gameState.gameMode === "Survivor" && pointsScored > 0) {
+        soundPromise.then(() => {
+          endGame()
+        })
+      } else {
+        endGame()
+      }
     } else {
       // Reset turn click state for the next player
       currentTurnCellClicked = false
@@ -1528,7 +1535,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let soundPromise = Promise.resolve()
     if (pointsScored > 0) {
-      soundPromise = playSoundSequentially("score", pointsScored)
+      if (gameState.gameMode === "Survivor") {
+        soundPromise = playSoundSequentially("eliminated", 1)
+      } else {
+        soundPromise = playSoundSequentially("score", pointsScored)
+      }
     } else if (wasBlock && gameState.gameMode !== "Survivor") {
       soundPromise = playSoundSequentially("block", linesBlocked)
       const cell = gameBoard.querySelector(`[data-index='${index}']`)
@@ -2835,6 +2846,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  async function playEliminatedSound() {
+    if (gameState.isMuted) return Promise.resolve()
+    const audio = sounds.eliminated
+    if (!audio) return Promise.resolve()
+    return new Promise((resolve) => {
+      audio.currentTime = 0
+      audio.onended = () => resolve()
+      audio.onerror = () => resolve()
+      audio.play().catch((e) => {
+        console.error(`Could not play eliminated sound: ${e}`)
+        resolve()
+      })
+    })
+  }
+
   function playSound(soundName) {
     if (gameState.isMuted) return
     const audio = sounds[soundName]
@@ -2851,6 +2877,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (soundName === "block") {
       return playBlockSequentially(times)
+    }
+    if (soundName === "eliminated") {
+      return playEliminatedSound()
     }
     const audio = sounds[soundName]
     if (!audio) return

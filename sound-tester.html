@@ -79,13 +79,13 @@
     /* Sound Selector Cards */
     .sound-select-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
     }
 
-    @media (max-width: 540px) {
+    @media (max-width: 600px) {
       .sound-select-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
       }
     }
 
@@ -447,6 +447,11 @@
           <div class="sound-name">Shield Thump</div>
           <div class="sound-meta">0.5s • Defense sound</div>
         </div>
+        <div class="sound-card" data-sound="eliminated">
+          <span class="sound-badge">Survivor</span>
+          <div class="sound-name">Out / Fail</div>
+          <div class="sound-meta">5.3s • Elimination jingle</div>
+        </div>
       </div>
     </div>
 
@@ -541,7 +546,8 @@
     const SOUND_FILES = {
       new: "sounds/score.mp3",
       old: "sounds/score_old.mp3",
-      block: "sounds/block.mp3"
+      block: "sounds/block.mp3",
+      eliminated: "sounds/eliminated.mp3"
     };
 
     const SCORE_PITCH_STEPS = [0, 200, 400, 700, 900, 1200, 1400, 1600];
@@ -557,7 +563,8 @@
     const audioBuffers = {
       new: null,
       old: null,
-      block: null
+      block: null,
+      eliminated: null
     };
 
     function getAudioContext() {
@@ -591,6 +598,7 @@
       loadAudio("new");
       loadAudio("old");
       loadAudio("block");
+      loadAudio("eliminated");
     }, { once: true });
 
     // UI elements
@@ -658,6 +666,17 @@
           slider.value = 350;
           currentSpacingMs = 350;
           updateSpacingDisplay(350);
+        } else if (currentSoundKey === "eliminated") {
+          pointsBtns.forEach((b) => b.classList.remove("active"));
+          const btn1 = document.querySelector('.point-btn[data-points="1"]');
+          if (btn1) btn1.classList.add("active");
+          currentPoints = 1;
+          pointsLabel.textContent = "1 Time";
+          pitchBtns.forEach((b) => b.classList.remove("active"));
+          const flatBtn = document.querySelector('.pitch-mode-btn[data-pitch-mode="flat"]');
+          if (flatBtn) flatBtn.classList.add("active");
+          pitchMode = "flat";
+          renderVisualizer();
         }
         loadAudio(currentSoundKey);
       });

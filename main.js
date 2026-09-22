@@ -36,6 +36,73 @@ document.addEventListener("DOMContentLoaded", () => {
     gameOver: new Audio("sounds/game-over.mp3"),
   }
 
+  // --- WEB AUDIO API (For pitch-shifted score sounds and timed block sounds) ---
+  let webAudioCtx = null
+  let scoreAudioBuffer = null
+  let blockAudioBuffer = null
+  let isScoreAudioLoading = false
+  let isBlockAudioLoading = false
+
+  function getAudioContext() {
+    if (!webAudioCtx) {
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext
+      if (AudioCtxClass) {
+        webAudioCtx = new AudioCtxClass()
+      }
+    }
+    if (webAudioCtx && webAudioCtx.state === "suspended") {
+      webAudioCtx.resume().catch(() => {})
+    }
+    return webAudioCtx
+  }
+
+  async function loadScoreAudioBuffer() {
+    if (scoreAudioBuffer || isScoreAudioLoading) return scoreAudioBuffer
+    const ctx = getAudioContext()
+    if (!ctx) return null
+    isScoreAudioLoading = true
+    try {
+      const response = await fetch("sounds/score.mp3")
+      const arrayBuffer = await response.arrayBuffer()
+      scoreAudioBuffer = await ctx.decodeAudioData(arrayBuffer)
+      return scoreAudioBuffer
+    } catch (e) {
+      console.warn("Could not load score audio buffer for Web Audio:", e)
+      return null
+    } finally {
+      isScoreAudioLoading = false
+    }
+  }
+
+  async function loadBlockAudioBuffer() {
+    if (blockAudioBuffer || isBlockAudioLoading) return blockAudioBuffer
+    const ctx = getAudioContext()
+    if (!ctx) return null
+    isBlockAudioLoading = true
+    try {
+      const response = await fetch("sounds/block.mp3")
+      const arrayBuffer = await response.arrayBuffer()
+      blockAudioBuffer = await ctx.decodeAudioData(arrayBuffer)
+      return blockAudioBuffer
+    } catch (e) {
+      console.warn("Could not load block audio buffer for Web Audio:", e)
+      return null
+    } finally {
+      isBlockAudioLoading = false
+    }
+  }
+
+  // Unlock Web Audio context and preload sounds on first user interaction
+  const unlockAudioContext = () => {
+    getAudioContext()
+    loadScoreAudioBuffer()
+    loadBlockAudioBuffer()
+    window.removeEventListener("pointerdown", unlockAudioContext)
+    window.removeEventListener("keydown", unlockAudioContext)
+  }
+  window.addEventListener("pointerdown", unlockAudioContext, { once: true })
+  window.addEventListener("keydown", unlockAudioContext, { once: true })
+
   const playerRadii = [
     "var(--radius-drawn-1)",
     "var(--radius-drawn-2)",
@@ -2629,6 +2696,145 @@ document.addEventListener("DOMContentLoaded", () => {
     return nextPlayer
   }
 
+  // Ascending musical pitch offsets in cents (100 cents = 1 semitone)
+  // Pentatonic intervals: 0 (Root), 200 (+1 whole step), 400 (+2 whole steps / Maj 3rd), 700 (5th), etc.
+  const SCORE_PITCH_STEPS = [0, 200, 400, 700, 900, 1200, 1400, 1600]
+
+  async function playScoreSequentially(times) {
+    if (gameState.isMuted || times <= 0) return Promise.resolve()
+
+    const ctx = getAudioContext()
+    const buffer = scoreAudioBuffer || (await loadScoreAudioBuffer())
+
+    // Web Audio API playback (supports dynamic pitch shifting and overlapping chimes)
+    if (ctx && buffer) {
+      if (ctx.state === "suspended") {
+        await ctx.resume().catch(() => {})
+      }
+
+      const stepDelay = 0.40 // 400ms interval between chimes
+      const now = ctx.currentTime
+
+      return new Promise((resolve) => {
+        let lastSourceEnded = false
+        const totalDuration = (times - 1) * stepDelay + buffer.duration
+
+        for (let i = 0; i < times; i++) {
+          const source = ctx.createBufferSource()
+          source.buffer = buffer
+
+          const detuneCents =
+            SCORE_PITCH_STEPS[i] !== undefined
+              ? SCORE_PITCH_STEPS[i]
+              : i * 200
+          source.detune.value = detuneCents
+
+          source.connect(ctx.destination)
+
+          const startTime = now + i * stepDelay
+          source.start(startTime)
+
+          if (i === times - 1) {
+            source.onended = () => {
+              if (!lastSourceEnded) {
+                lastSourceEnded = true
+                resolve()
+              }
+            }
+          }
+        }
+
+        // Safety timeout in case onended is missed or delayed
+        setTimeout(() => {
+          if (!lastSourceEnded) {
+            lastSourceEnded = true
+            resolve()
+          }
+        }, totalDuration * 1000 + 100)
+      })
+    }
+
+    // Fallback: HTML5 Audio with preservesPitch=false & playbackRate
+    for (let i = 0; i < times; i++) {
+      await new Promise((resolve) => {
+        const audio = sounds.score ? sounds.score.cloneNode() : null
+        if (!audio) return resolve()
+
+        const cents =
+          SCORE_PITCH_STEPS[i] !== undefined ? SCORE_PITCH_STEPS[i] : i * 200
+        audio.preservesPitch = false
+        audio.playbackRate = Math.pow(2, cents / 1200)
+
+        audio.onended = () => resolve()
+        audio.onerror = () => resolve()
+        audio.play().catch((e) => {
+          console.error(`Could not play score sound: ${e}`)
+          resolve()
+        })
+      })
+    }
+  }
+
+  async function playBlockSequentially(times) {
+    if (gameState.isMuted || times <= 0) return Promise.resolve()
+
+    const ctx = getAudioContext()
+    const buffer = blockAudioBuffer || (await loadBlockAudioBuffer())
+
+    if (ctx && buffer) {
+      if (ctx.state === "suspended") {
+        await ctx.resume().catch(() => {})
+      }
+
+      const stepDelay = 0.28 // 280ms interval between block sounds
+      const now = ctx.currentTime
+
+      return new Promise((resolve) => {
+        let lastSourceEnded = false
+        const totalDuration = (times - 1) * stepDelay + buffer.duration
+
+        for (let i = 0; i < times; i++) {
+          const source = ctx.createBufferSource()
+          source.buffer = buffer
+          source.connect(ctx.destination)
+
+          const startTime = now + i * stepDelay
+          source.start(startTime)
+
+          if (i === times - 1) {
+            source.onended = () => {
+              if (!lastSourceEnded) {
+                lastSourceEnded = true
+                resolve()
+              }
+            }
+          }
+        }
+
+        setTimeout(() => {
+          if (!lastSourceEnded) {
+            lastSourceEnded = true
+            resolve()
+          }
+        }, totalDuration * 1000 + 100)
+      })
+    }
+
+    // Fallback: HTML5 Audio
+    for (let i = 0; i < times; i++) {
+      await new Promise((resolve) => {
+        const audio = sounds.block ? sounds.block.cloneNode() : null
+        if (!audio) return resolve()
+        audio.onended = () => resolve()
+        audio.onerror = () => resolve()
+        audio.play().catch((e) => {
+          console.error(`Could not play block sound: ${e}`)
+          resolve()
+        })
+      })
+    }
+  }
+
   function playSound(soundName) {
     if (gameState.isMuted) return
     const audio = sounds[soundName]
@@ -2640,6 +2846,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function playSoundSequentially(soundName, times) {
     if (gameState.isMuted) return
+    if (soundName === "score") {
+      return playScoreSequentially(times)
+    }
+    if (soundName === "block") {
+      return playBlockSequentially(times)
+    }
     const audio = sounds[soundName]
     if (!audio) return
     for (let i = 0; i < times; i++) {

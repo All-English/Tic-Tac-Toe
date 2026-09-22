@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Score & Sound Effect Tester</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-hover: #0ea5e9;
+      --accent: #f59e0b;
+      --success: #22c55e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      max-width: 660px;
+      width: 100%;
+      padding: 32px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+
+    .section {
+      margin-bottom: 24px;
+    }
+
+    .section-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Sound Selector Cards */
+    .sound-select-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 540px) {
+      .sound-select-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sound-card {
+      background: #0f172a;
+      border: 2px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: left;
+      position: relative;
+    }
+
+    .sound-card:hover {
+      border-color: #475569;
+      background: #172033;
+    }
+
+    .sound-card.active {
+      border-color: var(--primary);
+      background: rgba(56, 189, 248, 0.12);
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.2);
+    }
+
+    .sound-badge {
+      display: inline-block;
+      font-size: 0.70rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 5px;
+      margin-bottom: 6px;
+    }
+
+    .sound-card.active .sound-badge {
+      background: var(--primary);
+      color: #0f172a;
+    }
+
+    .sound-card:not(.active) .sound-badge {
+      background: #334155;
+      color: #cbd5e1;
+    }
+
+    .sound-name {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 2px;
+    }
+
+    .sound-meta {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    /* Point selector */
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .point-btn {
+      flex: 1;
+      padding: 11px 8px;
+      background: #0f172a;
+      border: 1.5px solid var(--card-border);
+      color: var(--text-muted);
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .point-btn:hover {
+      border-color: var(--primary);
+      color: var(--text-main);
+    }
+
+    .point-btn.active {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--primary);
+      color: var(--primary);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+    }
+
+    /* Pitch mode toggle */
+    .pitch-mode-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .pitch-mode-btn {
+      flex: 1;
+      padding: 9px 12px;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pitch-mode-btn:hover {
+      border-color: #475569;
+      color: var(--text-main);
+    }
+
+    .pitch-mode-btn.active {
+      border-color: var(--accent);
+      background: rgba(245, 158, 11, 0.12);
+      color: var(--accent);
+    }
+
+    /* Spacing Slider */
+    .slider-container {
+      background: #0f172a;
+      padding: 18px 20px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+    }
+
+    .slider-value {
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .slider-value span {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-left: 4px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      background: #334155;
+      border-radius: 4px;
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    /* Presets */
+    .presets-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .preset-btn {
+      padding: 10px 14px;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      color: var(--text-main);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .preset-btn:hover {
+      border-color: #475569;
+      background: #172033;
+    }
+
+    .preset-btn.active {
+      border-color: var(--accent);
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    .preset-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    .preset-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* Visualizer */
+    .visualizer-container {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 86px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .chime-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.4;
+      transform: scale(0.92);
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .chime-bubble {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #334155;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #cbd5e1;
+      font-size: 1rem;
+      border: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .chime-pitch {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .chime-node.playing {
+      opacity: 1;
+      transform: scale(1.18);
+    }
+
+    .chime-node.playing .chime-bubble {
+      background: var(--primary);
+      color: #0f172a;
+      border-color: #e0f2fe;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.8);
+    }
+
+    /* Play Action */
+    .play-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #0284c7, #0ea5e9);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 1.15rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.35);
+      transition: all 0.15s;
+    }
+
+    .play-btn:hover {
+      background: linear-gradient(135deg, #0369a1, #0284c7);
+      transform: translateY(-1px);
+      box-shadow: 0 14px 20px -3px rgba(14, 165, 233, 0.45);
+    }
+
+    .play-btn:active {
+      transform: translateY(1px);
+    }
+
+    .play-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 18px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .footer-note kbd {
+      background: #334155;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--text-main);
+      font-size: 0.75rem;
+    }
+
+    .link-game {
+      display: inline-block;
+      margin-top: 10px;
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 0.88rem;
+    }
+    .link-game:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔔 Sound & Spacing Tester</h1>
+    <p class="subtitle">Compare different sounds, test repetition intervals, and preview pitch modes.</p>
+
+    <!-- Sound Selection -->
+    <div class="section">
+      <div class="section-label">
+        <span>Audio File</span>
+        <span id="sound-status" style="color: var(--success); font-size: 0.75rem;">Loaded</span>
+      </div>
+      <div class="sound-select-grid">
+        <div class="sound-card active" data-sound="new">
+          <span class="sound-badge">New Win</span>
+          <div class="sound-name">Pixabay Chime</div>
+          <div class="sound-meta">1.0s • Short, crisp strike</div>
+        </div>
+        <div class="sound-card" data-sound="old">
+          <span class="sound-badge">Old Win</span>
+          <div class="sound-name">Original Fanfare</div>
+          <div class="sound-meta">2.5s • Long celebration</div>
+        </div>
+        <div class="sound-card" data-sound="block">
+          <span class="sound-badge">Block</span>
+          <div class="sound-name">Shield Thump</div>
+          <div class="sound-meta">0.5s • Defense sound</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pitch Mode -->
+    <div class="section">
+      <div class="section-label">
+        <span>Pitch Progression</span>
+      </div>
+      <div class="pitch-mode-group">
+        <button class="pitch-mode-btn active" data-pitch-mode="ascending">
+          🎵 Ascending Pitch (+200¢ per step)
+        </button>
+        <button class="pitch-mode-btn" data-pitch-mode="flat">
+          🔁 Flat Pitch (Monotone repetition)
+        </button>
+      </div>
+    </div>
+
+    <!-- Points Count -->
+    <div class="section">
+      <div class="section-label">
+        <span>Repetitions / Count</span>
+        <span id="points-label">3 Times</span>
+      </div>
+      <div class="btn-group">
+        <button class="point-btn" data-points="1">1x</button>
+        <button class="point-btn" data-points="2">2x</button>
+        <button class="point-btn active" data-points="3">3x</button>
+        <button class="point-btn" data-points="4">4x</button>
+        <button class="point-btn" data-points="5">5x</button>
+      </div>
+    </div>
+
+    <!-- Spacing Slider -->
+    <div class="section">
+      <div class="section-label">
+        <span>Chime Spacing Interval</span>
+      </div>
+      <div class="slider-container">
+        <div class="slider-header">
+          <span style="font-size: 0.88rem; color: var(--text-muted);">Delay between notes:</span>
+          <div class="slider-value" id="spacing-display">0.40<span>s</span> (400ms)</div>
+        </div>
+        <input type="range" id="spacing-slider" min="150" max="1500" step="10" value="400">
+
+        <!-- Presets -->
+        <div class="presets-grid">
+          <button class="preset-btn" data-val="280">
+            <span class="preset-title">280ms (0.28s)</span>
+            <span class="preset-desc">Original setting (Rapid)</span>
+          </button>
+          <button class="preset-btn active" data-val="400">
+            <span class="preset-title">400ms (0.40s)</span>
+            <span class="preset-desc">Crisp & Punchy</span>
+          </button>
+          <button class="preset-btn" data-val="500">
+            <span class="preset-title">500ms (0.50s)</span>
+            <span class="preset-desc">Clear & Melodic</span>
+          </button>
+          <button class="preset-btn" data-val="700">
+            <span class="preset-title">700ms (0.70s)</span>
+            <span class="preset-desc">Spaced / Deliberate</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visualizer -->
+    <div class="section">
+      <div class="section-label">Live Timeline Preview</div>
+      <div class="visualizer-container" id="visualizer">
+        <!-- Chime nodes dynamically rendered here -->
+      </div>
+    </div>
+
+    <!-- Play Button -->
+    <button class="play-btn" id="play-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+      Play Sound Sequence
+    </button>
+
+    <div class="footer-note">
+      Tip: Press <kbd>Space</kbd> or <kbd>Enter</kbd> anytime to replay the sound.
+      <br>
+      <a href="/" class="link-game">← Back to Tic-Tac-Toe Game</a>
+    </div>
+  </div>
+
+  <script>
+    const SOUND_FILES = {
+      new: "sounds/score.mp3",
+      old: "sounds/score_old.mp3",
+      block: "sounds/block.mp3"
+    };
+
+    const SCORE_PITCH_STEPS = [0, 200, 400, 700, 900, 1200, 1400, 1600];
+    const PITCH_LABELS = ["Base", "+200¢ (+1 step)", "+400¢ (+2 steps)", "+700¢ (5th)", "+900¢ (6th)"];
+
+    let currentSoundKey = "new";
+    let pitchMode = "ascending"; // 'ascending' or 'flat'
+    let currentPoints = 3;
+    let currentSpacingMs = 400;
+    let isPlaying = false;
+
+    let audioCtx = null;
+    const audioBuffers = {
+      new: null,
+      old: null,
+      block: null
+    };
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    async function loadAudio(key) {
+      if (audioBuffers[key]) return audioBuffers[key];
+      const ctx = getAudioContext();
+      try {
+        const res = await fetch(SOUND_FILES[key]);
+        const arrayBuf = await res.arrayBuffer();
+        const decoded = await ctx.decodeAudioData(arrayBuf);
+        audioBuffers[key] = decoded;
+        return decoded;
+      } catch (err) {
+        console.error(`Error loading ${key} audio:`, err);
+        return null;
+      }
+    }
+
+    // Preload all sounds on first user touch/click
+    window.addEventListener("pointerdown", () => {
+      getAudioContext();
+      loadAudio("new");
+      loadAudio("old");
+      loadAudio("block");
+    }, { once: true });
+
+    // UI elements
+    const soundCards = document.querySelectorAll(".sound-card");
+    const pitchBtns = document.querySelectorAll(".pitch-mode-btn");
+    const pointsBtns = document.querySelectorAll(".point-btn");
+    const pointsLabel = document.getElementById("points-label");
+    const slider = document.getElementById("spacing-slider");
+    const spacingDisplay = document.getElementById("spacing-display");
+    const presetBtns = document.querySelectorAll(".preset-btn");
+    const visualizer = document.getElementById("visualizer");
+    const playBtn = document.getElementById("play-btn");
+
+    function renderVisualizer() {
+      visualizer.innerHTML = "";
+      for (let i = 0; i < currentPoints; i++) {
+        const node = document.createElement("div");
+        node.className = "chime-node";
+        node.id = `chime-node-${i}`;
+
+        const bubble = document.createElement("div");
+        bubble.className = "chime-bubble";
+        bubble.textContent = `#${i + 1}`;
+
+        const pitchText = document.createElement("div");
+        pitchText.className = "chime-pitch";
+        if (pitchMode === "flat") {
+          pitchText.textContent = "Flat (0¢)";
+        } else {
+          pitchText.textContent = PITCH_LABELS[i] || `+${SCORE_PITCH_STEPS[i]}¢`;
+        }
+
+        node.appendChild(bubble);
+        node.appendChild(pitchText);
+        visualizer.appendChild(node);
+      }
+    }
+
+    function updateSpacingDisplay(ms) {
+      const sec = (ms / 1000).toFixed(2);
+      spacingDisplay.innerHTML = `${sec}<span>s</span> (${ms}ms)`;
+
+      presetBtns.forEach((btn) => {
+        if (parseInt(btn.dataset.val, 10) === ms) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      });
+    }
+
+    // Switch sound (New vs Old vs Block)
+    soundCards.forEach((card) => {
+      card.addEventListener("click", () => {
+        soundCards.forEach((c) => c.classList.remove("active"));
+        card.classList.add("active");
+        currentSoundKey = card.dataset.sound;
+
+        // Auto-adjust spacing recommendation based on sound duration
+        if (currentSoundKey === "old" && currentSpacingMs < 400) {
+          slider.value = 500;
+          currentSpacingMs = 500;
+          updateSpacingDisplay(500);
+        } else if (currentSoundKey === "block" && currentSpacingMs > 500) {
+          slider.value = 350;
+          currentSpacingMs = 350;
+          updateSpacingDisplay(350);
+        }
+        loadAudio(currentSoundKey);
+      });
+    });
+
+    // Switch pitch mode (Ascending vs Flat)
+    pitchBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        pitchBtns.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        pitchMode = btn.dataset.pitchMode;
+        renderVisualizer();
+      });
+    });
+
+    // Switch points count
+    pointsBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        pointsBtns.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentPoints = parseInt(btn.dataset.points, 10);
+        pointsLabel.textContent = `${currentPoints} Time${currentPoints > 1 ? "s" : ""}`;
+        renderVisualizer();
+      });
+    });
+
+    slider.addEventListener("input", (e) => {
+      currentSpacingMs = parseInt(e.target.value, 10);
+      updateSpacingDisplay(currentSpacingMs);
+    });
+
+    presetBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const val = parseInt(btn.dataset.val, 10);
+        slider.value = val;
+        currentSpacingMs = val;
+        updateSpacingDisplay(val);
+      });
+    });
+
+    async function playSoundSequence() {
+      if (isPlaying) return;
+      isPlaying = true;
+      playBtn.disabled = true;
+
+      const ctx = getAudioContext();
+      const buffer = audioBuffers[currentSoundKey] || (await loadAudio(currentSoundKey));
+
+      if (!ctx || !buffer) {
+        alert("Audio file could not be loaded.");
+        isPlaying = false;
+        playBtn.disabled = false;
+        return;
+      }
+
+      const stepDelay = currentSpacingMs / 1000;
+      const now = ctx.currentTime;
+
+      for (let i = 0; i < currentPoints; i++) {
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+
+        if (pitchMode === "ascending") {
+          const detuneCents = SCORE_PITCH_STEPS[i] !== undefined ? SCORE_PITCH_STEPS[i] : i * 200;
+          source.detune.value = detuneCents;
+        } else {
+          source.detune.value = 0;
+        }
+
+        source.connect(ctx.destination);
+
+        const startTime = now + i * stepDelay;
+        source.start(startTime);
+
+        // Schedule visual indicator timing
+        const delayMs = i * currentSpacingMs;
+        setTimeout(() => {
+          const node = document.getElementById(`chime-node-${i}`);
+          if (node) {
+            node.classList.add("playing");
+            setTimeout(() => {
+              node.classList.remove("playing");
+            }, Math.max(180, currentSpacingMs * 0.85));
+          }
+        }, delayMs);
+      }
+
+      const totalDurationMs = (currentPoints - 1) * currentSpacingMs + (buffer.duration * 1000);
+      setTimeout(() => {
+        isPlaying = false;
+        playBtn.disabled = false;
+      }, Math.min(totalDurationMs, (currentPoints - 1) * currentSpacingMs + 700));
+    }
+
+    playBtn.addEventListener("click", playSoundSequence);
+
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space" || e.code === "Enter") {
+        if (e.target.tagName !== "BUTTON" && e.target.tagName !== "INPUT") {
+          e.preventDefault();
+          playSoundSequence();
+        }
+      }
+    });
+
+    // Init
+    loadAudio("new");
+    loadAudio("old");
+    loadAudio("block");
+    renderVisualizer();
+    updateSpacingDisplay(currentSpacingMs);
+  </script>
+</body>
+</html>

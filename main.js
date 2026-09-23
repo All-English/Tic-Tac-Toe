@@ -3555,10 +3555,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     const wordsPerUnit = Math.floor(totalWordsNeeded / uniqueUnits.length)
     let remainder = totalWordsNeeded % uniqueUnits.length
     uniqueUnits.forEach((unitValue) => {
-      const [level, unit] = unitValue.split("|")
-      const unitData = smartPhonicsWordBank[level][unit]
+      let seriesKey = "smart-phonics"
+      let level = ""
+      let unit = ""
+      const parts = unitValue.split("|")
+      if (parts.length === 3) {
+        seriesKey = parts[0]
+        level = parts[1]
+        unit = parts[2]
+      } else {
+        level = parts[0]
+        unit = parts[1]
+      }
+      const bank = (smartPhonicsWordBank.series && smartPhonicsWordBank.series[seriesKey] && smartPhonicsWordBank.series[seriesKey].levels)
+        ? smartPhonicsWordBank.series[seriesKey].levels
+        : smartPhonicsWordBank;
+      const unitData = bank?.[level]?.[unit]
+      if (!unitData || !unitData.words) return
+
       const wordPool = [...unitData.words]
-      const targetSound = unitData.targetSound
+      const targetSound = unitData.targetSound || ""
       let wordsToTake = wordsPerUnit
       if (remainder > 0) {
         wordsToTake++
@@ -3674,30 +3690,40 @@ document.addEventListener("DOMContentLoaded", async () => {
     initialOption.value = ""
     initialOption.textContent = "Select a word unit..."
     allOptions.push(initialOption)
-    const separator = document.createElement("hr")
-    allOptions.push(separator)
+    select.appendChild(initialOption)
 
-    const levelKeys = Object.keys(smartPhonicsWordBank)
+    const seriesEntries = (smartPhonicsWordBank.series && Object.keys(smartPhonicsWordBank.series).length > 0)
+      ? Object.entries(smartPhonicsWordBank.series)
+      : [["smart-phonics", { name: "Smart Phonics", levels: smartPhonicsWordBank }]];
 
-    levelKeys.forEach((level, index) => {
-      const units = smartPhonicsWordBank[level]
-      for (const unit in units) {
-        const option = document.createElement("option")
-        const unitData = units[unit]
-        option.value = `${level}|${unit}`
-        option.textContent = `${level.slice(-1)}-${unit.slice(-1)} (${
-          unitData.unitTitle
-        })`
-        allOptions.push(option)
-      }
+    seriesEntries.forEach(([seriesKey, seriesObj]) => {
+      const seriesGroup = document.createElement("optgroup")
+      seriesGroup.label = seriesObj.name || (window.SharedClassSync ? window.SharedClassSync.toSeriesDisplayName(seriesKey) : seriesKey)
 
-      if (index < levelKeys.length - 1) {
-        const separator = document.createElement("hr")
-        allOptions.push(separator)
-      }
+      const levels = seriesObj.levels || seriesObj
+      const levelKeys = Object.keys(levels).filter(k => k.startsWith("level"))
+
+      levelKeys.forEach((level, index) => {
+        const units = levels[level]
+        for (const unit in units) {
+          const option = document.createElement("option")
+          const unitData = units[unit]
+          option.value = seriesKey === "smart-phonics" ? `${level}|${unit}` : `${seriesKey}|${level}|${unit}`
+          option.textContent = `${level.replace("level", "")}-${unit.replace("unit", "")} (${
+            unitData.unitTitle
+          })`
+          seriesGroup.appendChild(option)
+          allOptions.push(option)
+        }
+
+        if (index < levelKeys.length - 1) {
+          const separator = document.createElement("hr")
+          seriesGroup.appendChild(separator)
+        }
+      })
+
+      select.appendChild(seriesGroup)
     })
-
-    select.append(...allOptions)
 
     if (selectedValue !== null && selectedValue !== "") {
       select.value = selectedValue

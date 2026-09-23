@@ -3796,6 +3796,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       activeSeriesId = bookSelectEl.options[0].value
       bookSelectEl.value = activeSeriesId
     }
+
+    const bookSelectField = document.getElementById("book-select-field")
+    if (bookSelectField) {
+      bookSelectField.style.display = bookSelectEl.options.length > 1 ? "" : "none"
+    } else {
+      bookSelectEl.style.display = bookSelectEl.options.length > 1 ? "" : "none"
+    }
   }
 
   function syncUrlParameters() {
@@ -4381,6 +4388,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 1. Resolve primary series from profile and units (majority vote fallback)
     const primarySeries = getPrimarySeriesFromUnits(canonicalUnits, profileCurriculumId)
     activeSeriesId = primarySeries
+    populateBookSelector()
     const bookSelectEl = document.getElementById("book-select")
     if (bookSelectEl) bookSelectEl.value = activeSeriesId
 

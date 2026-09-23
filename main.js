@@ -1,4 +1,4 @@
-import { smartPhonicsWordBank, playerSymbols, englishVoices } from "./config.js"
+import { smartPhonicsWordBank, initSmartPhonicsWordBank, playerSymbols, englishVoices } from "./config.js"
 
 const PLAYER_SETS_KEY = "phonics_player_sets"
 const SHARED_SETS_KEY = "shared_player_sets"
@@ -9,7 +9,7 @@ const STATS_KEY = "wordTacToe_stats"
 const MAX_PLAYERS = 5
 let lastVoiceId = null
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   // --- STATE ---
   let gameState = {
     currentView: "setup",
@@ -4661,6 +4661,10 @@ document.addEventListener("DOMContentLoaded", () => {
       playPlayerTurnAudio(playerIndex)
     }
   })
+
+  if (typeof initSmartPhonicsWordBank === "function") {
+    await initSmartPhonicsWordBank()
+  }
 
   loadSettings()
   updateApiFieldVisibility()

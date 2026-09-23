@@ -1,4 +1,4 @@
-export const smartPhonicsWordBank = {
+export let smartPhonicsWordBank = {
   level1: {
     unit1: {
       targetSound: "a,b,c",
@@ -625,3 +625,25 @@ export const englishVoices = [
 ]
 
 export const playerSymbols = ["X", "O", "△", "□", "☆"]
+
+/**
+ * Initializes and syncs smartPhonicsWordBank from Upstash or CDN.
+ * Falls back gracefully to bundled config word bank.
+ */
+export async function initSmartPhonicsWordBank() {
+  if (typeof window !== "undefined" && window.SharedClassSync && window.SharedClassSync.CurriculumLoader) {
+    try {
+      const data = await window.SharedClassSync.CurriculumLoader.load();
+      if (data) {
+        const adapted = window.SharedClassSync.CurriculumAdapter.toWordBank(data);
+        if (adapted && Object.keys(adapted).length > 0) {
+          smartPhonicsWordBank = adapted;
+          return adapted;
+        }
+      }
+    } catch (e) {
+      console.warn("[Tic-Tac-Toe] Could not refresh word bank from CDN/Upstash:", e);
+    }
+  }
+  return smartPhonicsWordBank;
+}

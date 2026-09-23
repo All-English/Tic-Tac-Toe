@@ -293,10 +293,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
 
-      // Priority 1: Scheduled active class in session right now
-      if (activeClassMatch) {
+      // Priority 1: Scheduled active class in session right now (unless explicit URL parameters are present)
+      const urlParams = new URLSearchParams(window.location.search)
+      const hasExplicitUrlParams = urlParams.has("units") || urlParams.has("series") || urlParams.has("book")
+      if (activeClassMatch && !hasExplicitUrlParams) {
         handleLoadSet(activeClassMatch.className)
-      } else {
+      } else if (!activeClassMatch) {
         // Priority 2: Outside class hours, fall back to active session players
         const dbActive = await fetchFromUpstash(SHARED_ACTIVE_PLAYERS_KEY)
         if (!localStorage.getItem(UPSTASH_URL_KEY)) return
@@ -350,6 +352,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const unitSelectorsContainer = document.getElementById(
     "unit-selectors-container",
   )
+  const bookSelect = document.getElementById("book-select")
+  let activeSeriesId = "smart-phonics"
   const addUnitBtn = document.getElementById("addUnitBtn")
   const removeAllUnitsBtn = document.getElementById("removeAllUnitsBtn")
   const startGameBtn = document.getElementById("startGameBtn")
@@ -3062,6 +3066,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         : !isTwoPlayers,
       gameMode: document.querySelector("#gameModeSelector button.selected")
         ?.dataset.mode,
+      selectedSeries: activeSeriesId,
       selectedUnits: Array.from(
         document.querySelectorAll(".phonics-unit-select"),
       ).map((select) => select.value),
@@ -3207,18 +3212,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else {
         updateGameModeHint("Conquest")
       }
-
-      // Re-create the saved word unit selectors
-      unitSelectorsContainer.innerHTML = "" // Clear defaults
-      const validSavedUnits = (settings.selectedUnits || []).filter(Boolean)
-      if (validSavedUnits.length > 0) {
-        validSavedUnits.forEach((unitValue) => {
-          createUnitSelector(unitValue)
-        })
-      } else {
-        createUnitSelector() // Create one default selector if none were saved
-        selectRandomUnit()
-      }
     } else {
       // --- IF NO SETTINGS ARE FOUND (NEW USER), CREATE DEFAULTS ---
       if (playersList.length === 0) {
@@ -3228,9 +3221,82 @@ document.addEventListener("DOMContentLoaded", async () => {
         ]
       }
       gameState.setup.players = playersList
-      createUnitSelector()
-      selectRandomUnit()
       updateGameModeHint("Conquest")
+    }
+
+    // --- RE-CREATE WORD UNIT SELECTORS & BOOK SELECTOR ---
+    // Priority Chain: Explicit URL Param -> localStorage / Settings -> Default ('smart-phonics')
+    const urlParams = new URLSearchParams(window.location.search)
+    const urlSeries = urlParams.get("series") || urlParams.get("book")
+    const urlUnitsParam = urlParams.get("units")
+    const hasUrlUnits = urlUnitsParam !== null && urlUnitsParam.trim() !== ""
+    const hasUrlSeries = Boolean(urlSeries)
+
+    if (hasUrlSeries || hasUrlUnits) {
+      if (hasUrlSeries) {
+        activeSeriesId = window.SharedClassSync ? window.SharedClassSync.toSeriesSlug(urlSeries) : urlSeries
+      } else {
+        const parsedUnits = urlUnitsParam.split(",").map((s) => s.trim()).filter(Boolean)
+        activeSeriesId = getPrimarySeriesFromUnits(parsedUnits)
+      }
+      populateBookSelector()
+      if (bookSelect) bookSelect.value = activeSeriesId
+
+      unitSelectorsContainer.innerHTML = ""
+      if (hasUrlUnits) {
+        const parsedUnits = urlUnitsParam.split(",").map((s) => s.trim()).filter(Boolean)
+        const matchingUnits = parsedUnits.filter((u) => {
+          const c = window.SharedClassSync ? window.SharedClassSync.toCanonicalUnit(u) : null
+          return (c?.series || "smart-phonics") === activeSeriesId
+        })
+        const unitsToRender = matchingUnits.length > 0 ? matchingUnits : parsedUnits
+        unitsToRender.forEach((unitValue) => {
+          const ttValue = window.SharedClassSync ? window.SharedClassSync.toTicTacToe(unitValue) : unitValue
+          createUnitSelector(ttValue)
+        })
+      }
+      if (unitSelectorsContainer.children.length === 0) {
+        createUnitSelector()
+        selectRandomUnit()
+      }
+    } else {
+      if (savedSettings) {
+        try {
+          const settings = JSON.parse(savedSettings)
+          if (settings.selectedSeries) {
+            activeSeriesId = settings.selectedSeries
+          } else if (settings.selectedUnits && settings.selectedUnits.length > 0) {
+            activeSeriesId = getPrimarySeriesFromUnits(settings.selectedUnits)
+          } else {
+            activeSeriesId = "smart-phonics"
+          }
+        } catch {
+          activeSeriesId = "smart-phonics"
+        }
+      } else {
+        activeSeriesId = "smart-phonics"
+      }
+      populateBookSelector()
+      if (bookSelect) bookSelect.value = activeSeriesId
+
+      unitSelectorsContainer.innerHTML = ""
+      let loadedAny = false
+      if (savedSettings) {
+        try {
+          const settings = JSON.parse(savedSettings)
+          const validSavedUnits = (settings.selectedUnits || []).filter(Boolean)
+          if (validSavedUnits.length > 0) {
+            validSavedUnits.forEach((unitValue) => {
+              createUnitSelector(unitValue)
+            })
+            loadedAny = true
+          }
+        } catch {}
+      }
+      if (!loadedAny) {
+        createUnitSelector()
+        selectRandomUnit()
+      }
     }
 
     // Refresh the entire UI to reflect the loaded settings
@@ -3243,6 +3309,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     populatePlayerDatalist()
     updateRotatingStartersDefault()
     updateEqualRoundsDefault()
+    syncUrlParameters()
   }
 
   // --- UNIFIED THEME LOGIC ---
@@ -3547,6 +3614,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     unitSelectorsContainer.innerHTML = "" // Clear all selectors
     createUnitSelector("", true) // Add a single, blank one back
     saveSettings()
+    syncUrlParameters()
   }
 
   function getCombinedWords(selectedUnits, totalWordsNeeded) {
@@ -3675,6 +3743,80 @@ document.addEventListener("DOMContentLoaded", async () => {
     updatePlayerButtonsState()
   }
 
+  function getPrimarySeriesFromUnits(canonicalUnits, profileCurriculumId = null) {
+    if (profileCurriculumId) {
+      return window.SharedClassSync ? window.SharedClassSync.toSeriesSlug(profileCurriculumId) : profileCurriculumId
+    }
+    if (!Array.isArray(canonicalUnits) || canonicalUnits.length === 0) {
+      return "smart-phonics"
+    }
+    const counts = {}
+    for (const u of canonicalUnits) {
+      const c = window.SharedClassSync ? window.SharedClassSync.toCanonicalUnit(u) : null
+      const series = c?.series || "smart-phonics"
+      counts[series] = (counts[series] || 0) + 1
+    }
+    let maxSeries = "smart-phonics"
+    let maxCount = 0
+    for (const [series, count] of Object.entries(counts)) {
+      if (count > maxCount) {
+        maxCount = count
+        maxSeries = series
+      }
+    }
+    return maxSeries
+  }
+
+  function populateBookSelector() {
+    const bookSelectEl = document.getElementById("book-select")
+    if (!bookSelectEl) return
+
+    const seriesEntries = (smartPhonicsWordBank.series && Object.keys(smartPhonicsWordBank.series).length > 0)
+      ? Object.entries(smartPhonicsWordBank.series)
+      : [["smart-phonics", { name: "Smart Phonics", levels: smartPhonicsWordBank }]]
+
+    bookSelectEl.innerHTML = ""
+    seriesEntries.forEach(([slug, obj]) => {
+      const opt = document.createElement("option")
+      opt.value = slug
+      opt.textContent = obj.name || (window.SharedClassSync ? window.SharedClassSync.toSeriesDisplayName(slug) : slug)
+      bookSelectEl.appendChild(opt)
+    })
+
+    if (activeSeriesId && !Array.from(bookSelectEl.options).some((o) => o.value === activeSeriesId)) {
+      const opt = document.createElement("option")
+      opt.value = activeSeriesId
+      opt.textContent = window.SharedClassSync ? window.SharedClassSync.toSeriesDisplayName(activeSeriesId) : activeSeriesId
+      bookSelectEl.appendChild(opt)
+    }
+
+    if (activeSeriesId && Array.from(bookSelectEl.options).some((o) => o.value === activeSeriesId)) {
+      bookSelectEl.value = activeSeriesId
+    } else if (bookSelectEl.options.length > 0) {
+      activeSeriesId = bookSelectEl.options[0].value
+      bookSelectEl.value = activeSeriesId
+    }
+  }
+
+  function syncUrlParameters() {
+    const newUrl = new URL(window.location.href)
+    if (activeSeriesId && activeSeriesId !== "smart-phonics") {
+      newUrl.searchParams.set("series", activeSeriesId)
+    } else {
+      newUrl.searchParams.delete("series")
+      newUrl.searchParams.delete("book")
+    }
+    const selected = Array.from(document.querySelectorAll(".phonics-unit-select"))
+      .map((s) => s.value)
+      .filter(Boolean)
+    if (selected.length > 0) {
+      newUrl.searchParams.set("units", selected.join(","))
+    } else {
+      newUrl.searchParams.delete("units")
+    }
+    window.history.replaceState({}, "", newUrl)
+  }
+
   function createUnitSelector(selectedValue = null, resetToBlank = false) {
     const container = document.createElement("div")
     container.className = "phonics-unit-container"
@@ -3692,37 +3834,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     allOptions.push(initialOption)
     select.appendChild(initialOption)
 
-    const seriesEntries = (smartPhonicsWordBank.series && Object.keys(smartPhonicsWordBank.series).length > 0)
-      ? Object.entries(smartPhonicsWordBank.series)
-      : [["smart-phonics", { name: "Smart Phonics", levels: smartPhonicsWordBank }]];
+    // Scope exclusively to activeSeriesId
+    const activeSeriesObj = (smartPhonicsWordBank.series && smartPhonicsWordBank.series[activeSeriesId])
+      ? smartPhonicsWordBank.series[activeSeriesId]
+      : (smartPhonicsWordBank.series ? Object.values(smartPhonicsWordBank.series)[0] : { name: "Smart Phonics", levels: smartPhonicsWordBank })
 
-    seriesEntries.forEach(([seriesKey, seriesObj]) => {
-      const seriesGroup = document.createElement("optgroup")
-      seriesGroup.label = seriesObj.name || (window.SharedClassSync ? window.SharedClassSync.toSeriesDisplayName(seriesKey) : seriesKey)
+    const levels = activeSeriesObj?.levels || activeSeriesObj || {}
+    const levelKeys = Object.keys(levels).filter((k) => k.startsWith("level"))
 
-      const levels = seriesObj.levels || seriesObj
-      const levelKeys = Object.keys(levels).filter(k => k.startsWith("level"))
+    levelKeys.forEach((level, index) => {
+      const units = levels[level]
+      for (const unit in units) {
+        const option = document.createElement("option")
+        const unitData = units[unit]
+        option.value = activeSeriesId === "smart-phonics" ? `${level}|${unit}` : `${activeSeriesId}|${level}|${unit}`
+        option.textContent = `${level.replace("level", "")}-${unit.replace("unit", "")} (${
+          unitData.unitTitle
+        })`
+        select.appendChild(option)
+        allOptions.push(option)
+      }
 
-      levelKeys.forEach((level, index) => {
-        const units = levels[level]
-        for (const unit in units) {
-          const option = document.createElement("option")
-          const unitData = units[unit]
-          option.value = seriesKey === "smart-phonics" ? `${level}|${unit}` : `${seriesKey}|${level}|${unit}`
-          option.textContent = `${level.replace("level", "")}-${unit.replace("unit", "")} (${
-            unitData.unitTitle
-          })`
-          seriesGroup.appendChild(option)
-          allOptions.push(option)
-        }
-
-        if (index < levelKeys.length - 1) {
-          const separator = document.createElement("hr")
-          seriesGroup.appendChild(separator)
-        }
-      })
-
-      select.appendChild(seriesGroup)
+      if (index < levelKeys.length - 1) {
+        const separator = document.createElement("hr")
+        select.appendChild(separator)
+      }
     })
 
     if (selectedValue !== null && selectedValue !== "") {
@@ -3815,6 +3951,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       updateRemoveButtonsVisibility()
       updateUnitSelectorsState()
       saveSettings()
+      syncUrlParameters()
     }
 
     container.appendChild(label)
@@ -4237,12 +4374,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  function applyUnitsToTicTacToe(canonicalUnits) {
+  function applyUnitsToTicTacToe(canonicalUnits, profileCurriculumId = null) {
     if (!Array.isArray(canonicalUnits) || canonicalUnits.length === 0) return
     if (!unitSelectorsContainer) return
+
+    // 1. Resolve primary series from profile and units (majority vote fallback)
+    const primarySeries = getPrimarySeriesFromUnits(canonicalUnits, profileCurriculumId)
+    activeSeriesId = primarySeries
+    const bookSelectEl = document.getElementById("book-select")
+    if (bookSelectEl) bookSelectEl.value = activeSeriesId
+
+    // 2. Filter canonical units to only those belonging to primarySeries
+    const seriesUnits = canonicalUnits.filter((u) => {
+      const c = window.SharedClassSync ? window.SharedClassSync.toCanonicalUnit(u) : null
+      return (c?.series || "smart-phonics") === primarySeries
+    })
+
+    if (seriesUnits.length < canonicalUnits.length) {
+      console.info(`[Word-Tac-Toe] Scoped to "${primarySeries}". Filtered out ${canonicalUnits.length - seriesUnits.length} unit(s) belonging to other series.`)
+    }
+
     unitSelectorsContainer.innerHTML = ""
-    canonicalUnits.forEach((u) => {
-      const ttValue = window.SharedClassSync.toTicTacToe(u)
+    seriesUnits.forEach((u) => {
+      const ttValue = window.SharedClassSync ? window.SharedClassSync.toTicTacToe(u) : u
       if (ttValue) {
         createUnitSelector(ttValue)
       }
@@ -4252,6 +4406,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     updateRemoveButtonsVisibility()
     updateUnitSelectorsState()
+    syncUrlParameters()
   }
 
   function initScheduleControls() {
@@ -4333,6 +4488,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       profiles[setName] = {
         schedule: sched,
         units: canonicals,
+        curriculumId: activeSeriesId,
         updatedAt: Date.now()
       }
       localStorage.setItem(window.SharedClassSync.SHARED_CLASS_PROFILES_KEY, JSON.stringify(profiles))
@@ -4373,7 +4529,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const rawProfiles = localStorage.getItem(window.SharedClassSync.SHARED_CLASS_PROFILES_KEY)
         const profiles = rawProfiles ? JSON.parse(rawProfiles) : {}
         if (profiles[setName] && Array.isArray(profiles[setName].units) && profiles[setName].units.length > 0) {
-          applyUnitsToTicTacToe(profiles[setName].units)
+          applyUnitsToTicTacToe(profiles[setName].units, profiles[setName].curriculumId)
         } else {
           // If profile has no units or current selectors are blank, ensure a valid unit is selected
           const currentSelects = Array.from(document.querySelectorAll(".phonics-unit-select"))
@@ -4420,6 +4576,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   addUnitBtn.addEventListener("click", () => {
     createUnitSelector()
     saveSettings() // Add this
+    syncUrlParameters()
   })
   removeAllUnitsBtn.addEventListener("click", handleRemoveAllUnits)
   startGameBtn.addEventListener("click", () => initGame(true))
@@ -4521,8 +4678,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (e.target.classList.contains("phonics-unit-select")) {
       updateUnitSelectorsState()
       saveSettings()
+      syncUrlParameters()
     }
   })
+
+  if (bookSelect) {
+    bookSelect.addEventListener("change", () => {
+      activeSeriesId = bookSelect.value
+      unitSelectorsContainer.innerHTML = ""
+      createUnitSelector()
+      updateRemoveButtonsVisibility()
+      updateUnitSelectorsState()
+      saveSettings()
+      syncUrlParameters()
+    })
+  }
 
   playerNamesContainer.addEventListener("dragover", (e) => {
     e.preventDefault()

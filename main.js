@@ -2228,8 +2228,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function saveActiveSessionPlayers(namesArray) {
-    localStorage.setItem(SHARED_ACTIVE_PLAYERS_KEY, JSON.stringify(namesArray))
-    syncToUpstash(SHARED_ACTIVE_PLAYERS_KEY, namesArray)
+    if (window.SharedClassSync?.saveActivePlayers) {
+      window.SharedClassSync.saveActivePlayers(namesArray)
+    } else {
+      localStorage.setItem(SHARED_ACTIVE_PLAYERS_KEY, JSON.stringify(namesArray))
+      syncToUpstash(SHARED_ACTIVE_PLAYERS_KEY, namesArray)
+    }
   }
 
   function getSavedPlayerNames() {

@@ -134,6 +134,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (!key) {
         localStorage.removeItem("elevenlabs_api_key")
+        window.SharedClassSync?.setSharedApiKey?.("")
         userApiKey = ""
         if (apiKeyStatus) {
           apiKeyStatus.textContent = "API Key cleared."
@@ -158,6 +159,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (response.ok) {
           localStorage.setItem("elevenlabs_api_key", key)
+          window.SharedClassSync?.setSharedApiKey?.(key)
           userApiKey = key
           if (apiKeyStatus) {
             apiKeyStatus.textContent = "Key verified & saved!"
@@ -195,6 +197,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function handleUpstashError(errorMessage) {
     localStorage.removeItem(UPSTASH_URL_KEY)
     localStorage.removeItem(UPSTASH_TOKEN_KEY)
+    window.SharedClassSync?.clearCredentials?.()
     
     const statusEl = document.getElementById("sync-status")
     if (statusEl) {
@@ -5021,6 +5024,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (testRes.ok) {
           localStorage.setItem(UPSTASH_URL_KEY, url)
           localStorage.setItem(UPSTASH_TOKEN_KEY, token)
+          window.SharedClassSync?.saveCredentials?.(url, token)
 
           if (syncStatus) {
             syncStatus.textContent = "Connected & synced!"

@@ -300,7 +300,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const urlParams = new URLSearchParams(window.location.search)
       const hasExplicitUrlParams = urlParams.has("units") || urlParams.has("series") || urlParams.has("book")
       if (activeClassMatch && !hasExplicitUrlParams) {
-        handleLoadSet(activeClassMatch.className)
+        handleLoadSet(activeClassMatch.className, true)
       } else if (!activeClassMatch) {
         // Priority 2: Outside class hours, fall back to active session players
         const dbActive = await fetchFromUpstash(SHARED_ACTIVE_PLAYERS_KEY)
@@ -2227,9 +2227,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     syncToUpstash(SHARED_SETS_KEY, sets)
   }
 
-  function saveActiveSessionPlayers(namesArray) {
+  function saveActiveSessionPlayers(namesArray, className = currentLoadedSetName) {
     if (window.SharedClassSync?.saveActivePlayers) {
-      window.SharedClassSync.saveActivePlayers(namesArray)
+      window.SharedClassSync.saveActivePlayers(namesArray, className)
     } else {
       localStorage.setItem(SHARED_ACTIVE_PLAYERS_KEY, JSON.stringify(namesArray))
       syncToUpstash(SHARED_ACTIVE_PLAYERS_KEY, namesArray)
@@ -4603,13 +4603,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     populateSetsDialog() // Refresh the list
   }
 
-  function handleLoadSet(setName) {
+  function handleLoadSet(setName, preferActiveSession = false) {
     const sets = getPlayerSets()
-    const playerNames = sets[setName]
+    const rawNames = sets[setName]
 
-    if (!playerNames) return
+    if (!rawNames) return
 
     currentLoadedSetName = setName
+
+    const playerNames = (preferActiveSession && window.SharedClassSync?.resolveClassRoster)
+      ? window.SharedClassSync.resolveClassRoster(setName, rawNames)
+      : rawNames
 
     const newPlayers = playerNames.map((name, index) => ({
       id: Date.now() + index,

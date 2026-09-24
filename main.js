@@ -406,6 +406,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const saveSetNameInput = document.getElementById("save-set-name-input")
   const saveSetBtn = document.getElementById("save-set-btn")
   const closeSetsDialogBtn = document.getElementById("close-sets-dialog-btn")
+  const manageBooksBtn = document.getElementById("manage-books-btn")
+  const manageBooksDialog = document.getElementById("manage-books-dialog")
+  const closeManageBooksBtn = document.getElementById("close-manage-books-btn")
+  const doneManageBooksBtn = document.getElementById("done-manage-books-btn")
+  const manageBooksList = document.getElementById("manage-books-list")
   const statsView = document.getElementById("stats-view")
   const showStatsBtn = document.getElementById("show-stats-btn")
   const backToSetupBtn = document.getElementById("back-to-setup-btn")
@@ -3771,23 +3776,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     const bookSelectEl = document.getElementById("book-select")
     if (!bookSelectEl) return
 
-    const seriesEntries = (smartPhonicsWordBank.series && Object.keys(smartPhonicsWordBank.series).length > 0)
+    const allSeriesEntries = (smartPhonicsWordBank.series && Object.keys(smartPhonicsWordBank.series).length > 0)
       ? Object.entries(smartPhonicsWordBank.series)
       : [["smart-phonics", { name: "Smart Phonics", levels: smartPhonicsWordBank }]]
 
+    // Manage books button is visible only when total curriculum books > 1
+    const manageBooksBtnEl = document.getElementById("manage-books-btn")
+    if (manageBooksBtnEl) {
+      manageBooksBtnEl.style.display = allSeriesEntries.length > 1 ? "inline-flex" : "none"
+    }
+
+    let visibleEntries = allSeriesEntries.filter(([slug]) => window.SharedClassSync ? !window.SharedClassSync.isBookHidden(slug) : true)
+    if (visibleEntries.length === 0 && allSeriesEntries.length > 0) {
+      visibleEntries = [allSeriesEntries[0]]
+    }
+
     bookSelectEl.innerHTML = ""
-    seriesEntries.forEach(([slug, obj]) => {
+    visibleEntries.forEach(([slug, obj]) => {
       const opt = document.createElement("option")
       opt.value = slug
       opt.textContent = obj.name || (window.SharedClassSync ? window.SharedClassSync.toSeriesDisplayName(slug) : slug)
       bookSelectEl.appendChild(opt)
     })
 
+    // If an active class or URL specified activeSeriesId, ensure it's selectable even if hidden
     if (activeSeriesId && !Array.from(bookSelectEl.options).some((o) => o.value === activeSeriesId)) {
-      const opt = document.createElement("option")
-      opt.value = activeSeriesId
-      opt.textContent = window.SharedClassSync ? window.SharedClassSync.toSeriesDisplayName(activeSeriesId) : activeSeriesId
-      bookSelectEl.appendChild(opt)
+      const matched = allSeriesEntries.find(([slug]) => slug === activeSeriesId)
+      if (matched) {
+        const opt = document.createElement("option")
+        opt.value = activeSeriesId
+        opt.textContent = matched[1].name || (window.SharedClassSync ? window.SharedClassSync.toSeriesDisplayName(activeSeriesId) : activeSeriesId)
+        bookSelectEl.appendChild(opt)
+      }
     }
 
     if (activeSeriesId && Array.from(bookSelectEl.options).some((o) => o.value === activeSeriesId)) {
@@ -3803,6 +3823,75 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
       bookSelectEl.style.display = bookSelectEl.options.length > 1 ? "" : "none"
     }
+  }
+
+  function renderManageBooksList() {
+    if (!manageBooksList) return
+    manageBooksList.innerHTML = ""
+
+    const allSeriesEntries = (smartPhonicsWordBank.series && Object.keys(smartPhonicsWordBank.series).length > 0)
+      ? Object.entries(smartPhonicsWordBank.series)
+      : [["smart-phonics", { name: "Smart Phonics", levels: smartPhonicsWordBank }]]
+
+    const visibleCount = allSeriesEntries.filter(([slug]) => window.SharedClassSync ? !window.SharedClassSync.isBookHidden(slug) : true).length
+
+    allSeriesEntries.forEach(([slug, obj]) => {
+      const isVisible = window.SharedClassSync ? !window.SharedClassSync.isBookHidden(slug) : true
+      const isLastRemaining = isVisible && visibleCount <= 1
+
+      const label = document.createElement("label")
+      label.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border: 1px solid var(--_border-color, #e0e0e0); border-radius: 6px; cursor: pointer;"
+      if (isLastRemaining) {
+        label.title = "At least one book must remain visible."
+      }
+
+      const textSpan = document.createElement("span")
+      textSpan.textContent = obj.name || (window.SharedClassSync ? window.SharedClassSync.toSeriesDisplayName(slug) : slug)
+      textSpan.style.fontWeight = "500"
+
+      const chk = document.createElement("input")
+      chk.type = "checkbox"
+      chk.checked = isVisible
+      chk.disabled = isLastRemaining
+      chk.className = "book-visibility-checkbox"
+      chk.style.cursor = isLastRemaining ? "not-allowed" : "pointer"
+
+      chk.addEventListener("change", async () => {
+        let currentHidden = window.SharedClassSync ? [...window.SharedClassSync.getHiddenBooks()] : []
+        const slugNorm = window.SharedClassSync ? window.SharedClassSync.toSeriesSlug(slug) : slug
+        if (chk.checked) {
+          currentHidden = currentHidden.filter((s) => s !== slugNorm)
+        } else {
+          if (!currentHidden.includes(slugNorm)) {
+            currentHidden.push(slugNorm)
+          }
+        }
+        if (window.SharedClassSync) {
+          await window.SharedClassSync.setHiddenBooks(currentHidden)
+        }
+
+        // If activeSeriesId is now hidden, switch to first visible
+        const remainingVisible = allSeriesEntries.filter(([s]) => window.SharedClassSync ? !window.SharedClassSync.isBookHidden(s) : true)
+        if (!chk.checked && activeSeriesId === slug && remainingVisible.length > 0) {
+          activeSeriesId = remainingVisible[0][0]
+          if (unitSelectorsContainer) {
+            unitSelectorsContainer.innerHTML = ""
+            createUnitSelector()
+            updateRemoveButtonsVisibility()
+            updateUnitSelectorsState()
+          }
+          saveSettings()
+          syncUrlParameters()
+        }
+
+        populateBookSelector()
+        renderManageBooksList()
+      })
+
+      label.appendChild(textSpan)
+      label.appendChild(chk)
+      manageBooksList.appendChild(label)
+    })
   }
 
   function syncUrlParameters() {
@@ -4765,6 +4854,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   closeSetsDialogBtn.addEventListener("click", () => {
     playerSetsDialog.close()
   })
+
+  if (manageBooksBtn && manageBooksDialog) {
+    manageBooksBtn.addEventListener("click", () => {
+      renderManageBooksList()
+      manageBooksDialog.showModal()
+    })
+  }
+
+  if (closeManageBooksBtn && manageBooksDialog) {
+    closeManageBooksBtn.addEventListener("click", () => {
+      manageBooksDialog.close()
+    })
+  }
+
+  if (doneManageBooksBtn && manageBooksDialog) {
+    doneManageBooksBtn.addEventListener("click", () => {
+      manageBooksDialog.close()
+    })
+  }
 
   saveSetBtn.addEventListener("click", handleSaveSet)
 

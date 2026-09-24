@@ -474,7 +474,15 @@
           </div>
 
           <div class="setup-section word-selection">
-            <h4 class="h5">Word Selection</h4>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+              <h4 class="h5" style="margin: 0;">Word Selection</h4>
+              <button type="button" id="manage-books-btn" class="icon-button small" aria-label="Manage textbook series visibility" title="Manage Books" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+              </button>
+            </div>
             <div class="word-selection-container">
               <label class="field book-selection-field" id="book-select-field" style="display: none; width: 100%; max-width: 320px; margin-bottom: 0.5rem;">
                 <span class="label">Textbook Series</span>
@@ -621,6 +629,23 @@
     </div>
   </dialog>
 
+  <dialog id="manage-books-dialog" class="card elevated" style="max-width: 400px; width: 90%;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+      <h3 class="h4" style="margin: 0;">Manage Books</h3>
+      <button id="close-manage-books-btn" class="icon-button" aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <p class="field-hint" style="margin-bottom: 1rem;">Select which textbook series appear in Word-Tac-Toe.</p>
+    <div id="manage-books-list" style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;"></div>
+    <div style="display: flex; justify-content: flex-end;">
+      <button id="done-manage-books-btn" class="button">Done</button>
+    </div>
+  </dialog>
+
   <dialog id="player-sets-dialog" class="card elevated side-drawer">
     <button id="close-sets-dialog-btn" class="icon-button" aria-label="Close">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -674,8 +699,8 @@
     </div>
     </article>
 
-  <script src="https://all-english-media.netlify.app/shared/class-sync.js?v=2.1"></script>
-  <script>window.SharedClassSync || document.write('<script src="shared-class-sync.js"><\/script>');</script>
+  <script src="shared-class-sync.js?v=2.2"></script>
+  <script>window.SharedClassSync?.getHiddenBooks || document.write('<script src="https://all-english-media.netlify.app/shared/class-sync.js?v=2.2"><\/script>');</script>
   <script src="main.js?v=10" type="module" defer></script>
 </body>
 

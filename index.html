@@ -474,33 +474,40 @@
           </div>
 
           <div class="setup-section word-selection">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-              <h4 class="h5" style="margin: 0;">Word Selection</h4>
-              <button type="button" id="manage-books-btn" class="icon-button small" aria-label="Manage textbook series visibility" title="Manage Books" style="display: none;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            <h4 class="h5">
+              Word Selection
+              <button type="button" id="reset-units-btn" class="icon-button small" aria-label="Reset all units" title="Reset all units">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                  <path d="M3 3v5h5"></path>
                 </svg>
               </button>
-            </div>
+              <button type="button" id="manage-books-btn" class="icon-button small" aria-label="Manage textbook series visibility" title="Manage Books" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+              </button>
+            </h4>
             <div class="word-selection-container">
               <label class="field book-selection-field" id="book-select-field" style="display: none; width: 100%; max-width: 320px; margin-bottom: 0.5rem;">
                 <span class="label">Textbook Series</span>
                 <select id="book-select" class="book-select"></select>
               </label>
-              <div id="unit-selectors-container">
+
+              <!-- Level Tabs Navigation -->
+              <div id="unit-level-tabs" class="unit-level-tabs" role="tablist" aria-label="Textbook Levels">
               </div>
-              <button id="addUnitBtn" class="button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                <span>Add Word Unit</span>
-              </button>
 
-              <button id="removeAllUnitsBtn" class="button outlined small hidden">Remove All</button>
+              <!-- Active Level Toolbar -->
+              <div id="active-level-toolbar" class="active-level-toolbar">
+                <span id="active-level-title" class="active-level-title">Level 1</span>
+                <button type="button" id="toggle-level-all-btn" class="button outlined small toggle-level-all-btn">Select All Levels</button>
+              </div>
 
+              <!-- Unit Chips Grid -->
+              <div id="unit-chips-grid" class="unit-chips-grid" role="group" aria-label="Unit Selection">
+              </div>
             </div>
           </div>
 
@@ -629,8 +636,8 @@
     </div>
   </dialog>
 
-  <dialog id="manage-books-dialog" class="card elevated" style="max-width: 400px; width: 90%;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+  <dialog id="manage-books-dialog" class="card elevated manage-books-dialog">
+    <div class="manage-books-header">
       <h3 class="h4" style="margin: 0;">Manage Books</h3>
       <button id="close-manage-books-btn" class="icon-button" aria-label="Close">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -639,9 +646,9 @@
         </svg>
       </button>
     </div>
-    <p class="field-hint" style="margin-bottom: 1rem;">Select which textbook series appear in Word-Tac-Toe.</p>
-    <div id="manage-books-list" style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;"></div>
-    <div style="display: flex; justify-content: flex-end;">
+    <p class="field-hint">Select which textbook series appear in Word-Tac-Toe.</p>
+    <div id="manage-books-list" class="manage-books-list"></div>
+    <div class="manage-books-actions">
       <button id="done-manage-books-btn" class="button">Done</button>
     </div>
   </dialog>

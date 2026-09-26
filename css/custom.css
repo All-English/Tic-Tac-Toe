@@ -216,27 +216,197 @@ main {
   margin-bottom: var(--size-fluid-2);
 }
 
-#unit-selectors-container {
-  margin-bottom: var(--size-fluid-2);
-}
-
+/* Word & Unit Selection Redesign */
 .word-selection-container {
-  display: grid;
-  justify-items: center;
-  gap: var(--size-2);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: var(--size-3);
 }
 
-.phonics-unit-select .separator {
-  pointer-events: none;
-  /* This makes the option unclickable */
-  text-align: center;
+/* Level Tabs */
+/* Level Tabs */
+.unit-level-tabs {
+  display: flex;
+  width: 100%;
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.level-tab-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--size-2) var(--size-1);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
   color: var(--text-color-2);
-  font-style: italic;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+  transition: color 0.15s, border-bottom-color 0.15s;
 }
 
-/* This prevents the separator from getting a background color on hover */
-.phonics-unit-select .separator:hover {
-  background-color: transparent;
+.level-tab-btn:hover {
+  color: var(--text-color-1);
+}
+
+.level-tab-btn[aria-selected="true"] {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.level-tab-dot {
+  position: absolute;
+  top: 5px;
+  right: calc(50% - 28px);
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-round);
+  background-color: var(--primary);
+  pointer-events: none;
+}
+
+/* Active Level Toolbar */
+.active-level-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--size-1);
+}
+
+.active-level-title {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--text-color-1);
+}
+
+.toggle-level-all-btn {
+  padding: 2px 10px;
+  font-size: var(--font-size-xs);
+  min-height: auto;
+}
+
+/* Unit Chips Grid */
+.unit-chips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--size-2);
+  width: 100%;
+}
+
+.unit-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--size-2);
+  border-radius: var(--size-1);
+  border: 1px solid var(--border-color);
+  background-color: var(--surface-default);
+  color: var(--text-color-1);
+  cursor: pointer;
+  text-align: left;
+  min-height: 52px;
+  position: relative;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.unit-chip:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.unit-chip[aria-pressed="true"] {
+  background-color: var(--primary);
+  color: var(--primary-contrast);
+  border-color: var(--primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.unit-chip-index {
+  font-weight: 700;
+  font-size: var(--font-size-xs);
+  line-height: 1.2;
+}
+
+.unit-chip-title {
+  font-size: 11px;
+  opacity: 0.85;
+  line-height: 1.2;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.unit-chip[aria-pressed="true"] .unit-chip-title {
+  opacity: 0.95;
+}
+
+/* Manage Books Dialog */
+dialog.manage-books-dialog {
+  max-width: 420px;
+  width: 92%;
+  padding: var(--size-fluid-3);
+  border-radius: var(--radius-3);
+  border: 1px solid var(--border-color);
+  background-color: var(--surface-card);
+}
+
+.manage-books-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--size-2);
+}
+
+.manage-books-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-2);
+  margin-block: var(--size-3);
+}
+
+.book-switch-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--size-2) var(--size-3);
+  border: 1px solid var(--border-color);
+  border-radius: var(--size-1);
+  background-color: var(--surface-default);
+  transition: border-color 0.15s;
+}
+
+.book-switch-item:hover:not(.disabled) {
+  border-color: var(--primary);
+}
+
+.book-switch-item.disabled {
+  opacity: 0.6;
+}
+
+.book-switch-item .book-title {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--text-color-1);
+}
+
+.manage-books-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--size-2);
 }
 
 .api-settings,
@@ -312,7 +482,8 @@ main {
 
 .player-setup>.h5,
 .game-mode-setup>.h5,
-.game-rules>.h5 {
+.game-rules>.h5,
+.word-selection>.h5 {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -512,17 +683,6 @@ main {
 
 .game-board.processing-move {
   pointer-events: none;
-}
-
-.phonics-unit-container {
-  display: grid;
-  gap: var(--size-1);
-  grid-template-columns: auto auto;
-  align-items: center;
-}
-
-.phonics-unit-container+.phonics-unit-container {
-  margin-top: var(--size-fluid-1);
 }
 
 dialog#game-over-dialog {
@@ -1176,7 +1336,7 @@ dialog.side-drawer .saved-set-item .button-group {
       "players rules"
       "words rules"
       "api-settings sync-settings";
-    grid-template-columns: auto;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--size-5) var(--size-7);
     align-items: start;
   }

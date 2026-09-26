@@ -351,14 +351,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   const gridSizeInput = document.getElementById("gridSize")
   const gridSizeValue = document.getElementById("gridSizeValue")
   const matchLengthInput = document.getElementById("matchLength")
-  const matchLengthValue = document.getElementById("matchLengthValue")
-  const unitSelectorsContainer = document.getElementById(
-    "unit-selectors-container",
-  )
+  const unitLevelTabs = document.getElementById("unit-level-tabs")
+  const activeLevelToolbar = document.getElementById("active-level-toolbar")
+  const activeLevelTitle = document.getElementById("active-level-title")
+  const toggleLevelAllBtn = document.getElementById("toggle-level-all-btn")
+  const unitChipsGrid = document.getElementById("unit-chips-grid")
   const bookSelect = document.getElementById("book-select")
   let activeSeriesId = "smart-phonics"
-  const addUnitBtn = document.getElementById("addUnitBtn")
-  const removeAllUnitsBtn = document.getElementById("removeAllUnitsBtn")
+  let selectedUnitKeys = new Set()
+  let currentActiveLevelKey = "level1"
   const startGameBtn = document.getElementById("startGameBtn")
   const gameDialog = document.getElementById("game-over-dialog")
   const muteSoundsToggle = document.getElementById("muteSoundsToggle")
@@ -409,6 +410,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const saveSetNameInput = document.getElementById("save-set-name-input")
   const saveSetBtn = document.getElementById("save-set-btn")
   const closeSetsDialogBtn = document.getElementById("close-sets-dialog-btn")
+  const resetUnitsBtn = document.getElementById("reset-units-btn")
   const manageBooksBtn = document.getElementById("manage-books-btn")
   const manageBooksDialog = document.getElementById("manage-books-dialog")
   const closeManageBooksBtn = document.getElementById("close-manage-books-btn")
@@ -3079,9 +3081,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       gameMode: document.querySelector("#gameModeSelector button.selected")
         ?.dataset.mode,
       selectedSeries: activeSeriesId,
-      selectedUnits: Array.from(
-        document.querySelectorAll(".phonics-unit-select"),
-      ).map((select) => select.value),
+      selectedUnits: Array.from(selectedUnitKeys),
+      activeLevelKey: currentActiveLevelKey,
       darkMode: darkModeToggle.checked,
       themeHue: themeHueSelect.value,
     }
@@ -3236,13 +3237,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       updateGameModeHint("Conquest")
     }
 
-    // --- RE-CREATE WORD UNIT SELECTORS & BOOK SELECTOR ---
+    // --- RE-CREATE WORD UNIT SELECTION & BOOK SELECTOR ---
     // Priority Chain: Explicit URL Param -> localStorage / Settings -> Default ('smart-phonics')
     const urlParams = new URLSearchParams(window.location.search)
     const urlSeries = urlParams.get("series") || urlParams.get("book")
     const urlUnitsParam = urlParams.get("units")
     const hasUrlUnits = urlUnitsParam !== null && urlUnitsParam.trim() !== ""
     const hasUrlSeries = Boolean(urlSeries)
+
+    selectedUnitKeys.clear()
 
     if (hasUrlSeries || hasUrlUnits) {
       if (hasUrlSeries) {
@@ -3254,7 +3257,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       populateBookSelector()
       if (bookSelect) bookSelect.value = activeSeriesId
 
-      unitSelectorsContainer.innerHTML = ""
       if (hasUrlUnits) {
         const parsedUnits = urlUnitsParam.split(",").map((s) => s.trim()).filter(Boolean)
         const matchingUnits = parsedUnits.filter((u) => {
@@ -3264,14 +3266,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         const unitsToRender = matchingUnits.length > 0 ? matchingUnits : parsedUnits
         unitsToRender.forEach((unitValue) => {
           const ttValue = window.SharedClassSync ? window.SharedClassSync.toTicTacToe(unitValue) : unitValue
-          createUnitSelector(ttValue)
+          if (ttValue) selectedUnitKeys.add(ttValue)
         })
       }
-      if (unitSelectorsContainer.children.length === 0) {
-        createUnitSelector()
-        selectRandomUnit()
+      if (selectedUnitKeys.size === 0) {
+        selectDefaultOrRandomUnit(true)
+      } else {
+        const firstUnit = Array.from(selectedUnitKeys)[0]
+        const info = getUnitData(firstUnit)
+        if (info?.levelKey) currentActiveLevelKey = info.levelKey
       }
     } else {
+      let savedActiveLevelKey = null
       if (savedSettings) {
         try {
           const settings = JSON.parse(savedSettings)
@@ -3282,6 +3288,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           } else {
             activeSeriesId = "smart-phonics"
           }
+          if (settings.activeLevelKey) {
+            savedActiveLevelKey = settings.activeLevelKey
+          }
         } catch {
           activeSeriesId = "smart-phonics"
         }
@@ -3291,7 +3300,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       populateBookSelector()
       if (bookSelect) bookSelect.value = activeSeriesId
 
-      unitSelectorsContainer.innerHTML = ""
       let loadedAny = false
       if (savedSettings) {
         try {
@@ -3299,23 +3307,30 @@ document.addEventListener("DOMContentLoaded", async () => {
           const validSavedUnits = (settings.selectedUnits || []).filter(Boolean)
           if (validSavedUnits.length > 0) {
             validSavedUnits.forEach((unitValue) => {
-              createUnitSelector(unitValue)
+              const ttValue = window.SharedClassSync ? window.SharedClassSync.toTicTacToe(unitValue) : unitValue
+              if (ttValue) selectedUnitKeys.add(ttValue)
             })
-            loadedAny = true
+            loadedAny = selectedUnitKeys.size > 0
           }
         } catch {}
       }
       if (!loadedAny) {
-        createUnitSelector()
-        selectRandomUnit()
+        selectDefaultOrRandomUnit(true)
+      } else if (savedActiveLevelKey) {
+        currentActiveLevelKey = savedActiveLevelKey
+      } else {
+        const firstUnit = Array.from(selectedUnitKeys)[0]
+        const info = getUnitData(firstUnit)
+        if (info?.levelKey) currentActiveLevelKey = info.levelKey
       }
     }
+
+    renderWordSelectionUI()
 
     // Refresh the entire UI to reflect the loaded settings
     updateTheme()
     renderNameInputs()
     syncSliders()
-    updateUnitSelectorsState()
     updateApiFieldVisibility()
     updatePronunciationToggleState()
     populatePlayerDatalist()
@@ -3433,11 +3448,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       settings.stealthEqualRounds = stealthEqualRoundsToggle
         ? stealthEqualRoundsToggle.checked
         : !isTwoPlayers
-      settings.selectedUnits = [
-        ...document.querySelectorAll(".phonics-unit-select"),
-      ]
-        .map((select) => select.value)
-        .filter((value) => value)
+      settings.selectedUnits = Array.from(selectedUnitKeys)
 
       if (settings.selectedUnits.length === 0) {
         showSnackbar("Please select at least one word unit to start the game.")
@@ -3620,13 +3631,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     updateMatchLengthDefault(currentMode)
     saveSettings()
     playSound("click")
-  }
-
-  function handleRemoveAllUnits() {
-    unitSelectorsContainer.innerHTML = "" // Clear all selectors
-    createUnitSelector("", true) // Add a single, blank one back
-    saveSettings()
-    syncUrlParameters()
   }
 
   function getCombinedWords(selectedUnits, totalWordsNeeded) {
@@ -3846,22 +3850,25 @@ document.addEventListener("DOMContentLoaded", async () => {
       const isVisible = window.SharedClassSync ? !window.SharedClassSync.isBookHidden(slug) : true
       const isLastRemaining = isVisible && visibleCount <= 1
 
-      const label = document.createElement("label")
-      label.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border: 1px solid var(--_border-color, #e0e0e0); border-radius: 6px; cursor: pointer;"
+      const item = document.createElement("div")
+      item.className = `book-switch-item${isLastRemaining ? " disabled" : ""}`
       if (isLastRemaining) {
-        label.title = "At least one book must remain visible."
+        item.title = "At least one book must remain visible."
       }
 
       const textSpan = document.createElement("span")
+      textSpan.className = "book-title"
       textSpan.textContent = obj.name || (window.SharedClassSync ? window.SharedClassSync.toSeriesDisplayName(slug) : slug)
-      textSpan.style.fontWeight = "500"
+
+      const switchLabel = document.createElement("label")
+      switchLabel.className = "switch"
 
       const chk = document.createElement("input")
       chk.type = "checkbox"
+      chk.role = "switch"
       chk.checked = isVisible
       chk.disabled = isLastRemaining
       chk.className = "book-visibility-checkbox"
-      chk.style.cursor = isLastRemaining ? "not-allowed" : "pointer"
 
       chk.addEventListener("change", async () => {
         let currentHidden = window.SharedClassSync ? [...window.SharedClassSync.getHiddenBooks()] : []
@@ -3880,24 +3887,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         // If activeSeriesId is now hidden, switch to first visible
         const remainingVisible = allSeriesEntries.filter(([s]) => window.SharedClassSync ? !window.SharedClassSync.isBookHidden(s) : true)
         if (!chk.checked && activeSeriesId === slug && remainingVisible.length > 0) {
-          activeSeriesId = remainingVisible[0][0]
-          if (unitSelectorsContainer) {
-            unitSelectorsContainer.innerHTML = ""
-            createUnitSelector()
-            updateRemoveButtonsVisibility()
-            updateUnitSelectorsState()
-          }
-          saveSettings()
-          syncUrlParameters()
+          handleSeriesChange(remainingVisible[0][0])
+        } else {
+          populateBookSelector()
+          renderManageBooksList()
         }
-
-        populateBookSelector()
-        renderManageBooksList()
       })
 
-      label.appendChild(textSpan)
-      label.appendChild(chk)
-      manageBooksList.appendChild(label)
+      switchLabel.appendChild(chk)
+      item.appendChild(textSpan)
+      item.appendChild(switchLabel)
+      manageBooksList.appendChild(item)
     })
   }
 
@@ -3909,9 +3909,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       newUrl.searchParams.delete("series")
       newUrl.searchParams.delete("book")
     }
-    const selected = Array.from(document.querySelectorAll(".phonics-unit-select"))
-      .map((s) => s.value)
-      .filter(Boolean)
+    const selected = Array.from(selectedUnitKeys).filter(Boolean)
     if (selected.length > 0) {
       newUrl.searchParams.set("units", selected.join(","))
     } else {
@@ -3920,185 +3918,282 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.history.replaceState({}, "", newUrl)
   }
 
-  function createUnitSelector(selectedValue = null, resetToBlank = false) {
-    const container = document.createElement("div")
-    container.className = "phonics-unit-container"
+  function getActiveSeriesLevels() {
+    if (smartPhonicsWordBank.series && Object.keys(smartPhonicsWordBank.series).length > 0) {
+      let seriesObj = smartPhonicsWordBank.series[activeSeriesId]
+      if (!seriesObj) {
+        seriesObj = Object.values(smartPhonicsWordBank.series)[0]
+      }
+      return seriesObj?.levels || seriesObj || {}
+    }
+    return smartPhonicsWordBank.levels || smartPhonicsWordBank || {}
+  }
 
-    const label = document.createElement("label")
-    label.className = "field"
+  function getUnitData(unitKey) {
+    if (!unitKey) return null
+    let seriesKey = activeSeriesId || "smart-phonics"
+    let level = ""
+    let unit = ""
+    const parts = unitKey.split("|")
+    if (parts.length === 3) {
+      seriesKey = parts[0]
+      level = parts[1]
+      unit = parts[2]
+    } else {
+      level = parts[0]
+      unit = parts[1]
+    }
 
-    const select = document.createElement("select")
-    select.className = "phonics-unit-select"
+    let levels = {}
+    if (smartPhonicsWordBank.series && smartPhonicsWordBank.series[seriesKey]) {
+      levels = smartPhonicsWordBank.series[seriesKey].levels || smartPhonicsWordBank.series[seriesKey]
+    } else {
+      levels = getActiveSeriesLevels()
+    }
 
-    const allOptions = []
-    const initialOption = document.createElement("option")
-    initialOption.value = ""
-    initialOption.textContent = "Select a word unit..."
-    allOptions.push(initialOption)
-    select.appendChild(initialOption)
+    const unitObj = levels?.[level]?.[unit]
+    const levelNum = level.replace(/^level/i, "")
+    const unitNum = unit.replace(/^unit/i, "")
+    const unitTitle = unitObj?.unitTitle || ""
+    const targetSound = unitObj?.targetSound || ""
+    const words = unitObj?.words || []
 
-    // Scope exclusively to activeSeriesId
-    const activeSeriesObj = (smartPhonicsWordBank.series && smartPhonicsWordBank.series[activeSeriesId])
-      ? smartPhonicsWordBank.series[activeSeriesId]
-      : (smartPhonicsWordBank.series ? Object.values(smartPhonicsWordBank.series)[0] : { name: "Smart Phonics", levels: smartPhonicsWordBank })
+    return {
+      seriesKey,
+      levelKey: level,
+      unitKey: unit,
+      fullKey: unitKey,
+      levelNum,
+      unitNum,
+      unitTitle,
+      targetSound,
+      wordsCount: words.length
+    }
+  }
 
-    const levels = activeSeriesObj?.levels || activeSeriesObj || {}
+  function selectDefaultOrRandomUnit(forceRandom = false) {
+    const levels = getActiveSeriesLevels()
+    const levelKeys = Object.keys(levels).filter((k) => k.startsWith("level"))
+    if (levelKeys.length === 0) return
+
+    const allAvailableKeys = []
+    levelKeys.forEach((lvl) => {
+      const units = levels[lvl]
+      for (const u in units) {
+        const fullKey = activeSeriesId === "smart-phonics" ? `${lvl}|${u}` : `${activeSeriesId}|${lvl}|${u}`
+        allAvailableKeys.push({ fullKey, level: lvl })
+      }
+    })
+
+    if (allAvailableKeys.length === 0) return
+
+    let pick = allAvailableKeys[0]
+    if (forceRandom) {
+      const randomIndex = Math.floor(Math.random() * allAvailableKeys.length)
+      pick = allAvailableKeys[randomIndex]
+    }
+
+    selectedUnitKeys.add(pick.fullKey)
+    currentActiveLevelKey = pick.level
+    renderWordSelectionUI()
+  }
+
+  function renderLevelTabs() {
+    if (!unitLevelTabs) return
+    unitLevelTabs.innerHTML = ""
+
+    const levels = getActiveSeriesLevels()
     const levelKeys = Object.keys(levels).filter((k) => k.startsWith("level"))
 
-    levelKeys.forEach((level, index) => {
-      const units = levels[level]
-      for (const unit in units) {
-        const option = document.createElement("option")
-        const unitData = units[unit]
-        option.value = activeSeriesId === "smart-phonics" ? `${level}|${unit}` : `${activeSeriesId}|${level}|${unit}`
-        option.textContent = `${level.replace("level", "")}-${unit.replace("unit", "")} (${
-          unitData.unitTitle
-        })`
-        select.appendChild(option)
-        allOptions.push(option)
-      }
+    if (levelKeys.length === 0) return
 
-      if (index < levelKeys.length - 1) {
-        const separator = document.createElement("hr")
-        select.appendChild(separator)
-      }
-    })
+    if (!levelKeys.includes(currentActiveLevelKey)) {
+      currentActiveLevelKey = levelKeys[0]
+    }
 
-    if (selectedValue !== null && selectedValue !== "") {
-      select.value = selectedValue
-      // If direct value didn't match an option, try translating with SharedClassSync
-      if (
-        (select.selectedIndex <= 0 || select.value !== selectedValue) &&
-        typeof window.SharedClassSync !== "undefined"
-      ) {
-        const translated = window.SharedClassSync.toTicTacToe(selectedValue)
-        if (translated) {
-          select.value = translated
+    levelKeys.forEach((lvlKey) => {
+      const btn = document.createElement("button")
+      btn.type = "button"
+      btn.role = "tab"
+      btn.className = "level-tab-btn"
+      const isSelected = lvlKey === currentActiveLevelKey
+      btn.setAttribute("aria-selected", isSelected ? "true" : "false")
+      btn.setAttribute("tabindex", isSelected ? "0" : "-1")
+
+      const lvlNum = lvlKey.replace(/^level/i, "")
+      const labelSpan = document.createElement("span")
+      labelSpan.textContent = `Level ${lvlNum}`
+      btn.appendChild(labelSpan)
+
+      // Count selected units belonging to this level
+      let levelSelectedCount = 0
+      selectedUnitKeys.forEach((key) => {
+        const info = getUnitData(key)
+        if (info && info.levelKey === lvlKey) {
+          levelSelectedCount++
         }
+      })
+
+      if (levelSelectedCount > 0) {
+        btn.title = `Level ${lvlNum} (${levelSelectedCount} unit${levelSelectedCount > 1 ? "s" : ""} selected)`
+        const dot = document.createElement("span")
+        dot.className = "level-tab-dot"
+        dot.setAttribute("aria-hidden", "true")
+        btn.appendChild(dot)
+      } else {
+        btn.title = `Level ${lvlNum}`
       }
-    } else if (resetToBlank) {
-      select.selectedIndex = 0
+
+      btn.addEventListener("click", () => {
+        currentActiveLevelKey = lvlKey
+        saveSettings()
+        renderLevelTabs()
+        renderActiveLevelToolbar()
+        renderUnitChipsGrid()
+      })
+
+      unitLevelTabs.appendChild(btn)
+    })
+  }
+
+  function renderActiveLevelToolbar() {
+    if (!activeLevelToolbar || !activeLevelTitle || !toggleLevelAllBtn) return
+
+    const lvlNum = currentActiveLevelKey.replace(/^level/i, "")
+    const levels = getActiveSeriesLevels()
+    const currentUnits = levels[currentActiveLevelKey] || {}
+    const totalUnitsInLevel = Object.keys(currentUnits).length
+
+    let selectedInLevel = 0
+    for (const u in currentUnits) {
+      const fullKey = activeSeriesId === "smart-phonics"
+        ? `${currentActiveLevelKey}|${u}`
+        : `${activeSeriesId}|${currentActiveLevelKey}|${u}`
+      if (selectedUnitKeys.has(fullKey)) {
+        selectedInLevel++
+      }
+    }
+
+    activeLevelTitle.textContent = selectedInLevel > 0
+      ? `Level ${lvlNum} Units (${selectedInLevel} selected)`
+      : `Level ${lvlNum} Units`
+
+    if (totalUnitsInLevel > 0 && selectedInLevel === totalUnitsInLevel) {
+      toggleLevelAllBtn.textContent = "Deselect Level"
     } else {
-      const allExistingSelectors = unitSelectorsContainer
-        ? unitSelectorsContainer.querySelectorAll(".phonics-unit-select")
-        : []
-      const usedValues = new Set()
-      allExistingSelectors.forEach((s) => {
-        if (s.value) usedValues.add(s.value)
-      })
-
-      let startIndex = 0
-      if (allExistingSelectors.length > 0) {
-        const lastSelector =
-          allExistingSelectors[allExistingSelectors.length - 1]
-        if (lastSelector.value) {
-          const lastIndexInMasterList = allOptions.findIndex(
-            (opt) => opt.value === lastSelector.value,
-          )
-          if (lastIndexInMasterList !== -1) {
-            startIndex = lastIndexInMasterList
-          }
-        }
-      }
-
-      let foundNext = false
-      for (let i = 1; i < allOptions.length; i++) {
-        const potentialIndex = (startIndex + i) % allOptions.length
-        const potentialOption = allOptions[potentialIndex]
-
-        if (potentialOption.value && !usedValues.has(potentialOption.value)) {
-          select.value = potentialOption.value
-          foundNext = true
-          break
-        }
-      }
-
-      if (!foundNext) {
-        select.selectedIndex = 0 // Fallback if no options are available
-      }
+      toggleLevelAllBtn.textContent = "Select All Levels"
     }
-
-    // Guard against invalid/blank state unless explicitly requested via resetToBlank
-    if (!resetToBlank && (select.selectedIndex <= 0 || !select.value)) {
-      const allExistingSelectors = unitSelectorsContainer
-        ? unitSelectorsContainer.querySelectorAll(".phonics-unit-select")
-        : []
-      const usedValues = new Set()
-      allExistingSelectors.forEach((s) => {
-        if (s.value) usedValues.add(s.value)
-      })
-      for (let i = 0; i < select.options.length; i++) {
-        const opt = select.options[i]
-        if (opt.value && !usedValues.has(opt.value)) {
-          select.value = opt.value
-          break
-        }
-      }
-      if (!select.value && select.options.length > 2) {
-        select.selectedIndex = 2 // First actual unit option
-      }
-    }
-
-    if (select.selectedIndex === -1) {
-      select.selectedIndex = 0
-    }
-
-    label.appendChild(select)
-    const removeBtn = document.createElement("button")
-    removeBtn.className = "icon-button remove-unit-btn"
-    removeBtn.setAttribute("aria-label", "Remove unit selector")
-    removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
-
-    removeBtn.onclick = () => {
-      container.remove()
-      updateRemoveButtonsVisibility()
-      updateUnitSelectorsState()
-      saveSettings()
-      syncUrlParameters()
-    }
-
-    container.appendChild(label)
-    container.appendChild(removeBtn)
-    unitSelectorsContainer.appendChild(container)
-    updateRemoveButtonsVisibility()
-    updateUnitSelectorsState()
   }
 
-  function updateUnitSelectorsState() {
-    const allSelectors = document.querySelectorAll(".phonics-unit-select")
+  function renderUnitChipsGrid() {
+    if (!unitChipsGrid) return
+    unitChipsGrid.innerHTML = ""
 
-    // First, gather all the values that are currently selected.
-    const selectedValues = new Set()
-    allSelectors.forEach((selector) => {
-      if (selector.value) {
-        selectedValues.add(selector.value)
+    const levels = getActiveSeriesLevels()
+    const currentUnits = levels[currentActiveLevelKey] || {}
+
+    for (const u in currentUnits) {
+      const unitData = currentUnits[u]
+      const fullKey = activeSeriesId === "smart-phonics"
+        ? `${currentActiveLevelKey}|${u}`
+        : `${activeSeriesId}|${currentActiveLevelKey}|${u}`
+      const isSelected = selectedUnitKeys.has(fullKey)
+
+      const chip = document.createElement("button")
+      chip.type = "button"
+      chip.className = "unit-chip"
+      chip.setAttribute("aria-pressed", isSelected ? "true" : "false")
+
+      const uNum = u.replace(/^unit/i, "")
+      const indexSpan = document.createElement("span")
+      indexSpan.className = "unit-chip-index"
+      indexSpan.textContent = `Unit ${uNum}`
+
+      const titleSpan = document.createElement("span")
+      titleSpan.className = "unit-chip-title"
+      titleSpan.textContent = unitData.unitTitle || unitData.targetSound || ""
+      if (unitData.words && unitData.words.length > 0) {
+        chip.title = `${unitData.unitTitle || "Unit " + uNum} (${unitData.words.length} words)\n${unitData.words.slice(0, 8).join(", ")}${unitData.words.length > 8 ? "..." : ""}`
       }
-    })
 
-    // Now, loop through each selector again to disable/enable its options.
-    allSelectors.forEach((selector) => {
-      selector.querySelectorAll("option").forEach((option) => {
-        // An option should be disabled if...
-        // 1. It has a value.
-        // 2. That value is in our set of selected values.
-        // 3. That value is NOT the value of the CURRENT selector we're looping through.
-        const isSelectedElsewhere =
-          selectedValues.has(option.value) && selector.value !== option.value
-        option.disabled = isSelectedElsewhere
+      chip.appendChild(indexSpan)
+      chip.appendChild(titleSpan)
+
+      chip.addEventListener("click", () => {
+        toggleUnit(fullKey)
       })
-    })
+
+      unitChipsGrid.appendChild(chip)
+    }
   }
 
-  function updateRemoveButtonsVisibility() {
-    const allRemoveButtons =
-      unitSelectorsContainer.querySelectorAll(".remove-unit-btn")
-    const shouldBeVisible = allRemoveButtons.length > 1
+  function toggleUnit(unitKey) {
+    if (selectedUnitKeys.has(unitKey)) {
+      selectedUnitKeys.delete(unitKey)
+    } else {
+      selectedUnitKeys.add(unitKey)
+    }
+    renderLevelTabs()
+    renderActiveLevelToolbar()
+    renderUnitChipsGrid()
+    saveSettings()
+    syncUrlParameters()
+  }
 
-    allRemoveButtons.forEach((btn) => {
-      btn.classList.toggle("hidden", !shouldBeVisible)
-    })
+  function toggleLevelAll() {
+    const levels = getActiveSeriesLevels()
+    const currentUnits = levels[currentActiveLevelKey] || {}
+    const totalUnits = Object.keys(currentUnits).length
+    if (totalUnits === 0) return
 
-    removeAllUnitsBtn.classList.toggle("hidden", !shouldBeVisible)
+    let selectedCount = 0
+    const keysInLevel = []
+    for (const u in currentUnits) {
+      const fullKey = activeSeriesId === "smart-phonics"
+        ? `${currentActiveLevelKey}|${u}`
+        : `${activeSeriesId}|${currentActiveLevelKey}|${u}`
+      keysInLevel.push(fullKey)
+      if (selectedUnitKeys.has(fullKey)) {
+        selectedCount++
+      }
+    }
+
+    if (selectedCount === totalUnits) {
+      keysInLevel.forEach((k) => selectedUnitKeys.delete(k))
+    } else {
+      keysInLevel.forEach((k) => selectedUnitKeys.add(k))
+    }
+
+    renderLevelTabs()
+    renderActiveLevelToolbar()
+    renderUnitChipsGrid()
+    saveSettings()
+    syncUrlParameters()
+  }
+
+  function handleResetUnits() {
+    selectedUnitKeys.clear()
+    renderLevelTabs()
+    renderActiveLevelToolbar()
+    renderUnitChipsGrid()
+    saveSettings()
+    syncUrlParameters()
+    playSound("click")
+  }
+
+  function handleSeriesChange(newSeriesId) {
+    activeSeriesId = newSeriesId
+    selectedUnitKeys.clear()
+    selectDefaultOrRandomUnit(false)
+    syncUrlParameters()
+    saveSettings()
+  }
+
+  function renderWordSelectionUI() {
+    populateBookSelector()
+    renderLevelTabs()
+    renderActiveLevelToolbar()
+    renderUnitChipsGrid()
   }
 
   function syncSliders() {
@@ -4110,20 +4205,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       matchLengthInput.value = newMaxMatchLength
     }
     matchLengthValue.textContent = matchLengthInput.value
-  }
-
-  function selectRandomUnit() {
-    const firstSelector = document.querySelector(".phonics-unit-select")
-    if (!firstSelector) return
-    const options = Array.from(firstSelector.options).filter(
-      (opt) => !opt.disabled && opt.value !== "",
-    )
-    if (options.length > 0) {
-      const randomIndex = Math.floor(Math.random() * options.length)
-      options[randomIndex].selected = true
-    }
-
-    updateRemoveButtonsVisibility()
   }
 
   function highlightTargetSounds(word, targetSoundString) {
@@ -4308,6 +4389,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function resetSettings() {
+    selectedUnitKeys.clear()
     userSetConquestRotatingStarters = false
     userSetStealthRotatingStarters = false
     userSetSurvivorRotatingStarters = false
@@ -4362,9 +4444,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (conquestButton) conquestButton.classList.add("selected")
     updateGameModeHint("Conquest")
 
-    // Reset word selectors
-    unitSelectorsContainer.innerHTML = ""
-    createUnitSelector("", true) // Create one blank selector
+    // Reset word selection
+    selectDefaultOrRandomUnit(true)
+    renderWordSelectionUI()
 
     // Update the UI
     renderNameInputs()
@@ -4479,7 +4561,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function applyUnitsToTicTacToe(canonicalUnits, profileCurriculumId = null) {
     if (!Array.isArray(canonicalUnits) || canonicalUnits.length === 0) return
-    if (!unitSelectorsContainer) return
+    if (!unitChipsGrid) return
 
     // 1. Resolve primary series from profile and units (majority vote fallback)
     const primarySeries = getPrimarySeriesFromUnits(canonicalUnits, profileCurriculumId)
@@ -4498,18 +4580,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.info(`[Word-Tac-Toe] Scoped to "${primarySeries}". Filtered out ${canonicalUnits.length - seriesUnits.length} unit(s) belonging to other series.`)
     }
 
-    unitSelectorsContainer.innerHTML = ""
+    selectedUnitKeys.clear()
     seriesUnits.forEach((u) => {
       const ttValue = window.SharedClassSync ? window.SharedClassSync.toTicTacToe(u) : u
       if (ttValue) {
-        createUnitSelector(ttValue)
+        selectedUnitKeys.add(ttValue)
       }
     })
-    if (unitSelectorsContainer.children.length === 0) {
-      createUnitSelector()
+    if (selectedUnitKeys.size === 0) {
+      selectDefaultOrRandomUnit(false)
+    } else {
+      const firstUnit = Array.from(selectedUnitKeys)[0]
+      const info = getUnitData(firstUnit)
+      if (info?.levelKey) currentActiveLevelKey = info.levelKey
     }
-    updateRemoveButtonsVisibility()
-    updateUnitSelectorsState()
+
+    renderWordSelectionUI()
     syncUrlParameters()
   }
 
@@ -4573,9 +4659,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const dayChks = document.querySelectorAll(".save-set-day-chk:checked")
       const selectedDays = Array.from(dayChks).map((c) => c.value)
 
-      const selected = Array.from(document.querySelectorAll(".phonics-unit-select"))
-        .map((s) => s.value)
-        .filter(Boolean)
+      const selected = Array.from(selectedUnitKeys)
       const canonicals = selected.map((s) => window.SharedClassSync.toCanonicalUnit(s)?.id).filter(Boolean)
 
       const sched = {
@@ -4639,11 +4723,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (profiles[setName] && Array.isArray(profiles[setName].units) && profiles[setName].units.length > 0) {
           applyUnitsToTicTacToe(profiles[setName].units, profiles[setName].curriculumId)
         } else {
-          // If profile has no units or current selectors are blank, ensure a valid unit is selected
-          const currentSelects = Array.from(document.querySelectorAll(".phonics-unit-select"))
-          const hasValid = currentSelects.some((s) => s.value)
-          if (!hasValid) {
-            selectRandomUnit()
+          // If profile has no units or current selection is blank, ensure a valid unit is selected
+          if (selectedUnitKeys.size === 0) {
+            selectDefaultOrRandomUnit(true)
           }
         }
       } catch (e) {
@@ -4681,12 +4763,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   })
 
   resetSettingsBtn.addEventListener("click", resetSettings)
-  addUnitBtn.addEventListener("click", () => {
-    createUnitSelector()
-    saveSettings() // Add this
-    syncUrlParameters()
-  })
-  removeAllUnitsBtn.addEventListener("click", handleRemoveAllUnits)
+  if (resetUnitsBtn) {
+    resetUnitsBtn.addEventListener("click", handleResetUnits)
+  }
+  if (toggleLevelAllBtn) {
+    toggleLevelAllBtn.addEventListener("click", toggleLevelAll)
+  }
   startGameBtn.addEventListener("click", () => initGame(true))
   randomizePlayerOrderBtn_setup.addEventListener("click", randomizePlayerOrder)
   pronounceWordsToggle.addEventListener("change", () => {
@@ -4782,23 +4864,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     saveSettings()
   })
 
-  unitSelectorsContainer.addEventListener("change", (e) => {
-    if (e.target.classList.contains("phonics-unit-select")) {
-      updateUnitSelectorsState()
-      saveSettings()
-      syncUrlParameters()
-    }
-  })
-
   if (bookSelect) {
     bookSelect.addEventListener("change", () => {
-      activeSeriesId = bookSelect.value
-      unitSelectorsContainer.innerHTML = ""
-      createUnitSelector()
-      updateRemoveButtonsVisibility()
-      updateUnitSelectorsState()
-      saveSettings()
-      syncUrlParameters()
+      handleSeriesChange(bookSelect.value)
     })
   }
 

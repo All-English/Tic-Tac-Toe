@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-title" content="Word-Tac-Toe" />
   <link rel="manifest" href="/favicon/site.webmanifest" />
-  <link rel="stylesheet" href="css/main.css?v=11">
+  <link rel="stylesheet" href="css/main.css?v=12">
 </head>
 
 <body>
@@ -168,7 +168,11 @@
                 </span>
               </span>
             </p>
-            <div class="setting-group">
+          </div>
+
+          <div class="setup-section audio-settings">
+            <h4 class="h5">Audio & Speech</h4>
+            <div class="setting-group audio-toggles-group">
               <label class="switch">
                 <input type="checkbox" role="switch" id="muteSoundsToggle">
                 <span class="label">Mute SoundFX</span>
@@ -216,17 +220,17 @@
                 </svg>
               </button>
             </h4>
-            <div class="toggle-button-group" id="gameModeSelector" role="group">
-              <button data-mode="Conquest" class="selected">
+            <div class="game-mode-grid" id="gameModeSelector" role="radiogroup" aria-label="Game Mode">
+              <button type="button" role="radio" data-mode="Conquest" aria-checked="true" class="selected">
                 <span>Conquest</span>
               </button>
-              <button data-mode="Stealth">
+              <button type="button" role="radio" data-mode="Stealth" aria-checked="false">
                 <span>Stealth</span>
               </button>
-              <button data-mode="Classic">
+              <button type="button" role="radio" data-mode="Classic" aria-checked="false">
                 <span>Classic</span>
               </button>
-              <button data-mode="Survivor">
+              <button type="button" role="radio" data-mode="Survivor" aria-checked="false">
                 <span>Survivor</span>
               </button>
             </div>
@@ -244,7 +248,9 @@
                 </div>
               </div>
             </div>
-            <div id="conquestOptionsGroup" class="setting-group conquest-options">
+            <div id="modeRulesPanel" class="mode-rules-panel">
+              <div class="panel-inner">
+                <div id="conquestOptionsGroup" class="setting-group conquest-options">
               <div class="option-row">
                 <label class="switch">
                   <input type="checkbox" role="switch" id="conquestRotatingStarterToggle">
@@ -469,6 +475,8 @@
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
               </div>
             </div>
           </div>
@@ -707,7 +715,7 @@
 
   <script src="shared-class-sync.js?v=2.3"></script>
   <script>window.SharedClassSync?.getHiddenBooks || document.write('<script src="https://all-english-media.allenglish.link/shared/class-sync.js?v=2.3"><\/script>');</script>
-  <script src="main.js?v=14" type="module" defer></script>
+  <script src="main.js?v=15" type="module" defer></script>
 </body>
 
 </html>

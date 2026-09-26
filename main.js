@@ -400,6 +400,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   )
   const gameModeHint = document.getElementById("gameModeHint")
   const gameModeTooltipKo = document.getElementById("game-mode-tooltip-ko")
+  const modeRulesPanel = document.getElementById("modeRulesPanel")
   const resetSettingsBtn = document.getElementById("resetSettingsBtn")
   const randomizePlayerOrderBtn_setup = document.getElementById(
     "randomizePlayerOrderBtn_setup",
@@ -2267,6 +2268,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function updateGameModeHint(mode) {
+    if (modeRulesPanel) {
+      modeRulesPanel.classList.toggle("is-collapsed", mode === "Classic")
+    }
+    if (gameModeSelector) {
+      gameModeSelector.querySelectorAll("button").forEach((btn) => {
+        const isMatch = btn.dataset.mode === mode
+        btn.classList.toggle("selected", isMatch)
+        btn.setAttribute("aria-checked", isMatch ? "true" : "false")
+      })
+    }
     if (survivorOptionsGroup) {
       survivorOptionsGroup.classList.toggle("hidden", mode !== "Survivor")
     }
@@ -3259,18 +3270,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       darkModeToggle.checked = settings.darkMode === true
       themeHueSelect.value = settings.themeHue || "var(--oklch-indigo)"
 
-      // Set the correct game mode button
-      if (settings.gameMode) {
-        gameModeSelector.querySelectorAll("button").forEach((button) => {
-          button.classList.toggle(
-            "selected",
-            button.dataset.mode === settings.gameMode,
-          )
-        })
-        updateGameModeHint(settings.gameMode)
-      } else {
-        updateGameModeHint("Conquest")
-      }
+      // Set the correct game mode button and panel
+      updateGameModeHint(settings.gameMode || "Conquest")
     } else {
       // --- IF NO SETTINGS ARE FOUND (NEW USER), CREATE DEFAULTS ---
       if (playersList.length === 0) {
@@ -4659,13 +4660,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     // themeHueSelect.dispatchEvent(new Event("change"))
 
     // Reset game mode to Conquest
-    const conquestButton = gameModeSelector.querySelector(
-      '[data-mode="Conquest"]',
-    )
-    gameModeSelector
-      .querySelectorAll("button")
-      .forEach((btn) => btn.classList.remove("selected"))
-    if (conquestButton) conquestButton.classList.add("selected")
     updateGameModeHint("Conquest")
 
     // Reset word selection
@@ -5074,14 +5068,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const previousMode = gameModeSelector.querySelector("button.selected")?.dataset.mode
     const gameMode = clickedButton.dataset.mode
-    updateGameModeHint(gameMode) // Use the new function
-
-    // Update the selected state visually
-    const buttons = gameModeSelector.querySelectorAll("button")
-    buttons.forEach((button) => {
-      button.classList.remove("selected")
-    })
-    clickedButton.classList.add("selected")
+    updateGameModeHint(gameMode)
 
     updateMatchLengthDefault(previousMode)
 

@@ -475,6 +475,7 @@ dialog.manage-books-dialog {
 .player-setup>.h5,
 .game-mode-setup>.h5,
 .game-rules>.h5,
+.audio-settings>.h5,
 .word-selection>.h5 {
   display: flex;
   justify-content: center;
@@ -1044,16 +1045,96 @@ dialog#game-over-dialog {
   margin-inline-start: var(--size-1);
 }
 
-/* --- Conquest Fairness Options --- */
+/* --- Game Mode 2x2 Segmented Grid --- */
+.game-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--size-2);
+  width: 100%;
+  max-width: 320px;
+  margin: var(--size-2) auto 0;
+}
+
+.game-mode-grid button {
+  appearance: none;
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-color-1, inherit);
+  border-radius: var(--radius-2);
+  min-height: 44px;
+  padding: var(--size-2) var(--size-3);
+  font-family: inherit;
+  font-size: var(--font-size-md, 15px);
+  font-weight: var(--font-weight-6, 600);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.game-mode-grid button:hover:not(.selected) {
+  background-color: var(--surface-tonal);
+  border-color: var(--primary);
+}
+
+.game-mode-grid button.selected,
+.game-mode-grid button[aria-checked="true"] {
+  background-color: var(--primary);
+  color: var(--primary-contrast);
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px light-dark(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.4));
+}
+
+.game-mode-grid button:active {
+  transform: scale(0.97);
+}
+
+/* --- Mode Rules Sub-Panel with Smooth Grid Collapse --- */
+.mode-rules-panel {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  width: 100%;
+  max-width: 320px;
+  margin: var(--size-3) auto 0;
+  transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.25s ease,
+              margin 0.3s ease;
+}
+
+.mode-rules-panel.is-collapsed {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  pointer-events: none;
+}
+
+.mode-rules-panel > .panel-inner {
+  overflow: hidden;
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-2);
+  padding: var(--size-2) var(--size-3);
+  box-sizing: border-box;
+}
+
+.mode-rules-panel .setting-group {
+  margin: 0;
+  padding: 0;
+}
 
 .conquest-options,
 .stealth-options,
 .survivor-options {
-  margin-block-start: var(--size-3);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--size-2);
+  width: 100%;
 }
 
 .conquest-options.hidden,
@@ -1067,13 +1148,71 @@ dialog#game-over-dialog {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 280px;
   gap: var(--size-2);
 }
 
 .option-row .switch {
   cursor: pointer;
   flex: 1;
+}
+
+/* --- Chunky Touch-Friendly Range Sliders --- */
+.game-rules .range {
+  padding: var(--size-1) 0;
+}
+
+.game-rules .range > input[type="range"] {
+  --thumb-size: 28px;
+  --track-height: 10px;
+  --thumb-offset: -9px;
+  margin: 1.25rem 0 1.5rem;
+  touch-action: pan-y;
+  cursor: pointer;
+}
+
+.game-rules .range > input[type="range"]::-webkit-slider-thumb {
+  width: var(--thumb-size);
+  height: var(--thumb-size);
+  border: 3px solid var(--surface-default);
+  box-shadow: 0 2px 8px light-dark(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.5));
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.game-rules .range > input[type="range"]:hover::-webkit-slider-thumb,
+.game-rules .range > input[type="range"]:focus-visible::-webkit-slider-thumb,
+.game-rules .range > input[type="range"]:active::-webkit-slider-thumb {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 6px oklch(from var(--primary) 70% 100% h / 25%);
+}
+
+.game-rules .range > input[type="range"]::-moz-range-thumb {
+  width: var(--thumb-size);
+  height: var(--thumb-size);
+  border: 3px solid var(--surface-default);
+  box-shadow: 0 2px 8px light-dark(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.5));
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.game-rules .range > input[type="range"]:hover::-moz-range-thumb,
+.game-rules .range > input[type="range"]:focus-visible::-moz-range-thumb,
+.game-rules .range > input[type="range"]:active::-moz-range-thumb {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 6px oklch(from var(--primary) 70% 100% h / 25%);
+}
+
+/* --- Dedicated Audio & Speech Section --- */
+.audio-settings .audio-toggles-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-2);
+  align-items: center;
+  margin-top: var(--size-2);
+}
+
+.audio-settings .switch {
+  width: 100%;
+  max-width: 280px;
+  justify-content: space-between;
 }
 
 .tooltip-group {
@@ -1413,10 +1552,11 @@ dialog.side-drawer .saved-set-item .button-group {
   #game-setup .content {
     display: grid;
     grid-template-areas:
-      /* "game-mode game-mode" */
       "players game-mode"
       "players rules"
       "words rules"
+      "words audio"
+      "words sync-settings"
       "api-settings sync-settings";
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--size-5) var(--size-7);
@@ -1427,12 +1567,16 @@ dialog.side-drawer .saved-set-item .button-group {
     grid-area: players;
   }
 
+  .game-mode-setup {
+    grid-area: game-mode;
+  }
+
   .game-rules {
     grid-area: rules;
   }
 
-  .game-mode-setup {
-    grid-area: game-mode;
+  .audio-settings {
+    grid-area: audio;
   }
 
   .word-selection {

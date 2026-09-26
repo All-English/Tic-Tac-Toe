@@ -4279,9 +4279,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function renderActiveLevelToolbar() {
-    if (!activeLevelToolbar || !activeLevelTitle || !toggleLevelAllBtn) return
+    if (!activeLevelToolbar || !toggleLevelAllBtn) return
 
-    const lvlNum = currentActiveLevelKey.replace(/^level/i, "")
     const levels = getActiveSeriesLevels()
     const currentUnits = levels[currentActiveLevelKey] || {}
     const totalUnitsInLevel = Object.keys(currentUnits).length
@@ -4296,14 +4295,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    activeLevelTitle.textContent = selectedInLevel > 0
-      ? `Level ${lvlNum} Units (${selectedInLevel} selected)`
-      : `Level ${lvlNum} Units`
+    if (activeLevelTitle) {
+      const lvlNum = currentActiveLevelKey.replace(/^level/i, "")
+      activeLevelTitle.textContent = selectedInLevel > 0
+        ? `Level ${lvlNum} Units (${selectedInLevel} selected)`
+        : `Level ${lvlNum} Units`
+    }
 
     if (totalUnitsInLevel > 0 && selectedInLevel === totalUnitsInLevel) {
-      toggleLevelAllBtn.textContent = "Deselect Level"
+      toggleLevelAllBtn.textContent = "Deselect All"
     } else {
-      toggleLevelAllBtn.textContent = "Select All Levels"
+      toggleLevelAllBtn.textContent = "Select All"
     }
   }
 

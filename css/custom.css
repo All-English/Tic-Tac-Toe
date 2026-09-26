@@ -225,11 +225,9 @@ main {
 }
 
 /* Level Tabs */
-/* Level Tabs */
 .unit-level-tabs {
   display: flex;
   width: 100%;
-  border-bottom: 1px solid var(--border-color);
   overflow-x: auto;
   scrollbar-width: thin;
   -webkit-overflow-scrolling: touch;
@@ -278,15 +276,9 @@ main {
 /* Active Level Toolbar */
 .active-level-toolbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding-top: var(--size-1);
-}
-
-.active-level-title {
-  font-weight: 600;
-  font-size: var(--font-size-sm);
-  color: var(--text-color-1);
 }
 
 .toggle-level-all-btn {

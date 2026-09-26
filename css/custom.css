@@ -245,7 +245,7 @@ main {
   border: none;
   border-bottom: 2px solid transparent;
   color: var(--text-color-2);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -265,7 +265,7 @@ main {
 .level-tab-dot {
   position: absolute;
   top: 5px;
-  right: calc(50% - 28px);
+  right: calc(50% - 32px);
   width: 6px;
   height: 6px;
   border-radius: var(--radius-round);
@@ -282,8 +282,8 @@ main {
 }
 
 .toggle-level-all-btn {
-  padding: 2px 10px;
-  font-size: var(--font-size-xs);
+  padding: 3px 12px;
+  font-size: var(--font-size-sm);
   min-height: auto;
 }
 
@@ -307,7 +307,7 @@ main {
   color: var(--text-color-1);
   cursor: pointer;
   text-align: left;
-  min-height: 52px;
+  min-height: 56px;
   position: relative;
   transition: all 0.15s ease;
   user-select: none;
@@ -327,12 +327,12 @@ main {
 
 .unit-chip-index {
   font-weight: 700;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-md);
   line-height: 1.2;
 }
 
 .unit-chip-title {
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   opacity: 0.85;
   line-height: 1.2;
   margin-top: 2px;

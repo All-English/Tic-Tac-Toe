@@ -3366,6 +3366,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       htmlElement.classList.remove("theme-bw")
       htmlElement.style.setProperty("--palette-hue", selectedTheme)
     }
+
+    // Dynamically update player symbol badges in setup if present
+    const badges = playerNamesContainer?.querySelectorAll(".player-symbol-badge")
+    if (badges && badges.length > 0) {
+      const colors = generatePlayerColors()
+      badges.forEach((badge, idx) => {
+        if (colors[idx]) {
+          badge.style.backgroundColor = colors[idx]
+        }
+      })
+    }
   }
 
   // Set the initial theme based on system preference and default dropdown value
@@ -3708,20 +3719,135 @@ document.addEventListener("DOMContentLoaded", async () => {
     validatePlayerNames()
   }
 
+  let activePointerDrag = null
+
+  function movePlayerTo(fromIndex, toIndex) {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return
+    if (fromIndex >= gameState.setup.players.length || toIndex >= gameState.setup.players.length) return
+
+    const newPlayers = [...gameState.setup.players]
+    const [itemToMove] = newPlayers.splice(fromIndex, 1)
+    newPlayers.splice(toIndex, 0, itemToMove)
+
+    gameState = {
+      ...gameState,
+      setup: {
+        ...gameState.setup,
+        players: newPlayers,
+      },
+    }
+    renderNameInputs()
+    saveSettings()
+    validatePlayerNames()
+    playSound("click")
+  }
+
   function renderNameInputs() {
     playerNamesContainer.innerHTML = ""
+    const colors = generatePlayerColors()
+
     gameState.setup.players.forEach((player, index) => {
       const wrapper = document.createElement("div")
       wrapper.className = "player-field-wrapper"
-      wrapper.draggable = true
-      wrapper.dataset.playerId = player.id // The ID for drag/drop and removal goes on the wrapper
-      wrapper.addEventListener("dragstart", () =>
-        wrapper.classList.add("dragging"),
-      )
-      wrapper.addEventListener("dragend", () =>
-        wrapper.classList.remove("dragging"),
-      )
+      wrapper.draggable = false
+      wrapper.dataset.playerId = player.id
+      wrapper.dataset.index = index
 
+      wrapper.addEventListener("dragstart", (e) => {
+        wrapper.classList.add("dragging")
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = "move"
+          e.dataTransfer.setData("text/plain", String(player.id))
+        }
+      })
+      wrapper.addEventListener("dragend", () => {
+        wrapper.classList.remove("dragging")
+        wrapper.draggable = false
+        playerNamesContainer.querySelectorAll(".player-field-wrapper").forEach((el) => {
+          el.classList.remove("drop-target")
+        })
+      })
+
+      // 1. Drag Handle
+      const dragHandle = document.createElement("span")
+      dragHandle.className = "player-drag-handle"
+      dragHandle.setAttribute("role", "button")
+      dragHandle.setAttribute("tabindex", "0")
+      dragHandle.setAttribute("aria-label", `Drag to reorder ${player.name || "Player " + (index + 1)}`)
+      dragHandle.title = "Drag to reorder"
+      dragHandle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle></svg>`
+
+      // Mouse drag initiation: only clicking and holding the handle activates dragging
+      dragHandle.addEventListener("mousedown", (e) => {
+        if (e.button === 0) {
+          wrapper.draggable = true
+        }
+      })
+      dragHandle.addEventListener("mouseup", () => {
+        if (!wrapper.classList.contains("dragging")) {
+          wrapper.draggable = false
+        }
+      })
+      dragHandle.addEventListener("mouseleave", () => {
+        if (!wrapper.classList.contains("dragging")) {
+          wrapper.draggable = false
+        }
+      })
+
+      // Touch events for mobile/smartboards (Pointer events for touch only)
+      dragHandle.addEventListener("pointerdown", (e) => {
+        if (e.pointerType === "mouse") return // Handled by HTML5 drag above
+        try {
+          dragHandle.setPointerCapture(e.pointerId)
+        } catch {}
+        activePointerDrag = {
+          pointerId: e.pointerId,
+          fromIndex: index,
+          wrapper: wrapper,
+        }
+        wrapper.classList.add("dragging")
+      })
+
+      dragHandle.addEventListener("pointermove", (e) => {
+        if (!activePointerDrag || activePointerDrag.pointerId !== e.pointerId) return
+        const target = document.elementFromPoint(e.clientX, e.clientY)
+        const targetWrapper = target?.closest(".player-field-wrapper")
+        playerNamesContainer.querySelectorAll(".player-field-wrapper").forEach((el) => {
+          el.classList.toggle("drop-target", el === targetWrapper && el !== wrapper)
+        })
+      })
+
+      const endPointerDrag = (e) => {
+        if (!activePointerDrag || activePointerDrag.pointerId !== e.pointerId) return
+        try {
+          dragHandle.releasePointerCapture(e.pointerId)
+        } catch {}
+        wrapper.classList.remove("dragging")
+        const target = document.elementFromPoint(e.clientX, e.clientY)
+        const targetWrapper = target?.closest(".player-field-wrapper")
+        playerNamesContainer.querySelectorAll(".player-field-wrapper").forEach((el) => {
+          el.classList.remove("drop-target")
+        })
+        if (targetWrapper && targetWrapper !== wrapper) {
+          const toIndex = parseInt(targetWrapper.dataset.index, 10)
+          if (!isNaN(toIndex)) {
+            movePlayerTo(activePointerDrag.fromIndex, toIndex)
+          }
+        }
+        activePointerDrag = null
+      }
+
+      dragHandle.addEventListener("pointerup", endPointerDrag)
+      dragHandle.addEventListener("pointercancel", endPointerDrag)
+
+      // 2. Color & Symbol Badge
+      const badge = document.createElement("span")
+      badge.className = "player-symbol-badge"
+      badge.style.backgroundColor = colors[index] || "var(--primary)"
+      badge.textContent = playerSymbols[index] || `${index + 1}`
+      badge.title = `Player ${index + 1}: ${playerSymbols[index] || ""}`
+
+      // 3. Name Field
       const field = document.createElement("label")
       field.className = "field player-name-field"
 
@@ -3735,7 +3861,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       input.setAttribute("list", "player-list-data")
       input.value = player.name
       input.addEventListener("input", (e) => {
-        const playerId = String(wrapper.dataset.playerId) // Read ID from wrapper
+        const playerId = String(wrapper.dataset.playerId)
         gameState.setup.players = gameState.setup.players.map((p) =>
           String(p.id) === playerId ? { ...p, name: e.target.value } : p,
         )
@@ -3746,12 +3872,42 @@ document.addEventListener("DOMContentLoaded", async () => {
       field.appendChild(label)
       field.appendChild(input)
 
+      // 4. Stacked Chevrons
+      const reorderGroup = document.createElement("div")
+      reorderGroup.className = "player-reorder-group"
+
+      const upBtn = document.createElement("button")
+      upBtn.type = "button"
+      upBtn.className = "chevron-btn move-up-btn"
+      upBtn.setAttribute("aria-label", `Move ${player.name || "Player " + (index + 1)} up`)
+      upBtn.title = "Move Up"
+      upBtn.disabled = index === 0
+      upBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`
+      upBtn.addEventListener("click", () => movePlayerTo(index, index - 1))
+
+      const downBtn = document.createElement("button")
+      downBtn.type = "button"
+      downBtn.className = "chevron-btn move-down-btn"
+      downBtn.setAttribute("aria-label", `Move ${player.name || "Player " + (index + 1)} down`)
+      downBtn.title = "Move Down"
+      downBtn.disabled = index === gameState.setup.players.length - 1
+      downBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`
+      downBtn.addEventListener("click", () => movePlayerTo(index, index + 1))
+
+      reorderGroup.appendChild(upBtn)
+      reorderGroup.appendChild(downBtn)
+
+      // 5. Remove Button
       const removeBtn = document.createElement("button")
+      removeBtn.type = "button"
       removeBtn.className = "icon-button remove-player-btn"
       removeBtn.setAttribute("aria-label", `Remove Player ${index + 1}`)
-      removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
+      removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
 
+      wrapper.appendChild(dragHandle)
+      wrapper.appendChild(badge)
       wrapper.appendChild(field)
+      wrapper.appendChild(reorderGroup)
       wrapper.appendChild(removeBtn)
 
       playerNamesContainer.appendChild(wrapper)
@@ -4872,8 +5028,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   playerNamesContainer.addEventListener("dragover", (e) => {
     e.preventDefault()
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = "move"
+    }
     const draggingEl = playerNamesContainer.querySelector(".dragging")
-    const targetEl = e.target.closest(".player-name-field")
+    const targetEl = e.target.closest(".player-field-wrapper")
 
     // Clear previous highlights from all other fields
     playerNamesContainer.querySelectorAll(".drop-target").forEach((el) => {
@@ -4907,21 +5066,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const fromIndex = gameState.setup.players.findIndex((p) => String(p.id) === fromId)
     const toIndex = gameState.setup.players.findIndex((p) => String(p.id) === toId)
 
-    const newPlayers = [...gameState.setup.players]
-    const [itemToMove] = newPlayers.splice(fromIndex, 1)
-    newPlayers.splice(toIndex, 0, itemToMove)
-
-    gameState = {
-      ...gameState,
-      setup: {
-        ...gameState.setup,
-        players: newPlayers,
-      },
+    if (fromIndex !== -1 && toIndex !== -1) {
+      movePlayerTo(fromIndex, toIndex)
     }
-    // Re-render the inputs with the new order
-    renderNameInputs()
-    saveSettings()
-    validatePlayerNames()
   })
 
   manageSetsBtn.addEventListener("click", () => {

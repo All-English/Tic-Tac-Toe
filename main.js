@@ -459,18 +459,25 @@ document.addEventListener("DOMContentLoaded", async () => {
       pendingTurnAnnouncementTimeout = null
     }
 
-    // Rebuild the .setup.players object from the previous game's playerNames
-    const playersFromLastGame = gameState.playerNames.map((name, index) => ({
-      id: Date.now() + index, // IDs are regenerated for the setup screen
-      name: name,
-    }))
+    // Rebuild the .setup.players object from the previous game's players, preserving colorIndex
+    const playersFromLastGame =
+      gameState.players && gameState.players.length > 0
+        ? gameState.players.map((p, index) => ({
+            id: Date.now() + index,
+            name: p.name || gameState.playerNames[index],
+            colorIndex: p.colorIndex,
+          }))
+        : gameState.playerNames.map((name, index) => ({
+            id: Date.now() + index,
+            name: name,
+          }))
 
-    // Reset the gameState to the initial structure, preserving players
+    // Reset the gameState to the initial structure, preserving players and colors
     gameState = {
       ...gameState, // Carry over settings like gridSize, etc.
       currentView: "setup",
       setup: {
-        players: playersFromLastGame,
+        players: assignRandomColors(playersFromLastGame, false),
       },
     }
 
@@ -3034,6 +3041,45 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  function assignRandomColors(players, forceReshuffle = false) {
+    if (!Array.isArray(players) || players.length === 0) return players
+
+    const hasColors = players.every(
+      (p) => typeof p.colorIndex === "number" && p.colorIndex >= 0 && p.colorIndex < MAX_PLAYERS,
+    )
+    const distinctColors = new Set(players.map((p) => p.colorIndex)).size === players.length
+
+    if (hasColors && distinctColors && !forceReshuffle) {
+      return players
+    }
+
+    const availableIndices = Array.from({ length: MAX_PLAYERS }, (_, i) => i)
+    for (let i = availableIndices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[availableIndices[i], availableIndices[j]] = [availableIndices[j], availableIndices[i]]
+    }
+
+    if (!forceReshuffle) {
+      const used = new Set(
+        players
+          .map((p) => p.colorIndex)
+          .filter((idx) => typeof idx === "number" && idx >= 0 && idx < MAX_PLAYERS),
+      )
+      const unused = availableIndices.filter((idx) => !used.has(idx))
+      return players.map((player) => {
+        if (typeof player.colorIndex === "number" && player.colorIndex >= 0 && player.colorIndex < MAX_PLAYERS) {
+          return player
+        }
+        return { ...player, colorIndex: unused.pop() ?? 0 }
+      })
+    } else {
+      return players.map((player, idx) => ({
+        ...player,
+        colorIndex: availableIndices[idx % availableIndices.length],
+      }))
+    }
+  }
+
   function updatePronunciationToggleState() {
     const isMuted = muteSoundsToggle.checked
     pronounceWordsToggle.disabled = isMuted
@@ -3133,7 +3179,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (playersList.length === 0) {
         playersList = settings.playerNames || []
       }
-      gameState.setup.players = playersList
+      gameState.setup.players = assignRandomColors(playersList, false)
       gridSizeInput.value = settings.gridSize || 3
       if (
         (settings.gameMode === "Survivor" &&
@@ -3233,7 +3279,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           { id: `${Date.now()}_2`, name: "Player 2" },
         ]
       }
-      gameState.setup.players = playersList
+      gameState.setup.players = assignRandomColors(playersList, false)
       updateGameModeHint("Conquest")
     }
 
@@ -3372,8 +3418,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (badges && badges.length > 0) {
       const colors = generatePlayerColors()
       badges.forEach((badge, idx) => {
-        if (colors[idx]) {
-          badge.style.backgroundColor = colors[idx]
+        const player = gameState.setup?.players?.[idx]
+        const colorIdx = player?.colorIndex !== undefined ? player.colorIndex : idx
+        if (colors[colorIdx]) {
+          badge.style.backgroundColor = colors[colorIdx]
         }
       })
     }
@@ -3467,10 +3515,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       const dynamicColorPalette = generatePlayerColors()
-      const shuffledColors = [...dynamicColorPalette].sort(
-        () => 0.5 - Math.random(),
-      )
-      settings.playerColors = shuffledColors.slice(0, settings.numPlayers)
+      settings.playerColors = preparedPlayers.map((player, idx) => {
+        const colorIdx = player.colorIndex !== undefined ? player.colorIndex : idx
+        return dynamicColorPalette[colorIdx] || dynamicColorPalette[idx]
+      })
 
       const shuffledRadii = [...playerRadii].sort(() => 0.5 - Math.random())
       settings.playerRadii = shuffledRadii.slice(0, settings.numPlayers)
@@ -3560,9 +3608,23 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
+    const usedColorIndices = new Set(
+      gameState.setup.players
+        .map((p) => p.colorIndex)
+        .filter((idx) => typeof idx === "number"),
+    )
+    const availableColorIndices = Array.from({ length: MAX_PLAYERS }, (_, i) => i).filter(
+      (idx) => !usedColorIndices.has(idx),
+    )
+    const chosenColorIndex =
+      availableColorIndices.length > 0
+        ? availableColorIndices[Math.floor(Math.random() * availableColorIndices.length)]
+        : gameState.setup.players.length % MAX_PLAYERS
+
     const newPlayer = {
       id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       name: newPlayerName,
+      colorIndex: chosenColorIndex,
     }
 
     gameState.setup.players.push(newPlayer)
@@ -3701,12 +3763,14 @@ document.addEventListener("DOMContentLoaded", async () => {
           playersToShuffle[i],
         ]
       }
+      // Re-assign new random colors for players on shuffle
+      const playersWithNewColors = assignRandomColors(playersToShuffle, true)
       // Now, update the actual state with the shuffled copy
       gameState = {
         ...gameState,
         setup: {
           ...gameState.setup,
-          players: playersToShuffle,
+          players: playersWithNewColors,
         },
       }
       attempts++
@@ -3744,6 +3808,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function renderNameInputs() {
     playerNamesContainer.innerHTML = ""
+    gameState.setup.players = assignRandomColors(gameState.setup.players, false)
     const colors = generatePlayerColors()
 
     gameState.setup.players.forEach((player, index) => {
@@ -3843,7 +3908,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       // 2. Color & Symbol Badge
       const badge = document.createElement("span")
       badge.className = "player-symbol-badge"
-      badge.style.backgroundColor = colors[index] || "var(--primary)"
+      const colorIdx = player.colorIndex !== undefined ? player.colorIndex : index
+      badge.style.backgroundColor = colors[colorIdx] || "var(--primary)"
       badge.textContent = playerSymbols[index] || `${index + 1}`
       badge.title = `Player ${index + 1}: ${playerSymbols[index] || ""}`
 
@@ -4552,10 +4618,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     userSetConquestEqualRounds = false
     userSetStealthEqualRounds = false
     userSetSurvivorEqualRounds = false
-    gameState.setup.players = [
+    gameState.setup.players = assignRandomColors([
       { id: `${Date.now()}_1`, name: "Player 1" },
       { id: `${Date.now()}_2`, name: "Player 2" },
-    ]
+    ], true)
 
     gridSizeInput.value = 3
     matchLengthInput.value = 3
@@ -4862,7 +4928,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     gameState = {
       ...gameState,
-      setup: { ...gameState.setup, players: newPlayers },
+      setup: { ...gameState.setup, players: assignRandomColors(newPlayers, true) },
     }
 
     renderNameInputs()
